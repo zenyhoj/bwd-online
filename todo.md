@@ -1,4 +1,4 @@
-- [x] add purpose of seminar: new service, reconnection, change name, others
-- [ ] build and push to github
-
+[] - optimize the application for mobile users
+[] - enhance the dashboard to show more information about the application
+[] - reduce the dashboard clutter and make the dashboard more user-friendly and accessible to admins 
 

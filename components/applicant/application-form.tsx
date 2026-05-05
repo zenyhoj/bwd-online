@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CLASSIFICATION_OPTIONS } from "@/lib/fee-schedule";
 import type { Database } from "@/types";
 
 type Applicant = Database["public"]["Tables"]["applicants"]["Row"];
@@ -86,7 +87,32 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
           <input type="hidden" name="address" value={applicant?.address ?? ""} />
           <input type="hidden" name="cellphoneNumber" value={applicant?.cellphone_number ?? ""} />
 
-          {/* Only field the user fills in */}
+          {/* Classification */}
+          <div className="space-y-2">
+            <Label htmlFor="classification">
+              Connection classification <span className="text-destructive">*</span>
+            </Label>
+            <select
+              id="classification"
+              name="classification"
+              required
+              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">Select classification...</option>
+              {CLASSIFICATION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            {hasError("classification") ? (
+              <p className="text-xs text-destructive">{errorText("classification")}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Determines the application fee. Residential/Commercial C: ₱3,000 · Commercial A&B: ₱4,000 · Industrial/Bulk: ₱5,000
+              </p>
+            )}
+          </div>
+
+          {/* Number of users */}
           <div className="space-y-2">
             <Label htmlFor="numberOfUsers">
               Number of users <span className="text-destructive">*</span>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { getFeeBreakdown } from "@/lib/fee-schedule";
 import type { Payment } from "@/types";
 
 type PaymentSchedulerFormProps = {
@@ -17,13 +18,15 @@ type PaymentSchedulerFormProps = {
   payment?: Payment;
   canSchedule?: boolean;
   scheduleHint?: string;
+  classification?: string | null;
 };
 
 export function PaymentSchedulerForm({
   applicationId,
   payment,
   canSchedule = true,
-  scheduleHint
+  scheduleHint,
+  classification
 }: PaymentSchedulerFormProps) {
   const action = payment ? updatePaymentStatusAction : schedulePaymentAction;
   const [state, formAction, pending] = useActionState(action, initialActionState);
@@ -38,6 +41,9 @@ export function PaymentSchedulerForm({
       new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
     );
   }, []);
+
+  // ── Fee breakdown card ──────────────────────────────────────────────────────
+  const fee = getFeeBreakdown(classification);
 
   // ── Locked read-only view once payment is paid ──────────────────────────────
   if (isPaidLocked && payment) {
@@ -76,6 +82,26 @@ export function PaymentSchedulerForm({
   // ── Editable form ────────────────────────────────────────────────────────────
   return (
     <div className="space-y-5">
+      {/* Fee breakdown info card */}
+      {fee && (
+        <div className="rounded-xl border border-border/70 bg-muted/30 p-4 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Application fee — {fee.label}</p>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Total fee: </span>
+              <span className="font-semibold">{formatCurrency(fee.total)}</span>
+            </div>
+            {fee.installment && (
+              <div className="text-muted-foreground">
+                <span>Installment option: </span>
+                <span className="font-medium text-foreground">{formatCurrency(fee.installment.initial)} initial</span>
+                <span> + </span>
+                <span className="font-medium text-foreground">{formatCurrency(fee.installment.monthly)}/mo × {fee.installment.months} months</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       <div>
         <h3 className="font-semibold">{payment ? "Manage payment" : "Schedule office payment"}</h3>
         <p className="text-sm text-muted-foreground">

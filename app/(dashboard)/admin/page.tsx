@@ -671,6 +671,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                             payment={latestSelectedPayment ?? undefined}
                             canSchedule={canSchedulePayment}
                             scheduleHint="You can schedule the office payment date here after the inspection is approved."
+                            classification={(selectedApplication as Record<string, unknown>).concessionaire_classification as string | null}
                           />
                         )}
                         {activeAction === "mark-installation" && (

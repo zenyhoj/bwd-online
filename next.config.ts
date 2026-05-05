@@ -13,7 +13,8 @@ const nextConfig: NextConfig = {
         hostname: "tile.openstreetmap.org"
       }
     ]
-  }
+  },
+  devIndicators: false,
 };
 
 export default nextConfig;

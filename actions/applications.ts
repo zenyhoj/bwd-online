@@ -63,6 +63,11 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: "Complete the full seminar series before submitting your application." };
     }
 
+    const classification = formData.get("classification")?.toString() ?? "";
+    if (!classification) {
+      return { success: false, message: "Connection classification is required.", fieldErrors: { classification: ["Please select a classification."] } as Record<string, string[]> };
+    }
+
     const { error } = await supabase.from("applications").insert({
       organization_id: profile.organization_id,
       applicant_id: applicantId,
@@ -75,7 +80,8 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       service_type: "new_connection",
       seminar_completed: true,
       status: "submitted",
-      submitted_at: new Date().toISOString()
+      submitted_at: new Date().toISOString(),
+      concessionaire_classification: classification as "residential_commercial_c" | "commercial_a_b" | "commercial_industrial_bulk"
     });
 
     if (error) {
