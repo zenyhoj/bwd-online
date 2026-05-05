@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle2, ClipboardList, CreditCard, Wrench } from "lucide-react";
 
 import { WaterMeterSchedulerForm } from "@/components/admin/water-meter-scheduler-form";
 import { WaterMeterCompletionForm } from "@/components/admin/water-meter-completion-form";
@@ -320,22 +321,62 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader><CardTitle>Total in queue</CardTitle></CardHeader>
-          <CardContent className="text-3xl font-bold">{applications.count}</CardContent>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Total in queue</p>
+                <p className="mt-1 text-3xl font-bold">{applications.count}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">active applications</p>
+              </div>
+              <div className="rounded-xl bg-blue-500/10 p-3">
+                <ClipboardList className="h-6 w-6 text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle>Ready for inspection</CardTitle></CardHeader>
-          <CardContent className="text-3xl font-bold">{readyForInspection}</CardContent>
+        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Ready for inspection</p>
+                <p className="mt-1 text-3xl font-bold">{readyForInspection}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">need scheduling</p>
+              </div>
+              <div className="rounded-xl bg-amber-500/10 p-3">
+                <Wrench className="h-6 w-6 text-amber-500" />
+              </div>
+            </div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle>Ready for payment</CardTitle></CardHeader>
-          <CardContent className="text-3xl font-bold">{readyForPayment}</CardContent>
+        <Card className="relative overflow-hidden border-l-4 border-l-violet-500">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Ready for payment</p>
+                <p className="mt-1 text-3xl font-bold">{readyForPayment}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">awaiting payment</p>
+              </div>
+              <div className="rounded-xl bg-violet-500/10 p-3">
+                <CreditCard className="h-6 w-6 text-violet-500" />
+              </div>
+            </div>
+          </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle>Ready for conversion</CardTitle></CardHeader>
-          <CardContent className="text-3xl font-bold">{readyForConversionEffective}</CardContent>
+        <Card className="relative overflow-hidden border-l-4 border-l-emerald-500">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Ready for conversion</p>
+                <p className="mt-1 text-3xl font-bold">{readyForConversionEffective}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">can be converted</p>
+              </div>
+              <div className="rounded-xl bg-emerald-500/10 p-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
@@ -417,7 +458,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium">
+                          <span className="inline-block rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium whitespace-nowrap">
                             {queueStageLabel(recordStage)}
                           </span>
                         </TableCell>
@@ -522,24 +563,38 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-border/50 px-6 py-4 text-sm">
-                  {[
-                    { label: "In-house plumbing", value: stepState.plumbing },
-                    { label: "Inspection", value: stepState.inspection },
-                    { label: "Payment", value: stepState.payment },
-                    { label: "Conversion", value: stepState.conversion }
-                  ].map((step, idx) => (
-                    <div key={step.label} className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-                        {idx + 1}
-                      </span>
-                      <span className="font-medium text-foreground">{step.label}</span>
-                      <span className="text-muted-foreground">•</span>
-                      <span className={step.value === "Complete" ? "text-primary font-medium" : step.value === "Waiting" ? "text-muted-foreground/50" : "text-muted-foreground"}>
-                        {step.value}
-                      </span>
-                    </div>
-                  ))}
+                <div className="border-b border-border/50 px-6 py-4">
+                  <div className="flex items-center gap-0 overflow-x-auto">
+                    {[
+                      { label: "Plumbing", value: stepState.plumbing },
+                      { label: "Inspection", value: stepState.inspection },
+                      { label: "Payment", value: stepState.payment },
+                      { label: "Conversion", value: stepState.conversion }
+                    ].map((step, idx, arr) => {
+                      const isDone = step.value === "Complete";
+                      const isActive = !isDone && (idx === 0 || arr[idx - 1]?.value === "Complete");
+                      return (
+                        <div key={step.label} className="flex items-center">
+                          <div className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg text-center min-w-[90px] text-xs font-medium ${
+                            isDone ? "text-emerald-600" : isActive ? "text-primary" : "text-muted-foreground/50"
+                          }`}>
+                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                              isDone ? "bg-emerald-100 text-emerald-600" : isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground/40"
+                            }`}>{idx + 1}</span>
+                            <span>{step.label}</span>
+                            <span className={`text-[10px] font-normal ${
+                              isDone ? "text-emerald-500" : isActive ? "text-primary/70" : "text-muted-foreground/40"
+                            }`}>{step.value}</span>
+                          </div>
+                          {idx < arr.length - 1 && (
+                            <div className={`h-px w-6 shrink-0 ${
+                              arr[idx].value === "Complete" ? "bg-emerald-300" : "bg-border/60"
+                            }`} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] divide-y lg:divide-y-0 lg:divide-x divide-border/50">
@@ -581,9 +636,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     </p>
                     {activeAction ? (
                       <div className="mt-8 rounded-xl border-2 border-primary/20 bg-background p-6 shadow-sm">
-                        <div className="mb-6 flex items-center justify-between gap-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold whitespace-nowrap overflow-hidden text-ellipsis">Active Workflow Step</p>
-                          <Badge variant="default" className="whitespace-nowrap">Next in workflow</Badge>
+                        <div className="mb-6 flex items-start justify-between gap-4">
+                          <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">Active Workflow Step</p>
+                          <Badge variant="default" className="text-[10px] shrink-0">Next</Badge>
                         </div>
                         {activeAction === "inhouse-plumbing" && (
                           <InhouseInstallationForm
@@ -659,73 +714,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
               </CardContent>
             </Card>
 
-            {/* Active forms are now rendered inside the 'Next action' dashboard item. */}
-          </div>
-
-          <div>
-            <Card className="border-border/70 shadow-sm xl:sticky xl:top-6">
-              <CardHeader className="border-b border-border/50 bg-muted/10 pb-4">
-                <CardTitle>Workflow actions</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Manage the next steps for this application.
-                </p>
-              </CardHeader>
-              <CardContent className="p-0 divide-y divide-border/50">
-                {activeAction !== "payment" && (
-                  <div className="p-6">
-                    {latestSelectedPayment ? (
-                      <div className="mb-4 rounded-lg border border-border/80 bg-muted/30 p-3 text-sm text-muted-foreground">
-                        {latestSelectedPayment.status === "paid"
-                          ? "Payment is already marked as paid. Details are shown below in read-only mode."
-                          : "A payment schedule already exists for this application. Update it below if needed."}
-                      </div>
-                    ) : null}
-                    <PaymentSchedulerForm
-                      applicationId={String(selectedApplication.id)}
-                      payment={latestSelectedPayment ?? undefined}
-                      canSchedule={canSchedulePayment}
-                      scheduleHint="You can schedule the office payment date here after the inspection is approved."
-                    />
-                  </div>
-                )}
-                <div className="p-6 bg-muted/5">
-                  <InstallationSchedulerForm
-                    applicationId={String(selectedApplication.id)}
-                    scheduledAt={(selectedApplication.inhouse_installation_scheduled_at as string | null | undefined) ?? null}
-                    canSchedule={Boolean(canScheduleInstallation)}
-                    isCompleted={Boolean(selectedApplication.inhouse_installation_completed)}
-                  />
-                </div>
-                {activeAction !== "mark-installation" && (
-                  <div className="p-6">
-                    {canMarkInstallationComplete ? (
-                      <InhouseInstallationForm
-                        applicationId={String(selectedApplication.id)}
-                        plumbers={plumbers}
-                        currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
-                        isCompleted={Boolean(selectedApplication.inhouse_installation_completed)}
-                        variant="admin"
-                      />
-                    ) : (
-                      <div className="space-y-4">
-                        <h3 className="font-semibold text-muted-foreground">Inhouse installation</h3>
-                        <p className="text-sm text-muted-foreground">Mark installation complete after the office payment date has been scheduled.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-                {activeAction !== "water-meter" && (
-                  <div className="p-6 bg-muted/5">
-                    <WaterMeterSchedulerForm
-                      applicationId={String(selectedApplication.id)}
-                      scheduledAt={(selectedApplication.water_meter_installation_scheduled_at as string | null | undefined) ?? null}
-                      canSchedule={Boolean(selectedApplication.inhouse_installation_completed)}
-                      minDateOverride={latestSelectedPayment?.paid_at ?? null}
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Workflow actions are handled inline in the 'Next action' panel above. */}
           </div>
         </div>
       ) : noQueueResults ? (
