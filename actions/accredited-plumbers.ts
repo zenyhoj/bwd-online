@@ -143,6 +143,49 @@ export async function createAccreditedPlumberAction(
   });
 }
 
+export async function updateAccreditedPlumberAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Only administrators can manage accredited plumbers." };
+    }
+
+    const plumberId = formData.get("plumberId")?.toString() ?? "";
+    if (!plumberId) return { success: false, message: "Plumber ID is required." };
+
+    const parsed = await parseFormData(accreditedPlumberSchema, {
+      fullName: formData.get("fullName"),
+      licenseNumber: formData.get("licenseNumber"),
+      phone: formData.get("phone"),
+      notes: formData.get("notes")
+    });
+
+    if (parsed.error) return parsed.error;
+
+    const { error } = await supabase
+      .from("accredited_plumbers")
+      .update({
+        full_name: parsed.data.fullName,
+        license_number: parsed.data.licenseNumber || null,
+        phone: parsed.data.phone || null,
+        notes: parsed.data.notes || null
+      })
+      .eq("id", plumberId)
+      .eq("organization_id", profile.organization_id);
+
+    if (error) return { success: false, message: error.message };
+
+    revalidatePath("/admin/plumbers");
+    revalidatePath("/admin");
+    revalidatePath("/applicant");
+    return { success: true, message: "Plumber updated." };
+  });
+}
+
 export async function deleteAccreditedPlumberAction(
   _prevState: ActionState,
   formData: FormData
