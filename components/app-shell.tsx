@@ -83,9 +83,9 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
       : navByRole[profile.role];
 
   return (
-    <div className="min-h-screen bg-transparent">
-      <div className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[240px_1fr]">
-        <Card className="relative h-fit border-border/70 p-4 shadow-sm">
+    <div className="min-h-screen bg-transparent print:bg-white">
+      <div className="mx-auto grid max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[240px_1fr] print:block print:max-w-none print:p-0 print:m-0">
+        <Card className="relative h-fit border-border/70 p-4 shadow-sm print:hidden">
           <div className="mb-6 space-y-1">
             <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">BWD Online</p>
             <h1 className="text-lg font-semibold">{profile.full_name}</h1>

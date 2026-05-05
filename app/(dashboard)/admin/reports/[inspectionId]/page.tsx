@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { PrintButton } from "@/components/reports/print-button";
 import { InspectionReport } from "@/components/reports/inspection-report";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 type InspectionReportPageProps = {
   params: Promise<{ inspectionId: string }>;
@@ -10,7 +10,7 @@ type InspectionReportPageProps = {
 
 export default async function InspectionReportPage({ params }: InspectionReportPageProps) {
   const { inspectionId } = await params;
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const { data: inspection } = await supabase.from("inspections").select("*").eq("id", inspectionId).single();
 
   if (!inspection) {

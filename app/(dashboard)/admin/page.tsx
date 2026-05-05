@@ -489,7 +489,36 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       {formatDateTime((selectedApplication.submitted_at as string | null | undefined) ?? null)}
                     </p>
                   </div>
-                  <StatusBadge status={getEffectiveApplicationStatus(selectedApplication as Record<string, unknown>)} />
+                  <div className="flex flex-col items-end gap-2">
+                    <StatusBadge status={getEffectiveApplicationStatus(selectedApplication as Record<string, unknown>)} />
+                    <div className="flex items-center gap-3">
+                      {latestSelectedPayment?.status === "paid" ? (
+                        <Button variant="default" asChild className="font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
+                          <Link href={`/admin/reports/waco/${selectedApplication.id}`} target="_blank">
+                            Print WACO
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button variant="default" disabled className="font-medium shadow-sm">
+                          Print WACO
+                        </Button>
+                      )}
+
+                      {latestSelectedInspection?.id ? (
+                        latestSelectedPayment?.status === "paid" ? (
+                          <Button variant="default" asChild className="font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
+                            <Link href={`/admin/reports/${latestSelectedInspection.id}`} target="_blank">
+                              Print Inspection
+                            </Link>
+                          </Button>
+                        ) : (
+                          <Button variant="default" disabled className="font-medium shadow-sm">
+                            Print Inspection
+                          </Button>
+                        )
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
