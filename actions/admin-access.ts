@@ -1,12 +1,39 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 
 import { parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { staffInviteSchema } from "@/schemas";
 import type { ActionState } from "@/types";
+
+async function getInviteRedirectUrl() {
+  const headerStore = await headers();
+  const forwardedProto = headerStore.get("x-forwarded-proto");
+  const forwardedHost = headerStore.get("x-forwarded-host");
+  const host = forwardedHost ?? headerStore.get("host");
+  const protocol = forwardedProto ?? (host?.includes("localhost") ? "http" : "https");
+
+  if (host) {
+    return `${protocol}://${host}/accept-invite`;
+  }
+
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return new URL("/accept-invite", process.env.NEXT_PUBLIC_SITE_URL).toString();
+  }
+
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/accept-invite`;
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/accept-invite`;
+  }
+
+  return "http://localhost:3000/accept-invite";
+}
 
 export async function inviteStaffAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   return withErrorHandling(async () => {
@@ -27,6 +54,7 @@ export async function inviteStaffAction(_prevState: ActionState, formData: FormD
     }
 
     const adminClient = createSupabaseAdminClient();
+    const redirectTo = await getInviteRedirectUrl();
     const { data: existingProfile } = await adminClient
       .from("profiles")
       .select("id")
@@ -39,6 +67,7 @@ export async function inviteStaffAction(_prevState: ActionState, formData: FormD
     }
 
     const inviteResult = await adminClient.auth.admin.inviteUserByEmail(parsed.data.email, {
+      redirectTo,
       data: {
         full_name: parsed.data.fullName,
         role: parsed.data.role
