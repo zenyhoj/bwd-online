@@ -40,8 +40,8 @@ export function WaterMeterCompletionForm({ applicationId, scheduledAt }: WaterMe
 
       <FormMessage state={state} />
 
-      <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-        {pending ? "Marking complete..." : "Mark Installation as Complete"}
+      <Button type="submit" loading={pending} className="w-full sm:w-auto">
+        Mark Installation as Complete
       </Button>
     </form>
   );

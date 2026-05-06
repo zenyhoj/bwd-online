@@ -84,8 +84,8 @@ export function InhouseInstallationForm({
                 <p className="text-sm text-muted-foreground">This application is already marked complete.</p>
               ) : null}
               <FormMessage state={state} />
-              <Button type="submit" disabled={pending || isCompleted} className="w-full sm:w-auto">
-                {pending ? "Saving..." : isCompleted ? "Completed" : "Mark complete"}
+              <Button type="submit" disabled={isCompleted} loading={pending} className="w-full sm:w-auto">
+                {isCompleted ? "Completed" : "Mark complete"}
               </Button>
             </div>
           </form>

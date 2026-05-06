@@ -137,8 +137,8 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
 
           <FormMessage state={state} />
 
-          <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-            {pending ? "Submitting..." : "Submit application"}
+          <Button type="submit" loading={pending} className="w-full sm:w-auto">
+            Submit application
           </Button>
         </form>
       </CardContent>

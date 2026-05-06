@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { rescheduleInspectionAction } from "@/actions/inspections";
 import { initialActionState } from "@/actions/state";
@@ -68,8 +68,8 @@ export function InspectionScheduleInlineEditor({
           required
         />
         {hasChanged ? (
-          <Button type="submit" size="sm" aria-label="Update schedule" title="Update schedule" disabled={pending}>
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+          <Button type="submit" size="sm" aria-label="Update schedule" title="Update schedule" loading={pending}>
+            <Check className="h-4 w-4" />
           </Button>
         ) : null}
       </div>

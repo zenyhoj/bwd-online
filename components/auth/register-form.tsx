@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 import { registerAction } from "@/actions/auth";
 import { initialActionState } from "@/actions/state";
@@ -44,6 +45,7 @@ export function RegisterForm() {
   const [passwordValue, setPasswordValue] = useState("");
   const [confirmValue, setConfirmValue] = useState("");
   const [confirmTouched, setConfirmTouched] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [savedCredentials, setSavedCredentials] = useState<{ email: string; password: string; fullName: string } | null>(null);
   // Capture values at submit time before the form clears
@@ -172,18 +174,29 @@ export function RegisterForm() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoComplete="new-password"
-                placeholder="At least 8 characters"
-                value={passwordValue}
-                onChange={(e) => setPasswordValue(e.target.value)}
-                aria-invalid={hasError("password")}
-                className={hasError("password") ? "border-destructive focus-visible:ring-destructive" : undefined}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  placeholder="At least 8 characters"
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
+                  aria-invalid={hasError("password")}
+                  className={`pr-10 ${hasError("password") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                />
+                <button
+                  type="button"
+                  className="absolute right-0 top-0 flex h-full items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowPassword((v) => !v)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {hasError("password") ? (
                 <p className="text-xs text-destructive">{errorText("password")}</p>
               ) : (
@@ -193,19 +206,30 @@ export function RegisterForm() {
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                autoComplete="new-password"
-                placeholder="Re-enter your password"
-                value={confirmValue}
-                onChange={(e) => setConfirmValue(e.target.value)}
-                onBlur={() => setConfirmTouched(true)}
-                aria-invalid={passwordMismatch}
-                className={passwordMismatch ? "border-destructive focus-visible:ring-destructive" : undefined}
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  placeholder="Re-enter your password"
+                  value={confirmValue}
+                  onChange={(e) => setConfirmValue(e.target.value)}
+                  onBlur={() => setConfirmTouched(true)}
+                  aria-invalid={passwordMismatch}
+                  className={`pr-10 ${passwordMismatch ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                />
+                <button
+                  type="button"
+                  className="absolute right-0 top-0 flex h-full items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => setShowPassword((v) => !v)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordMismatch ? (
                 <p className="text-xs text-destructive">Passwords do not match.</p>
               ) : null}
@@ -244,8 +268,8 @@ export function RegisterForm() {
 
             <FormMessage state={state} />
 
-            <Button type="submit" className="w-full" disabled={pending || passwordMismatch || !confirmValue}>
-              {pending ? "Creating account..." : "Create account"}
+            <Button type="submit" className="w-full" disabled={passwordMismatch || !confirmValue} loading={pending}>
+              Create account
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">

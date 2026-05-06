@@ -241,8 +241,8 @@ export function PaymentSchedulerForm({
           <FormMessage state={state} />
         </div>
         <div className="sm:col-span-2">
-          <Button type="submit" disabled={pending || (!payment && !canSchedule)} className="w-full sm:w-auto">
-            {pending ? "Saving..." : payment ? (mode === "paid" ? "Confirm payment" : "Save new schedule") : "Set office payment date"}
+          <Button type="submit" disabled={!payment && !canSchedule} loading={pending} className="w-full sm:w-auto">
+            {payment ? (mode === "paid" ? "Confirm payment" : "Save new schedule") : "Set office payment date"}
           </Button>
         </div>
       </form>

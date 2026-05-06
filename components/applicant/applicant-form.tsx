@@ -98,13 +98,9 @@ export function ApplicantForm() {
         </CardContent>
         <CardFooter className="flex justify-end gap-2 border-t pt-4 border-border/50">
           <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Saving..." : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Create Applicant
-              </>
-            )}
+          <Button type="submit" loading={pending}>
+            <Save className="mr-2 h-4 w-4" />
+            Create Applicant
           </Button>
         </CardFooter>
       </form>

@@ -21,8 +21,8 @@ function DeleteSeminarButton({ seminarItemId }: { seminarItemId: string }) {
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="seminarItemId" value={seminarItemId} />
-      <Button type="submit" variant="outline" disabled={pending}>
-        {pending ? "Removing..." : "Delete"}
+      <Button type="submit" variant="outline" loading={pending}>
+        Delete
       </Button>
       <FormMessage state={state} />
     </form>
@@ -137,8 +137,8 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
             <FormMessage state={state} />
           </div>
           <div className="flex items-center gap-2 md:col-span-2">
-            <Button type="submit" disabled={pending}>
-              {pending ? "Saving..." : "Save changes"}
+            <Button type="submit" loading={pending}>
+              Save changes
             </Button>
             <Button type="button" variant="ghost" onClick={() => setIsEditing(false)} disabled={pending}>
               Cancel
@@ -251,8 +251,8 @@ export function SeminarItemForm({ items }: SeminarItemFormProps) {
               <FormMessage state={state} />
             </div>
             <div className="md:col-span-2">
-              <Button type="submit" disabled={pending}>
-                {pending ? "Saving..." : "Add seminar item"}
+              <Button type="submit" loading={pending}>
+                Add seminar item
               </Button>
             </div>
           </form>

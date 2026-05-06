@@ -45,8 +45,8 @@ export function DocumentReviewForm({ document }: DocumentReviewFormProps) {
         <Input id={`reviewNotes-${document.id}`} name="reviewNotes" required />
       </div>
       <FormMessage state={state} />
-      <Button type="submit" disabled={pending}>
-        {pending ? "Saving..." : "Save review"}
+      <Button type="submit" loading={pending}>
+        Save review
       </Button>
     </form>
   );

@@ -124,8 +124,8 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
             <FormMessage state={state} />
           </div>
           <div className="md:col-span-2">
-            <Button type="submit" disabled={pending || !hasPulledPlumber}>
-              {pending ? "Saving..." : "Save inspection"}
+            <Button type="submit" disabled={!hasPulledPlumber} loading={pending}>
+              Save inspection
             </Button>
           </div>
         </form>

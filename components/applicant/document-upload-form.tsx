@@ -45,8 +45,8 @@ export function DocumentUploadForm({ applicationId }: DocumentUploadFormProps) {
             <Label htmlFor="file">File</Label>
             <Input id="file" name="file" type="file" required />
           </div>
-          <Button type="submit" disabled={pending}>
-            {pending ? "Uploading..." : "Upload"}
+          <Button type="submit" loading={pending}>
+            Upload
           </Button>
           <div className="md:col-span-3">
             <FormMessage state={state} />

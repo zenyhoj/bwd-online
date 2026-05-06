@@ -71,8 +71,8 @@ export function WaterMeterSchedulerForm({ applicationId, scheduledAt, canSchedul
           <FormMessage state={state} />
         </div>
         <div className="md:col-span-2">
-          <Button type="submit" disabled={pending || !canSchedule} className="w-full sm:w-auto">
-            {pending ? "Saving..." : scheduledAt ? "Update schedule" : "Save schedule"}
+          <Button type="submit" disabled={!canSchedule} loading={pending} className="w-full sm:w-auto">
+            {scheduledAt ? "Update schedule" : "Save schedule"}
           </Button>
         </div>
       </form>

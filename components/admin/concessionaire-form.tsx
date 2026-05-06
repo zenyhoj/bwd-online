@@ -40,8 +40,8 @@ export function ConcessionaireForm({ applicationId, profileId }: ConcessionaireF
             <FormMessage state={state} />
           </div>
           <div className="md:col-span-2">
-            <Button type="submit" disabled={pending}>
-              {pending ? "Converting..." : "Create concessionaire"}
+            <Button type="submit" loading={pending}>
+              Create concessionaire
             </Button>
           </div>
         </form>

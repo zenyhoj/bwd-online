@@ -71,8 +71,8 @@ export function StaffInviteForm() {
             <p className="text-xs text-muted-foreground">
               Admins receive an email from Supabase to complete account setup.
             </p>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Sending..." : "Invite admin"}
+            <Button type="submit" loading={pending}>
+              Invite admin
             </Button>
           </div>
           <div className="md:col-span-3">

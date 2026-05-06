@@ -21,8 +21,8 @@ function DeleteInspectorButton({ inspectorId }: { inspectorId: string }) {
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="inspectorId" value={inspectorId} />
-      <Button type="submit" variant="outline" disabled={pending}>
-        {pending ? "Removing..." : "Remove"}
+      <Button type="submit" variant="outline" loading={pending}>
+        Remove
       </Button>
       <FormMessage state={state} />
     </form>
@@ -60,8 +60,8 @@ export function InspectorRegistryForm({ inspectors }: InspectorRegistryFormProps
               <FormMessage state={state} />
             </div>
             <div className="md:col-span-2">
-              <Button type="submit" disabled={pending}>
-                {pending ? "Saving..." : "Add inspector"}
+              <Button type="submit" loading={pending}>
+                Add inspector
               </Button>
             </div>
           </form>

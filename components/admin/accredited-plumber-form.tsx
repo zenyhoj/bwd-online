@@ -52,8 +52,8 @@ function EditPlumberRow({
             <Input name="notes" defaultValue={plumber.notes ?? ""} className="h-9 text-sm" />
           </div>
           <div className="sm:col-span-2 lg:col-span-4 flex items-center gap-2 flex-wrap">
-            <Button type="submit" size="sm" disabled={pending}>
-              {pending ? "Saving..." : "Save changes"}
+            <Button type="submit" size="sm" loading={pending}>
+              Save changes
             </Button>
             <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
               Cancel
@@ -77,10 +77,10 @@ function DeletePlumberButton({ plumberId }: { plumberId: string }) {
         type="submit"
         variant="ghost"
         size="sm"
-        disabled={pending}
+        loading={pending}
         className="text-destructive hover:text-destructive hover:bg-destructive/10"
       >
-        {pending ? "Removing..." : "Delete"}
+        Delete
       </Button>
       {state.message && !state.success ? (
         <p className="mt-1 text-xs text-destructive">{state.message}</p>
@@ -120,8 +120,8 @@ export function AccreditedPlumberForm({ plumbers }: AccreditedPlumberFormProps) 
               <Input id="notes" name="notes" className="h-11" />
             </div>
             <div className="sm:col-span-2 lg:col-span-4 flex items-center gap-3 flex-wrap">
-              <Button type="submit" disabled={pending}>
-                {pending ? "Saving..." : "Add plumber"}
+              <Button type="submit" loading={pending}>
+                Add plumber
               </Button>
               <FormMessage state={state} />
             </div>

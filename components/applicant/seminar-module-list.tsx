@@ -132,7 +132,7 @@ function SeminarItemCard({ item, index, completed, isLastPendingItem, applicantI
           <input type="hidden" name="applicantId" value={applicantId} />
           <input type="hidden" name="seminarItemId" value={item.id} />
           <input type="hidden" name="completed" value="true" />
-          <Button type="submit" disabled={pending || completed}>
+          <Button type="submit" disabled={completed} loading={pending}>
             {completed ? "Completed" : "Mark as completed"}
           </Button>
           <div className="min-w-[240px] flex-1">

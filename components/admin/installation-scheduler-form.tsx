@@ -90,8 +90,8 @@ export function InstallationSchedulerForm({
               ) : null}
               <FormMessage state={state} />
               <div className="flex flex-wrap gap-2">
-                <Button type="submit" disabled={pending || !canSchedule || isCompleted} className="w-full sm:w-auto">
-                  {pending ? "Saving..." : isCompleted ? "Completed" : scheduledAt ? "Update confirmed date" : "Confirm date"}
+                <Button type="submit" disabled={!canSchedule || isCompleted} loading={pending} className="w-full sm:w-auto">
+                  {isCompleted ? "Completed" : scheduledAt ? "Update confirmed date" : "Confirm date"}
                 </Button>
                 {scheduledAt && !pending ? (
                   <Button type="button" variant="outline" onClick={() => setIsEditing(false)} className="w-full sm:w-auto">
