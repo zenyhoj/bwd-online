@@ -129,7 +129,7 @@ function NavContent({
         <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">Navigation</p>
         <span className="text-[11px] text-muted-foreground">{navItems.length} items</span>
       </div>
-      <nav className="space-y-1.5">
+      <nav className="space-y-0.5">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href || (item.href !== `/${profile.role}` && pathname.startsWith(`${item.href}/`));
@@ -141,20 +141,20 @@ function NavContent({
               href={item.href as never}
               aria-current={isActive ? "page" : undefined}
               onClick={onClose}
-              className={`group flex items-center gap-3 rounded-xl border px-3 py-3 text-sm transition-all ${
+              className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all ${
                 isActive
-                  ? "border-primary/30 bg-[linear-gradient(135deg,rgba(255,164,28,0.18),rgba(30,44,74,0.06))] font-medium text-foreground shadow-[0_14px_30px_-24px_rgba(245,158,11,0.9)]"
-                  : "border-transparent text-muted-foreground hover:border-border/80 hover:bg-muted/40 hover:text-foreground"
+                  ? "bg-[linear-gradient(135deg,rgba(255,164,28,0.14),rgba(30,44,74,0.04))] font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-muted/35 hover:text-foreground"
               }`}
             >
               <span
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors ${
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
                   isActive
-                    ? "border-primary/25 bg-background/80 text-primary"
-                    : "border-border/60 bg-background/65 text-muted-foreground group-hover:text-foreground"
+                    ? "bg-background/85 text-primary shadow-sm ring-1 ring-primary/15"
+                    : "text-muted-foreground group-hover:bg-background/75 group-hover:text-foreground"
                 }`}
               >
-                <item.icon className="h-4 w-4 shrink-0" />
+                <item.icon className="h-3.5 w-3.5 shrink-0" />
               </span>
               <span className="flex-1">{item.label}</span>
               {badge > 0 && (
@@ -169,14 +169,15 @@ function NavContent({
       <div className="mt-8 rounded-2xl border border-border/70 bg-muted/20 p-3">
         <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">Session</p>
         <form action={signOutAction}>
-        <Button
-          type="submit"
-          variant="outline"
-          className="w-full justify-start gap-2 rounded-xl border-border/80 bg-background/80 text-muted-foreground hover:bg-background hover:text-foreground"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign out
-        </Button>
+          <button
+            type="submit"
+            className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border/80 bg-background/80 px-3 py-0 text-sm font-medium leading-none text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <span className="flex h-full items-center justify-center gap-2 leading-none">
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span className="block leading-none">Sign out</span>
+            </span>
+          </button>
         </form>
       </div>
     </>
