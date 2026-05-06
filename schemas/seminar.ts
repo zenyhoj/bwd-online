@@ -23,3 +23,10 @@ export const editSeminarItemSchema = seminarItemSchema.extend({
   id: z.string().uuid(),
   isActive: z.coerce.boolean()
 });
+
+export const reorderSeminarItemsSchema = z.object({
+  items: z.array(z.object({
+    id: z.string().uuid(),
+    displayOrder: z.number().int().min(0)
+  }))
+});

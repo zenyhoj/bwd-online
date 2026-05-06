@@ -2,7 +2,26 @@
 
 import { useActionState, useEffect, useState } from "react";
 
-import { createSeminarItemAction, deleteSeminarItemAction, updateSeminarItemAction } from "@/actions/seminar";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical } from "lucide-react";
+
+import { createSeminarItemAction, deleteSeminarItemAction, updateSeminarItemAction, reorderSeminarItemsAction } from "@/actions/seminar";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -34,6 +53,17 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
   const [state, formAction, pending] = useActionState(updateSeminarItemAction, initialActionState);
   const [mediaType, setMediaType] = useState<string>(item.media_type);
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: item.id,
+    disabled: isEditing // Prevent dragging while editing
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : 1
+  };
+
   useEffect(() => {
     if (state.success) {
       setIsEditing(false);
@@ -42,7 +72,7 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
 
   if (isEditing) {
     return (
-      <div className="rounded-xl border border-border/80 bg-muted/5 p-4">
+      <div ref={setNodeRef} style={style} className="rounded-xl border border-border/80 bg-muted/5 p-4">
         <form action={formAction} className="grid gap-4 md:grid-cols-2">
           <input type="hidden" name="id" value={item.id} />
           {item.media_url ? <input type="hidden" name="existingMediaUrl" value={item.media_url} /> : null}
@@ -150,15 +180,31 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border/80 p-4 lg:flex-row lg:items-start lg:justify-between">
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-          <span>Order {item.display_order}</span>
-          <span>{item.media_type}</span>
-          <span>{item.is_active ? "Active" : "Inactive"}</span>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex flex-col gap-4 rounded-xl border border-border/80 p-4 lg:flex-row lg:items-start lg:justify-between bg-card ${
+        isDragging ? "opacity-50 ring-2 ring-primary" : ""
+      }`}
+    >
+      <div className="flex gap-4 w-full">
+        <div
+          className="mt-1 flex cursor-grab flex-col items-center justify-start text-muted-foreground hover:text-foreground active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+        >
+          <GripVertical className="h-5 w-5" />
         </div>
-        <h3 className="text-lg font-semibold">{item.title}</h3>
-        <p className="max-w-3xl text-sm leading-7 text-muted-foreground">{item.description}</p>
+        <div className="space-y-2 flex-1">
+          <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+            <span>Order {item.display_order}</span>
+            <span>{item.media_type}</span>
+            <span>{item.is_active ? "Active" : "Inactive"}</span>
+          </div>
+          <h3 className="text-lg font-semibold">{item.title}</h3>
+          <p className="max-w-3xl text-sm leading-7 text-muted-foreground">{item.description}</p>
         {item.media_url ? (
           <p className="text-xs text-muted-foreground">
             Media URL:{" "}
@@ -168,7 +214,8 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
           </p>
         ) : null}
       </div>
-      <div className="flex items-center gap-2">
+        </div>
+      <div className="flex items-center gap-2 shrink-0">
         <Button variant="outline" onClick={() => setIsEditing(true)}>
           Edit
         </Button>
@@ -178,9 +225,46 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
   );
 }
 
-export function SeminarItemForm({ items }: SeminarItemFormProps) {
+export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
   const [state, formAction, pending] = useActionState(createSeminarItemAction, initialActionState);
   const [mediaType, setMediaType] = useState<string>("text");
+  const [items, setItems] = useState(initialItems);
+
+  useEffect(() => {
+    // Keep local items in sync if server props change (e.g. after adding/deleting)
+    setItems([...initialItems].sort((a, b) => a.display_order - b.display_order));
+  }, [initialItems]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setItems((currentItems) => {
+        const oldIndex = currentItems.findIndex((item) => item.id === active.id);
+        const newIndex = currentItems.findIndex((item) => item.id === over.id);
+
+        const newItems = arrayMove(currentItems, oldIndex, newIndex);
+
+        // Reassign display_order
+        const reorderedItems = newItems.map((item, index) => ({
+          ...item,
+          display_order: index
+        }));
+
+        // Fire server action to persist the new order in background
+        reorderSeminarItemsAction(reorderedItems.map(i => ({ id: i.id, displayOrder: i.display_order })));
+
+        return reorderedItems;
+      });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -267,9 +351,13 @@ export function SeminarItemForm({ items }: SeminarItemFormProps) {
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">No seminar items published yet.</p>
           ) : (
-            items.map((item) => (
-              <SeminarItemRow key={item.id} item={item} />
-            ))
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                {items.map((item) => (
+                  <SeminarItemRow key={item.id} item={item} />
+                ))}
+              </SortableContext>
+            </DndContext>
           )}
         </CardContent>
       </Card>

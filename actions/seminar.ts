@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
-import { deleteSeminarItemSchema, editSeminarItemSchema, seminarItemSchema, seminarProgressSchema } from "@/schemas";
+import { deleteSeminarItemSchema, editSeminarItemSchema, reorderSeminarItemsSchema, seminarItemSchema, seminarProgressSchema } from "@/schemas";
 import type { ActionState } from "@/types";
 
 export async function updateSeminarProgressAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -213,5 +213,43 @@ export async function updateSeminarItemAction(_prevState: ActionState, formData:
     revalidatePath("/admin/seminars");
     revalidatePath("/applicant/seminar");
     return { success: true, message: "Seminar item updated." };
+  });
+}
+
+export async function reorderSeminarItemsAction(items: { id: string; displayOrder: number }[]): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Only administrators can manage seminar items." };
+    }
+
+    const parsed = reorderSeminarItemsSchema.safeParse({ items });
+
+    if (!parsed.success) {
+      return { success: false, message: "Invalid input data." };
+    }
+
+    // Since Supabase doesn't have a single bulk update RPC out of the box in this project without custom SQL,
+    // we do an upsert to the seminar_items table or multiple updates.
+    // However, multiple updates inside a Promise.all is perfectly fine for a small number of items (usually < 20).
+    const updates = parsed.data.items.map((item) =>
+      supabase
+        .from("seminar_items")
+        .update({ display_order: item.displayOrder })
+        .eq("id", item.id)
+        .eq("organization_id", profile.organization_id)
+    );
+
+    const results = await Promise.all(updates);
+    const hasError = results.some((res) => res.error);
+
+    if (hasError) {
+      return { success: false, message: "Failed to update order for some items." };
+    }
+
+    revalidatePath("/admin/seminars");
+    revalidatePath("/applicant/seminar");
+    return { success: true, message: "Seminar order updated." };
   });
 }
