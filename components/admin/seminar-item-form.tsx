@@ -246,23 +246,22 @@ export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setItems((currentItems) => {
-        const oldIndex = currentItems.findIndex((item) => item.id === active.id);
-        const newIndex = currentItems.findIndex((item) => item.id === over.id);
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
 
-        const newItems = arrayMove(currentItems, oldIndex, newIndex);
+      const newItems = arrayMove(items, oldIndex, newIndex);
 
-        // Reassign display_order
-        const reorderedItems = newItems.map((item, index) => ({
-          ...item,
-          display_order: index
-        }));
+      // Reassign display_order
+      const reorderedItems = newItems.map((item, index) => ({
+        ...item,
+        display_order: index
+      }));
 
-        // Fire server action to persist the new order in background
-        reorderSeminarItemsAction(reorderedItems.map(i => ({ id: i.id, displayOrder: i.display_order })));
+      // Update local state first for immediate UI feedback
+      setItems(reorderedItems);
 
-        return reorderedItems;
-      });
+      // Fire server action to persist the new order in background
+      reorderSeminarItemsAction(reorderedItems.map((i) => ({ id: i.id, displayOrder: i.display_order })));
     }
   };
 
