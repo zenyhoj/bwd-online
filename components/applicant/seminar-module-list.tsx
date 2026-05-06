@@ -9,6 +9,7 @@ import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RichTextContent } from "@/components/ui/rich-text-content";
 import type { ApplicantSeminarProgress, SeminarItem } from "@/types";
 
 type SeminarModuleListProps = {
@@ -126,7 +127,7 @@ function SeminarItemCard({ item, index, completed, isLastPendingItem, applicantI
         </span>
       </CardHeader>
       <CardContent className="space-y-5">
-        <p className="text-sm leading-7 text-muted-foreground">{item.description}</p>
+        <RichTextContent value={item.description} />
         <SeminarMedia item={item} />
         <form action={formAction} className="flex flex-wrap items-center gap-3">
           <input type="hidden" name="applicantId" value={applicantId} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import {
   DndContext,
@@ -26,8 +26,10 @@ import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RichTextContent } from "@/components/ui/rich-text-content";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import type { SeminarItem } from "@/types";
 
 type SeminarItemFormProps = {
@@ -52,6 +54,7 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
   const [isEditing, setIsEditing] = useState(false);
   const [state, formAction, pending] = useActionState(updateSeminarItemAction, initialActionState);
   const [mediaType, setMediaType] = useState<string>(item.media_type);
+  const [description, setDescription] = useState<string>(item.description);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
@@ -70,6 +73,11 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
     }
   }, [state.success]);
 
+  useEffect(() => {
+    setDescription(item.description);
+    setMediaType(item.media_type);
+  }, [item.description, item.media_type]);
+
   if (isEditing) {
     return (
       <div ref={setNodeRef} style={style} className="rounded-xl border border-border/80 bg-muted/5 p-4">
@@ -83,16 +91,15 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor={`description-${item.id}`}>Description</Label>
-            <textarea
-              id={`description-${item.id}`}
-              name="description"
-              className="min-h-36 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              defaultValue={item.description}
-              required
+            <input type="hidden" name="description" value={description} />
+            <RichTextEditor
+              value={description}
+              onChange={setDescription}
+              placeholder="Write the seminar description here..."
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`mediaType-${item.id}`}>Media type</Label>
+            <Label htmlFor={`mediaType-${item.id}`}>Featured media</Label>
             <select
               id={`mediaType-${item.id}`}
               name="mediaType"
@@ -105,17 +112,6 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
               <option value="pdf">PDF Upload</option>
               <option value="video">Video (YouTube/Drive URL)</option>
             </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`displayOrder-${item.id}`}>Display order</Label>
-            <Input
-              id={`displayOrder-${item.id}`}
-              name="displayOrder"
-              type="number"
-              min={0}
-              defaultValue={item.display_order}
-              required
-            />
           </div>
 
           <div className="space-y-2">
@@ -170,7 +166,16 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
             <Button type="submit" loading={pending}>
               Save changes
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setIsEditing(false)} disabled={pending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setDescription(item.description);
+                setMediaType(item.media_type);
+                setIsEditing(false);
+              }}
+              disabled={pending}
+            >
               Cancel
             </Button>
           </div>
@@ -204,16 +209,16 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
             <span>{item.is_active ? "Active" : "Inactive"}</span>
           </div>
           <h3 className="text-lg font-semibold">{item.title}</h3>
-          <p className="max-w-3xl text-sm leading-7 text-muted-foreground">{item.description}</p>
-        {item.media_url ? (
-          <p className="text-xs text-muted-foreground">
-            Media URL:{" "}
-            <a href={item.media_url} target="_blank" rel="noreferrer" className="underline break-all">
-              {item.media_url}
-            </a>
-          </p>
-        ) : null}
-      </div>
+          <RichTextContent value={item.description} className="max-w-3xl" />
+          {item.media_url ? (
+            <p className="text-xs text-muted-foreground">
+              Media URL:{" "}
+              <a href={item.media_url} target="_blank" rel="noreferrer" className="underline break-all">
+                {item.media_url}
+              </a>
+            </p>
+          ) : null}
+        </div>
         </div>
       <div className="flex items-center gap-2 shrink-0">
         <Button variant="outline" onClick={() => setIsEditing(true)}>
@@ -228,12 +233,22 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
 export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
   const [state, formAction, pending] = useActionState(createSeminarItemAction, initialActionState);
   const [mediaType, setMediaType] = useState<string>("text");
+  const [description, setDescription] = useState<string>("");
   const [items, setItems] = useState(initialItems);
+  const createFormRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     // Keep local items in sync if server props change (e.g. after adding/deleting)
     setItems([...initialItems].sort((a, b) => a.display_order - b.display_order));
   }, [initialItems]);
+
+  useEffect(() => {
+    if (state.success) {
+      createFormRef.current?.reset();
+      setDescription("");
+      setMediaType("text");
+    }
+  }, [state.success]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -272,22 +287,22 @@ export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
           <CardTitle>Add seminar item</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="grid gap-4 md:grid-cols-2">
+          <form ref={createFormRef} action={formAction} className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="title">Title</Label>
               <Input id="title" name="title" required />
             </div>
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                name="description"
-                className="min-h-36 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                required
-              />
-            </div>
+              <input type="hidden" name="description" value={description} />
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                placeholder="Write the seminar description here..."
+            />
+          </div>
             <div className="space-y-2">
-              <Label htmlFor="mediaType">Media type</Label>
+              <Label htmlFor="mediaType">Featured media</Label>
               <select
                 id="mediaType"
                 name="mediaType"
@@ -300,10 +315,6 @@ export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
                 <option value="pdf">PDF Upload</option>
                 <option value="video">Video (YouTube/Drive URL)</option>
               </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="displayOrder">Display order</Label>
-              <Input id="displayOrder" name="displayOrder" type="number" min={0} defaultValue={items.length} required />
             </div>
             
             {mediaType === "video" ? (
@@ -347,6 +358,7 @@ export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
           <CardTitle>Current seminar list</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">Drag items by the grip handle to change their order.</p>
           {items.length === 0 ? (
             <p className="text-sm text-muted-foreground">No seminar items published yet.</p>
           ) : (

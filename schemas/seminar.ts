@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { getRichTextPlainText, normalizeRichText } from "@/lib/rich-text";
+
 export const seminarProgressSchema = z.object({
   applicantId: z.string().uuid(),
   seminarItemId: z.string().uuid(),
@@ -8,11 +10,15 @@ export const seminarProgressSchema = z.object({
 
 export const seminarItemSchema = z.object({
   title: z.string().min(3),
-  description: z.string().min(20),
+  description: z.preprocess(
+    (value) => (typeof value === "string" ? normalizeRichText(value) : value),
+    z.string().refine((value) => getRichTextPlainText(value).length >= 20, {
+      message: "Description must contain at least 20 characters of text."
+    })
+  ),
   mediaType: z.enum(["text", "image", "video", "pdf"]),
   mediaUrl: z.string().url().optional().or(z.literal("")).or(z.null()),
-  mediaFile: z.any().optional(), // Using z.any() because File is tricky to validate directly on the server without custom logic sometimes, though z.instanceof(File) works in newer Zod
-  displayOrder: z.coerce.number().int().min(0).max(999)
+  mediaFile: z.any().optional() // Using z.any() because File is tricky to validate directly on the server without custom logic sometimes, though z.instanceof(File) works in newer Zod
 });
 
 export const deleteSeminarItemSchema = z.object({

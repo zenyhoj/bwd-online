@@ -66,12 +66,23 @@ export async function createSeminarItemAction(_prevState: ActionState, formData:
       description: formData.get("description"),
       mediaType: formData.get("mediaType"),
       mediaUrl: formData.get("mediaUrl"),
-      mediaFile: formData.get("mediaFile"),
-      displayOrder: formData.get("displayOrder")
+      mediaFile: formData.get("mediaFile")
     });
 
     if (parsed.error) {
       return parsed.error;
+    }
+
+    const { data: lastItem, error: lastItemError } = await supabase
+      .from("seminar_items")
+      .select("display_order")
+      .eq("organization_id", profile.organization_id)
+      .order("display_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (lastItemError) {
+      return { success: false, message: lastItemError.message };
     }
 
     let finalMediaUrl = parsed.data.mediaUrl || null;
@@ -98,7 +109,7 @@ export async function createSeminarItemAction(_prevState: ActionState, formData:
       description: parsed.data.description,
       media_type: parsed.data.mediaType,
       media_url: finalMediaUrl,
-      display_order: parsed.data.displayOrder,
+      display_order: (lastItem?.display_order ?? -1) + 1,
       created_by: profile.id
     });
 
@@ -159,7 +170,6 @@ export async function updateSeminarItemAction(_prevState: ActionState, formData:
       mediaType: formData.get("mediaType"),
       mediaUrl: formData.get("mediaUrl"),
       mediaFile: formData.get("mediaFile"),
-      displayOrder: formData.get("displayOrder"),
       isActive: formData.get("isActive")
     });
 
@@ -200,7 +210,6 @@ export async function updateSeminarItemAction(_prevState: ActionState, formData:
         description: parsed.data.description,
         media_type: parsed.data.mediaType,
         media_url: finalMediaUrl,
-        display_order: parsed.data.displayOrder,
         is_active: parsed.data.isActive
       })
       .eq("id", parsed.data.id)
