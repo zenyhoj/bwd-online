@@ -142,7 +142,7 @@ function NavContent({
 }
 
 export function AppShell({ profile, applicantNavMode = "newApplication", navBadges = {}, children }: AppShellProps) {
-  const pathname = usePathname();
+  const pathname = usePathname() ?? "";
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems =
