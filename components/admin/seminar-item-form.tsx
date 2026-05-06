@@ -43,7 +43,7 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
   if (isEditing) {
     return (
       <div className="rounded-xl border border-border/80 bg-muted/5 p-4">
-        <form action={formAction} className="grid gap-4 md:grid-cols-2" encType="multipart/form-data">
+        <form action={formAction} className="grid gap-4 md:grid-cols-2">
           <input type="hidden" name="id" value={item.id} />
           {item.media_url ? <input type="hidden" name="existingMediaUrl" value={item.media_url} /> : null}
 
@@ -189,7 +189,7 @@ export function SeminarItemForm({ items }: SeminarItemFormProps) {
           <CardTitle>Add seminar item</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="grid gap-4 md:grid-cols-2" encType="multipart/form-data">
+          <form action={formAction} className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="title">Title</Label>
               <Input id="title" name="title" required />
