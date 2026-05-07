@@ -34,6 +34,7 @@ export function InhouseInstallationForm({
     plumbers.find((plumber) => plumber.id === currentPlumberId)?.full_name ??
     (currentPlumberId ? "Assigned plumber" : "Not yet assigned");
   const completionDateValue = currentCompletedAt ? currentCompletedAt.slice(0, 10) : "";
+  const formResetKey = `${applicationId}:${currentPlumberId ?? ""}:${completionDateValue}:${isCompleted ? "done" : "pending"}`;
   const isReadOnly = variant === "admin" && isCompleted;
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export function InhouseInstallationForm({
             No accredited plumbers are available yet. Ask the administrator to add one first.
           </p>
         ) : (
-          <form action={formAction} className="grid gap-4">
+          <form key={formResetKey} action={formAction} className="grid gap-4">
             <input type="hidden" name="applicationId" value={applicationId} />
             <input type="hidden" name="completed" value="true" />
             <div className="space-y-2">

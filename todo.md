@@ -1,1 +1,1 @@
-- polish the seminar items
+- if reference account name be found in the database, 
