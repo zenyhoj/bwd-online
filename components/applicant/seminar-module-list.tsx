@@ -10,6 +10,7 @@ import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RichTextContent } from "@/components/ui/rich-text-content";
+import { cn } from "@/lib/utils";
 import type { ApplicantSeminarProgress, SeminarItem } from "@/types";
 
 type SeminarModuleListProps = {
@@ -23,6 +24,7 @@ type SeminarItemCardProps = {
   index: number;
   completed: boolean;
   isLastPendingItem: boolean;
+  isLocked: boolean;
   applicantId: string;
 };
 
@@ -75,11 +77,17 @@ export function SeminarModuleList({ items, progress, applicantId }: SeminarModul
   const completedIds = new Set(progress.filter((entry) => entry.completed).map((entry) => entry.seminar_item_id));
   const remainingCount = items.filter((item) => !completedIds.has(item.id)).length;
   const allCompleted = items.length > 0 && remainingCount === 0;
+  let hasEncounteredPendingItem = false;
 
   return (
     <div className="grid gap-5">
       {items.map((item, index) => {
         const completed = completedIds.has(item.id);
+        const isLocked = !completed && hasEncounteredPendingItem;
+
+        if (!completed && !hasEncounteredPendingItem) {
+          hasEncounteredPendingItem = true;
+        }
 
         return (
           <SeminarItemCard
@@ -88,6 +96,7 @@ export function SeminarModuleList({ items, progress, applicantId }: SeminarModul
             index={index}
             completed={completed}
             isLastPendingItem={!completed && remainingCount === 1}
+            isLocked={isLocked}
             applicantId={applicantId}
           />
         );
@@ -111,19 +120,20 @@ export function SeminarModuleList({ items, progress, applicantId }: SeminarModul
   );
 }
 
-function SeminarItemCard({ item, index, completed, isLastPendingItem, applicantId }: SeminarItemCardProps) {
+function SeminarItemCard({ item, index, completed, isLastPendingItem, isLocked, applicantId }: SeminarItemCardProps) {
   const [state, formAction, pending] = useActionState(updateSeminarProgressAction, initialActionState);
   const justFinishedSeries = isLastPendingItem && state.success;
+  const statusLabel = completed ? "Completed" : isLocked ? "Locked" : "Pending";
 
   return (
-    <Card>
+    <Card className={cn(isLocked && "border-dashed border-muted-foreground/40 bg-muted/30 opacity-75")}>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Seminar {index + 1}</p>
           <CardTitle className="text-xl">{item.title}</CardTitle>
         </div>
         <span className="rounded-full bg-secondary px-3 py-1 text-sm text-secondary-foreground">
-          {completed ? "Completed" : "Pending"}
+          {statusLabel}
         </span>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -133,13 +143,18 @@ function SeminarItemCard({ item, index, completed, isLastPendingItem, applicantI
           <input type="hidden" name="applicantId" value={applicantId} />
           <input type="hidden" name="seminarItemId" value={item.id} />
           <input type="hidden" name="completed" value="true" />
-          <Button type="submit" disabled={completed} loading={pending}>
-            {completed ? "Completed" : "Mark as completed"}
+          <Button type="submit" disabled={completed || isLocked} loading={pending}>
+            {completed ? "Completed" : isLocked ? "Complete previous seminar first" : "Mark as completed"}
           </Button>
           <div className="min-w-[240px] flex-1">
             <FormMessage state={state} />
           </div>
         </form>
+        {isLocked ? (
+          <p className="text-sm text-muted-foreground">
+            This seminar unlocks after you complete the previous seminar item.
+          </p>
+        ) : null}
         {justFinishedSeries ? (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 p-4">
             <p className="text-sm font-medium text-emerald-900">

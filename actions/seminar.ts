@@ -31,6 +31,47 @@ export async function updateSeminarProgressAction(_prevState: ActionState, formD
       return { success: false, message: "This seminar item is no longer available." };
     }
 
+    const { data: orderedItems, error: orderedItemsError } = await supabase
+      .from("seminar_items")
+      .select("id")
+      .eq("organization_id", profile.organization_id)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (orderedItemsError) {
+      return { success: false, message: orderedItemsError.message };
+    }
+
+    const targetIndex = (orderedItems ?? []).findIndex((item) => item.id === parsed.data.seminarItemId);
+
+    if (targetIndex === -1) {
+      return { success: false, message: "This seminar item is no longer available." };
+    }
+
+    const requiredPreviousItemIds = (orderedItems ?? []).slice(0, targetIndex).map((item) => item.id);
+
+    if (requiredPreviousItemIds.length > 0) {
+      const { data: completedPreviousItems, error: completedPreviousItemsError } = await supabase
+        .from("applicant_seminar_progress")
+        .select("seminar_item_id")
+        .eq("organization_id", profile.organization_id)
+        .eq("applicant_id", parsed.data.applicantId)
+        .eq("completed", true)
+        .in("seminar_item_id", requiredPreviousItemIds);
+
+      if (completedPreviousItemsError) {
+        return { success: false, message: completedPreviousItemsError.message };
+      }
+
+      const completedPreviousIds = new Set((completedPreviousItems ?? []).map((item) => item.seminar_item_id));
+      const hasIncompletePreviousItem = requiredPreviousItemIds.some((id) => !completedPreviousIds.has(id));
+
+      if (hasIncompletePreviousItem) {
+        return { success: false, message: "Complete the previous seminar item first." };
+      }
+    }
+
     const { error } = await supabase.from("applicant_seminar_progress").upsert(
       {
         organization_id: profile.organization_id,
