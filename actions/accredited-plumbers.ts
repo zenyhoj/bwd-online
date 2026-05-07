@@ -259,11 +259,20 @@ export async function updateInhouseInstallationAction(
     const parsed = await parseFormData(inhouseInstallationSchema, {
       applicationId: formData.get("applicationId"),
       accreditedPlumberId: formData.get("accreditedPlumberId"),
-      completed: formData.get("completed")
+      completed: formData.get("completed"),
+      completedAt: formData.get("completedAt")
     });
 
     if (parsed.error) {
       return parsed.error;
+    }
+
+    if (parsed.data.completedAt && isFutureDate(parsed.data.completedAt)) {
+      return {
+        success: false,
+        message: "Completion date cannot be in the future.",
+        fieldErrors: { completedAt: ["Completion date cannot be in the future."] }
+      };
     }
 
     const { data: application, error: applicationError } = await supabase
@@ -307,12 +316,19 @@ export async function updateInhouseInstallationAction(
       return { success: false, message: "Choose a valid accredited plumber." };
     }
 
+    const completedAtIso =
+      parsed.data.completed && parsed.data.completedAt
+        ? new Date(`${parsed.data.completedAt}T00:00:00`).toISOString()
+        : parsed.data.completed
+          ? new Date().toISOString()
+          : null;
+
     const { error } = await supabase
       .from("applications")
       .update({
         accredited_plumber_id: parsed.data.accreditedPlumberId,
         inhouse_installation_completed: parsed.data.completed,
-        inhouse_installation_completed_at: parsed.data.completed ? new Date().toISOString() : null,
+        inhouse_installation_completed_at: completedAtIso,
         inhouse_installation_updated_by: profile.id
       })
       .eq("id", parsed.data.applicationId);
@@ -327,12 +343,19 @@ export async function updateInhouseInstallationAction(
     revalidatePath("/applicant");
     revalidatePath("/admin");
     revalidatePath("/admin/concessionaires");
+
+    const redirectTo =
+      profile.role === "applicant"
+        ? `/applicant?applicant=${application.applicant_id}&application=${parsed.data.applicationId}`
+        : undefined;
+
     return {
       success: true,
       message:
         profile.role === "admin"
           ? "Inhouse installation marked complete for this application."
-          : "Your inhouse installation completion was recorded."
+          : "Your inhouse installation completion was recorded.",
+      redirectTo
     };
   });
 }

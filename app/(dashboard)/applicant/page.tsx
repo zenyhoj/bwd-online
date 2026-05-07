@@ -317,11 +317,12 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
         </CardContent>
       </Card>
 
-      {selectedApplication && !selectedApplication.inhouse_installation_completed ? (
+      {selectedApplication ? (
         <InhouseInstallationForm
           applicationId={selectedApplication.id}
           plumbers={plumbers}
           currentPlumberId={selectedApplication.accredited_plumber_id}
+          currentCompletedAt={selectedApplication.inhouse_installation_completed_at}
           isCompleted={selectedApplication.inhouse_installation_completed}
         />
       ) : null}

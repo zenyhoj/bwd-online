@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import { updateInhouseInstallationAction } from "@/actions/accredited-plumbers";
 import { initialActionState } from "@/actions/state";
@@ -14,6 +15,7 @@ type InhouseInstallationFormProps = {
   applicationId: string;
   plumbers: AccreditedPlumber[];
   currentPlumberId?: string | null;
+  currentCompletedAt?: string | null;
   isCompleted?: boolean;
   variant?: "applicant" | "admin";
 };
@@ -22,32 +24,24 @@ export function InhouseInstallationForm({
   applicationId,
   plumbers,
   currentPlumberId,
+  currentCompletedAt,
   isCompleted = false,
   variant = "applicant"
 }: InhouseInstallationFormProps) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(updateInhouseInstallationAction, initialActionState);
   const selectedPlumber =
     plumbers.find((plumber) => plumber.id === currentPlumberId)?.full_name ??
     (currentPlumberId ? "Assigned plumber" : "Not yet assigned");
+  const completionDateValue = currentCompletedAt ? currentCompletedAt.slice(0, 10) : "";
+  const isReadOnly = variant === "admin" && isCompleted;
 
-  if (variant === "applicant" && isCompleted) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Inhouse installation completion</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="rounded-lg border border-border/80 bg-muted/30 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Accredited plumber</p>
-            <p className="mt-2 font-medium">{selectedPlumber}</p>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            You already marked this application as complete. No further action is needed from your side.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  useEffect(() => {
+    if (variant === "applicant" && state.success && state.redirectTo) {
+      router.push(state.redirectTo);
+      router.refresh();
+    }
+  }, [router, state.redirectTo, state.success, variant]);
 
   return (
     <div className="space-y-4">
@@ -68,7 +62,7 @@ export function InhouseInstallationForm({
                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 defaultValue={currentPlumberId ?? ""}
                 required
-                disabled={isCompleted}
+                disabled={isReadOnly}
               >
                 <option value="">Select accredited plumber</option>
                 {plumbers.map((plumber) => (
@@ -78,14 +72,31 @@ export function InhouseInstallationForm({
                 ))}
               </select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor={`completedAt-${applicationId}`}>Date of completion</Label>
+              <input
+                id={`completedAt-${applicationId}`}
+                name="completedAt"
+                type="date"
+                defaultValue={completionDateValue}
+                required
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isReadOnly}
+              />
+            </div>
             
             <div className="space-y-4">
-              {isCompleted ? (
+              {variant === "applicant" && isCompleted ? (
+                <p className="text-sm text-muted-foreground">
+                  This application is already marked complete. You can still update the plumber or completion date if needed.
+                </p>
+              ) : null}
+              {variant === "admin" && isCompleted ? (
                 <p className="text-sm text-muted-foreground">This application is already marked complete.</p>
               ) : null}
               <FormMessage state={state} />
-              <Button type="submit" disabled={isCompleted} loading={pending} className="w-full sm:w-auto">
-                {isCompleted ? "Completed" : "Mark complete"}
+              <Button type="submit" disabled={isReadOnly} loading={pending} className="w-full sm:w-auto">
+                {isReadOnly ? "Completed" : isCompleted ? "Save changes" : "Mark complete"}
               </Button>
             </div>
           </form>

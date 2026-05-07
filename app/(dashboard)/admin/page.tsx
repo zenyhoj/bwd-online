@@ -658,6 +658,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                             applicationId={String(selectedApplication.id)}
                             plumbers={plumbers}
                             currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
+                            currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
                             isCompleted={false}
                             variant="admin"
                           />
@@ -692,6 +693,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                             applicationId={String(selectedApplication.id)}
                             plumbers={plumbers}
                             currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
+                            currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
                             isCompleted={Boolean(selectedApplication.inhouse_installation_completed)}
                             variant="admin"
                           />
