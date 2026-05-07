@@ -62,27 +62,26 @@ export function InhouseInstallationForm({
           <input type="hidden" name="applicationId" value={applicationId} />
           <input type="hidden" name="completed" value="true" />
 
-          <div className="space-y-2">
-            <Label htmlFor={`accreditedPlumberId-${applicationId}`}>Accredited plumber</Label>
-            <select
-              id={`accreditedPlumberId-${applicationId}`}
-              name="accreditedPlumberId"
-              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-              defaultValue={currentPlumberId ?? ""}
-              required
-              disabled={isReadOnly}
-            >
-              <option value="">Select accredited plumber</option>
-              {plumbers.map((plumber) => (
-                <option key={plumber.id} value={plumber.id}>
-                  {plumber.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {isApplicant ? (
-            <>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(220px,0.9fr)_minmax(0,1.1fr)] lg:items-start">
+              <div className="space-y-2">
+                <Label htmlFor={`accreditedPlumberId-${applicationId}`}>Accredited plumber</Label>
+                <select
+                  id={`accreditedPlumberId-${applicationId}`}
+                  name="accreditedPlumberId"
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  defaultValue={currentPlumberId ?? ""}
+                  required
+                  disabled={isReadOnly}
+                >
+                  <option value="">Select accredited plumber</option>
+                  {plumbers.map((plumber) => (
+                    <option key={plumber.id} value={plumber.id}>
+                      {plumber.full_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor={`completedAt-${applicationId}`}>Date of completion</Label>
                 <input
@@ -96,7 +95,7 @@ export function InhouseInstallationForm({
                 />
                 {minimumCompletedDateValue ? (
                   <p className="text-xs text-muted-foreground">
-                    Choose a completion date on or after the online seminar completion date.
+                    On or after seminar completion date.
                   </p>
                 ) : null}
               </div>
@@ -108,28 +107,48 @@ export function InhouseInstallationForm({
                   type="file"
                   accept="image/*"
                   required={!currentProofImageUrl}
-                  className="block w-full text-sm file:mr-4 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary"
+                  className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Upload a selfie with the plumber or a photo showing the plumber doing the in-house plumbing work.
+                  Upload a selfie or work photo.
                 </p>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="space-y-2">
-              <Label htmlFor={`signedAt-${applicationId}`}>Attendance sheet signed date</Label>
-              <input
-                id={`signedAt-${applicationId}`}
-                name="signedAt"
-                type="date"
-                defaultValue={signedDateValue}
-                required
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={isReadOnly}
-              />
-              <p className="text-xs text-muted-foreground">
-                Use the date the plumber signed the attendance sheet at the BWD office as the admin-side proof.
-              </p>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(220px,0.8fr)] lg:items-start">
+              <div className="space-y-2">
+                <Label htmlFor={`accreditedPlumberId-${applicationId}`}>Accredited plumber</Label>
+                <select
+                  id={`accreditedPlumberId-${applicationId}`}
+                  name="accreditedPlumberId"
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  defaultValue={currentPlumberId ?? ""}
+                  required
+                  disabled={isReadOnly}
+                >
+                  <option value="">Select accredited plumber</option>
+                  {plumbers.map((plumber) => (
+                    <option key={plumber.id} value={plumber.id}>
+                      {plumber.full_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`signedAt-${applicationId}`}>Attendance sheet signed date</Label>
+                <input
+                  id={`signedAt-${applicationId}`}
+                  name="signedAt"
+                  type="date"
+                  defaultValue={signedDateValue}
+                  required
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isReadOnly}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Use the BWD office attendance date.
+                </p>
+              </div>
             </div>
           )}
 
@@ -161,7 +180,7 @@ export function InhouseInstallationForm({
               <p className="text-sm text-muted-foreground">This application is already marked complete.</p>
             ) : null}
             <FormMessage state={state} />
-            <Button type="submit" disabled={isReadOnly || pending} className="w-full sm:w-auto">
+            <Button type="submit" disabled={isReadOnly || pending} className="w-full sm:w-auto lg:min-w-[180px]">
               {isReadOnly ? "Completed" : isCompleted ? "Save changes" : "Mark complete"}
             </Button>
           </div>
