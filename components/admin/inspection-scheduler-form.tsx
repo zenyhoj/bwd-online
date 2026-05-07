@@ -6,11 +6,11 @@ import { useActionState, useEffect, useState } from "react";
 import { rescheduleInspectionAction, scheduleInspectionAction } from "@/actions/inspections";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { formatDateTime } from "@/lib/format";
 import type { InspectorRecord } from "@/types";
 
@@ -56,14 +56,15 @@ export function InspectionSchedulerForm({
     setMinSchedule(new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
   }, []);
 
-  // Close reschedule panel on success
   useEffect(() => {
-    if (rescheduleState.success) setShowReschedule(false);
+    if (rescheduleState.success) {
+      setShowReschedule(false);
+    }
   }, [rescheduleState.success]);
 
   if (inspectors.length === 0) {
     return (
-      <Card>
+      <Card className="border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>Schedule inspection</CardTitle>
         </CardHeader>
@@ -79,43 +80,61 @@ export function InspectionSchedulerForm({
     );
   }
 
-  // Already has a scheduled inspection — show read-only summary + reschedule option
   if (existingInspection) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Inspection scheduled</CardTitle>
+      <Card className="border-border/70 shadow-sm">
+        <CardHeader className="space-y-2 border-b border-border/60 pb-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle className="text-3xl font-semibold tracking-tight">Inspection scheduled</CardTitle>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Review the appointment details below and reschedule if the visit needs to move.
+              </p>
+            </div>
+            <div className="shrink-0">
+              <StatusBadge status={existingInspection.status ?? "scheduled"} />
+            </div>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 text-sm sm:grid-cols-3">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Inspector</p>
-              <p className="mt-1 font-medium">{existingInspection.inspector_name ?? "—"}</p>
+        <CardContent className="space-y-6 p-6">
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Inspector</p>
+              <p className="mt-2 text-lg font-semibold leading-snug">{existingInspection.inspector_name ?? "-"}</p>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Scheduled at</p>
-              <p className="mt-1 font-medium">{formatDateTime(existingInspection.scheduled_at ?? null)}</p>
+            <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Scheduled at</p>
+              <p className="mt-2 text-lg font-semibold leading-snug">{formatDateTime(existingInspection.scheduled_at ?? null)}</p>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
-              <div className="mt-1">
+            <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Status</p>
+              <div className="mt-2">
                 <StatusBadge status={existingInspection.status ?? "scheduled"} />
               </div>
             </div>
           </div>
 
-          {existingInspection.status !== "approved" && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowReschedule((v) => !v)}
-              >
-                {showReschedule ? "Cancel" : "Reschedule"}
-              </Button>
+          {existingInspection.status !== "approved" ? (
+            <div className="space-y-4 rounded-2xl border border-primary/15 bg-primary/[0.03] p-4 sm:p-5">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold">Need to change the appointment?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Open the reschedule form to pick a new inspection date and time.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant={showReschedule ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setShowReschedule((value) => !value)}
+                >
+                  {showReschedule ? "Hide form" : "Reschedule"}
+                </Button>
+              </div>
 
-              {showReschedule && (
-                <form action={rescheduleAction} className="grid gap-3 pt-2 md:grid-cols-[1fr_auto] md:items-end">
+              {showReschedule ? (
+                <form action={rescheduleAction} className="space-y-4 border-t border-border/60 pt-4">
                   <input type="hidden" name="inspectionId" value={existingInspection.id} />
                   <div className="space-y-2">
                     <Label htmlFor={`reschedule-${existingInspection.id}`}>New date and time</Label>
@@ -126,26 +145,29 @@ export function InspectionSchedulerForm({
                       min={minSchedule || undefined}
                       defaultValue={toDateTimeLocalValue(existingInspection.scheduled_at)}
                       required
+                      className="h-11"
                     />
                   </div>
-                  <Button type="submit" disabled={reschedulePending}>
-                    {reschedulePending ? "Saving..." : "Confirm reschedule"}
-                  </Button>
-                  <div className="md:col-span-2">
-                    <FormMessage state={rescheduleState} />
+                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                    <Button type="button" variant="ghost" onClick={() => setShowReschedule(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={reschedulePending}>
+                      {reschedulePending ? "Saving..." : "Confirm reschedule"}
+                    </Button>
                   </div>
+                  <FormMessage state={rescheduleState} />
                 </form>
-              )}
-            </>
-          )}
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     );
   }
 
-  // No inspection yet — show the schedule form
   return (
-    <Card>
+    <Card className="border-border/70 shadow-sm">
       <CardHeader>
         <CardTitle>Schedule inspection</CardTitle>
       </CardHeader>
@@ -177,9 +199,9 @@ export function InspectionSchedulerForm({
               min={minSchedule || undefined}
               required
             />
-            <p className="text-xs text-muted-foreground">Monday – Friday, 8:00 AM – 5:00 PM only.</p>
+            <p className="text-xs text-muted-foreground">Monday - Friday, 8:00 AM - 5:00 PM only.</p>
           </div>
-          <Button type="submit" disabled={schedulePending} className="mt-2">
+          <Button type="submit" disabled={schedulePending} className="mt-2 w-full sm:w-auto">
             {schedulePending ? "Saving..." : "Schedule"}
           </Button>
           <FormMessage state={scheduleState} />

@@ -1,11 +1,28 @@
-import { format } from "date-fns";
+const MANILA_TIMEZONE = "Asia/Manila";
+
+const manilaDateFormatter = new Intl.DateTimeFormat("en-PH", {
+  timeZone: MANILA_TIMEZONE,
+  month: "short",
+  day: "numeric",
+  year: "numeric"
+});
+
+const manilaDateTimeFormatter = new Intl.DateTimeFormat("en-PH", {
+  timeZone: MANILA_TIMEZONE,
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  hour12: true
+});
 
 export function formatDateTime(value: string | null) {
   if (!value) {
     return "N/A";
   }
 
-  return format(new Date(value), "PPP p");
+  return manilaDateTimeFormatter.format(new Date(value));
 }
 
 export function formatDate(value: string | null) {
@@ -13,7 +30,7 @@ export function formatDate(value: string | null) {
     return "N/A";
   }
 
-  return format(new Date(value), "PPP");
+  return manilaDateFormatter.format(new Date(value));
 }
 
 export function formatCurrency(value: number) {
