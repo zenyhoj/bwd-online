@@ -8,11 +8,20 @@ import { validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
 
 function isPastDateTime(value: string) {
-  return new Date(value).getTime() < Date.now();
+  return toManilaDate(value).getTime() < Date.now();
 }
 
 function toDateOnlyISOString(value: string) {
   return new Date(`${value}T00:00:00.000Z`).toISOString();
+}
+
+function toManilaDate(value: string) {
+  const normalized = value.length === 16 ? `${value}:00+08:00` : `${value}+08:00`;
+  return new Date(normalized);
+}
+
+function toManilaISOString(value: string) {
+  return toManilaDate(value).toISOString();
 }
 
 function getSchemaMismatchMessage(message: string) {
@@ -84,7 +93,7 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
       scheduled_by: profile.id,
       registry_inspector_id: parsed.data.inspectorId,
       inspector_name: inspector.full_name,
-      scheduled_at: new Date(parsed.data.scheduledAt).toISOString(),
+      scheduled_at: toManilaISOString(parsed.data.scheduledAt),
       status: "scheduled"
     });
 
@@ -142,7 +151,7 @@ export async function rescheduleInspectionAction(_prevState: ActionState, formDa
     const { error } = await supabase
       .from("inspections")
       .update({
-        scheduled_at: new Date(parsed.data.scheduledAt).toISOString(),
+        scheduled_at: toManilaISOString(parsed.data.scheduledAt),
         status: "rescheduled"
       })
       .eq("id", parsed.data.inspectionId);
