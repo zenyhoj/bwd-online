@@ -22,6 +22,48 @@ function isMissingInstallationScheduleColumn(message?: string | null) {
   return message?.includes("inhouse_installation_scheduled_at") ?? false;
 }
 
+function isMissingInhouseProofColumns(message?: string | null) {
+  return (
+    message?.includes("inhouse_installation_proof_image_url") === true ||
+    message?.includes("inhouse_installation_signed_at") === true
+  );
+}
+
+async function uploadInhouseProofImage({
+  supabase,
+  organizationId,
+  applicationId,
+  file
+}: {
+  supabase: Awaited<ReturnType<typeof getActionContext>>["supabase"];
+  organizationId: string;
+  applicationId: string;
+  file: File;
+}) {
+  if (!file.type.startsWith("image/")) {
+    return { error: "Proof file must be an image.", url: null as string | null };
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "Proof image must be 5 MB or less.", url: null as string | null };
+  }
+
+  const fileExt = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
+  const safeExt = (fileExt ?? "jpg").replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "jpg";
+  const filePath = `${organizationId}/${applicationId}/${Date.now()}-proof.${safeExt}`;
+
+  const { error: uploadError } = await supabase.storage.from("inhouse-installation-proofs").upload(filePath, file, {
+    upsert: true
+  });
+
+  if (uploadError) {
+    return { error: uploadError.message, url: null as string | null };
+  }
+
+  const { data } = supabase.storage.from("inhouse-installation-proofs").getPublicUrl(filePath);
+  return { error: null, url: data.publicUrl };
+}
+
 export async function scheduleInhouseInstallationAction(
   _prevState: ActionState,
   formData: FormData
@@ -260,7 +302,8 @@ export async function updateInhouseInstallationAction(
       applicationId: formData.get("applicationId"),
       accreditedPlumberId: formData.get("accreditedPlumberId"),
       completed: formData.get("completed"),
-      completedAt: formData.get("completedAt")
+      completedAt: formData.get("completedAt"),
+      signedAt: formData.get("signedAt")
     });
 
     if (parsed.error) {
@@ -275,9 +318,17 @@ export async function updateInhouseInstallationAction(
       };
     }
 
+    if (parsed.data.signedAt && isFutureDate(parsed.data.signedAt)) {
+      return {
+        success: false,
+        message: "Signed date cannot be in the future.",
+        fieldErrors: { signedAt: ["Signed date cannot be in the future."] }
+      };
+    }
+
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, applicant_id, organization_id")
+      .select("id, applicant_id, organization_id, inhouse_installation_proof_image_url, inhouse_installation_signed_at")
       .eq("id", parsed.data.applicationId)
       .single();
 
@@ -304,6 +355,24 @@ export async function updateInhouseInstallationAction(
       return { success: false, message: "You are not allowed to update this installation record." };
     }
 
+    const proofImage = formData.get("proofImage");
+
+    if (profile.role === "applicant" && !application.inhouse_installation_proof_image_url && !(proofImage instanceof File && proofImage.size > 0)) {
+      return {
+        success: false,
+        message: "Upload a plumber proof image before marking this as complete.",
+        fieldErrors: { proofImage: ["A proof image is required."] }
+      };
+    }
+
+    if (profile.role === "admin" && !parsed.data.signedAt) {
+      return {
+        success: false,
+        message: "Enter the attendance sheet signed date.",
+        fieldErrors: { signedAt: ["Attendance sheet signed date is required."] }
+      };
+    }
+
     const { data: plumber, error: plumberError } = await supabase
       .from("accredited_plumbers")
       .select("id")
@@ -323,17 +392,49 @@ export async function updateInhouseInstallationAction(
           ? new Date().toISOString()
           : null;
 
+    let proofImageUrl = application.inhouse_installation_proof_image_url;
+    if (profile.role === "applicant" && proofImage instanceof File && proofImage.size > 0) {
+      const uploadResult = await uploadInhouseProofImage({
+        supabase,
+        organizationId: application.organization_id,
+        applicationId: application.id,
+        file: proofImage
+      });
+
+      if (uploadResult.error) {
+        return {
+          success: false,
+          message: uploadResult.error,
+          fieldErrors: { proofImage: [uploadResult.error] }
+        };
+      }
+
+      proofImageUrl = uploadResult.url;
+    }
+
+    const signedAtIso = parsed.data.signedAt ? new Date(`${parsed.data.signedAt}T00:00:00`).toISOString() : null;
+
     const { error } = await supabase
       .from("applications")
       .update({
         accredited_plumber_id: parsed.data.accreditedPlumberId,
         inhouse_installation_completed: parsed.data.completed,
         inhouse_installation_completed_at: completedAtIso,
+        inhouse_installation_proof_image_url: proofImageUrl,
+        inhouse_installation_signed_at:
+          profile.role === "admin" ? signedAtIso : application.inhouse_installation_signed_at,
         inhouse_installation_updated_by: profile.id
       })
       .eq("id", parsed.data.applicationId);
 
     if (error) {
+      if (isMissingInhouseProofColumns(error.message)) {
+        return {
+          success: false,
+          message:
+            "Database is missing in-house plumbing proof columns. Run supabase/inhouse-installation-proof.sql in Supabase SQL Editor, then retry."
+        };
+      }
       return { success: false, message: error.message };
     }
 

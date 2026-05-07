@@ -170,6 +170,9 @@ export function InspectionSchedulerForm({
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
         <CardTitle>Schedule inspection</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Inspection scheduling follows a first finished, first served basis based on the earliest completed in-house plumbing record.
+        </p>
       </CardHeader>
       <CardContent>
         <form action={scheduleAction} className="flex flex-col gap-4">

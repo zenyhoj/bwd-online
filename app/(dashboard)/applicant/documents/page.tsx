@@ -1,15 +1,16 @@
 import { redirect } from "next/navigation";
+
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
+import { DocumentSubmissionPreferenceForm } from "@/components/applicant/document-submission-preference-form";
 import { DocumentUploadForm } from "@/components/applicant/document-upload-form";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StatusBadge } from "@/components/shared/status-badge";
 import { getDocumentDownloadHref } from "@/lib/document-links";
+import { areDocumentsReadyForPayment, getDocumentRequirementRows } from "@/lib/document-workflow";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { documentTypeLabels } from "@/lib/constants";
 import { getApplicants, getApplicantApplications } from "@/lib/queries";
-import type { DocumentType } from "@/types";
 
 type ApplicantDocumentsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -24,7 +25,6 @@ function getStringParam(
 
 export default async function ApplicantDocumentsPage({ searchParams }: ApplicantDocumentsPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  // Use admin client — ownership is already verified via getApplicants().
   const supabase = createSupabaseAdminClient();
 
   const applicants = await getApplicants();
@@ -43,6 +43,12 @@ export default async function ApplicantDocumentsPage({ searchParams }: Applicant
   const { data: documents } = application
     ? await supabase.from("documents").select("*").eq("application_id", application.id).order("created_at", { ascending: false })
     : { data: [] };
+
+  const requirementRows = getDocumentRequirementRows(documents ?? []);
+  const actionableTypes = requirementRows
+    .filter((row) => row.status === "missing" || row.status === "rejected")
+    .map((row) => row.type);
+  const documentsReady = application ? areDocumentsReadyForPayment(application, documents ?? []) : false;
 
   return (
     <div className="space-y-6">
@@ -68,36 +74,84 @@ export default async function ApplicantDocumentsPage({ searchParams }: Applicant
           description="This applicant has multiple applications. Choose one to view documents."
         />
       ) : null}
-      {application ? <DocumentUploadForm applicationId={application.id} /> : null}
-      <Card>
-        <CardHeader>
-          <CardTitle>Uploaded documents</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Type</TableHead>
-                <TableHead>File</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(documents ?? []).map((document) => (
-                <TableRow key={document.id}>
-                  <TableCell>{documentTypeLabels[document.document_type as DocumentType]}</TableCell>
-                  <TableCell>
-                    <a href={getDocumentDownloadHref(document.id)} className="text-primary hover:underline">
-                      {document.file_name}
-                    </a>
-                  </TableCell>
-                  <TableCell><StatusBadge status={document.status} /></TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+
+      {application ? (
+        <>
+          <Card className="border-border/70 shadow-sm">
+            <CardHeader>
+              <CardTitle>Document requirements</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusBadge status={documentsReady ? "verified" : "pending"} />
+                <span className="text-sm text-muted-foreground">
+                  {documentsReady
+                    ? "Documents are complete for payment scheduling."
+                    : "Complete or replace all required documents, or inform BWD that you will bring them to the office."}
+                </span>
+              </div>
+
+              {application.document_review_note ? (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p className="font-medium">Admin note</p>
+                  <p className="mt-1 whitespace-pre-wrap">{application.document_review_note}</p>
+                </div>
+              ) : null}
+
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Requirement</TableHead>
+                    <TableHead>File</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Review note</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {requirementRows.map((row) => (
+                    <TableRow key={row.type}>
+                      <TableCell>{row.label}</TableCell>
+                      <TableCell>
+                        {row.document ? (
+                          <a href={getDocumentDownloadHref(row.document.id)} className="text-primary hover:underline">
+                            {row.document.file_name}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">Not uploaded</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={row.status === "missing" ? "pending" : row.status} />
+                      </TableCell>
+                      <TableCell>{row.reviewNote ?? (row.status === "missing" ? "Awaiting upload" : "-")}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <DocumentSubmissionPreferenceForm
+            applicationId={application.id}
+            submissionMode={application.document_submission_mode ?? "online"}
+          />
+
+          {actionableTypes.length > 0 ? (
+            <DocumentUploadForm applicationId={application.id} allowedDocumentTypes={actionableTypes} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Uploads complete</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  There are no missing or rejected documents to upload right now.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : null}
     </div>
   );
 }

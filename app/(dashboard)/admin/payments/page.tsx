@@ -2,6 +2,7 @@ import { PaymentSchedulerForm } from "@/components/admin/payment-scheduler-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
@@ -33,7 +34,7 @@ export default async function AdminPaymentsPage() {
       .order("due_date", { ascending: true }),
     supabase
       .from("applications")
-      .select("id, full_name, service_type, status, inspections(status, plumbing_approved, inspected_at), payments(id)")
+      .select("id, full_name, service_type, status, document_submission_mode, document_review_note, inspections(status, plumbing_approved, inspected_at), documents(*), payments(id)")
       .eq("organization_id", profile.organization_id)
       .order("created_at", { ascending: false })
   ]);
@@ -44,11 +45,13 @@ export default async function AdminPaymentsPage() {
         status?: string | null;
         plumbing_approved?: boolean | null;
       }[] | undefined) ?? []);
+    const documents = ((application.documents as typeof application.documents) ?? []) as never[];
     const existingPayments = ((application.payments as { id: string }[] | undefined) ?? []).length;
 
     return (
       existingPayments === 0 &&
-      inspections.some((inspection) => inspection.status === "approved")
+      inspections.some((inspection) => inspection.status === "approved") &&
+      areDocumentsReadyForPayment(application, documents)
     );
   });
 

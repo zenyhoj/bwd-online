@@ -4,6 +4,7 @@ import { CheckCircle2, ClipboardList, CreditCard, Wrench } from "lucide-react";
 import { WaterMeterSchedulerForm } from "@/components/admin/water-meter-scheduler-form";
 import { WaterMeterCompletionForm } from "@/components/admin/water-meter-completion-form";
 import { DocumentReviewForm } from "@/components/admin/document-review-form";
+import { DocumentWorkflowNoteForm } from "@/components/admin/document-workflow-note-form";
 import { InspectionSchedulerForm } from "@/components/admin/inspection-scheduler-form";
 import { InstallationSchedulerForm } from "@/components/admin/installation-scheduler-form";
 import { PaymentSchedulerForm } from "@/components/admin/payment-scheduler-form";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
+import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { parsePagination } from "@/lib/pagination";
 import {
   getAccreditedPlumbers,
@@ -96,6 +98,8 @@ function nextAction(record: Record<string, unknown>) {
   );
   const hasScheduledInspection = inspections.length > 0;
   const inhousePlumbingComplete = Boolean(record.inhouse_installation_completed);
+  const documents = ((record.documents as Document[] | undefined) ?? []);
+  const documentsReady = areDocumentsReadyForPayment(record as never, documents);
   const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
 
@@ -103,6 +107,7 @@ function nextAction(record: Record<string, unknown>) {
   if (!inhousePlumbingComplete) return "Complete in-house plumbing";
   if (!hasScheduledInspection) return "Schedule inspection";
   if (!hasApprovedInspection) return "Await inspection result";
+  if (!documentsReady) return "Review documents";
   if (paymentsList.length === 0 || latestPayment?.status !== "paid") return "Confirm payment";
   if (!waterMeterScheduled) return "Schedule water meter";
   if (!waterMeterInstalled) return "Complete water meter";
@@ -126,6 +131,8 @@ function queueStage(record: Record<string, unknown>) {
   );
   const hasScheduledInspection = inspections.length > 0;
   const inhousePlumbingComplete = Boolean(record.inhouse_installation_completed);
+  const documents = ((record.documents as Document[] | undefined) ?? []);
+  const documentsReady = areDocumentsReadyForPayment(record as never, documents);
   const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
 
@@ -133,6 +140,7 @@ function queueStage(record: Record<string, unknown>) {
   if (!inhousePlumbingComplete) return "for-inhouse-plumbing";
   if (!hasScheduledInspection) return "for-inspection";
   if (!hasApprovedInspection) return "under-review";
+  if (!documentsReady) return "for-documents";
   if (paymentsList.length === 0 || latestPayment?.status !== "paid") return "for-payment";
   if (!waterMeterScheduled) return "for-water-meter-schedule";
   if (!waterMeterInstalled) return "for-water-meter-complete";
@@ -147,6 +155,8 @@ function queueStageLabel(stage: string) {
       return "For inspection";
     case "under-review":
       return "Under review";
+    case "for-documents":
+      return "For documents";
     case "for-payment":
       return "For payment";
     case "for-installation":
@@ -168,12 +178,14 @@ function workflowStepState({
   inspections,
   payments,
   applicationStatus,
-  inhousePlumbingCompleted
+  inhousePlumbingCompleted,
+  documentsReady
 }: {
   inspections: { status?: string; scheduled_at?: string | null }[];
   payments: Payment[];
   applicationStatus: string;
   inhousePlumbingCompleted: boolean;
+  documentsReady: boolean;
 }) {
   const hasScheduledInspection = inspections.length > 0;
   const hasApprovedInspection = inspections.some((inspection) => inspection.status === "approved");
@@ -182,7 +194,7 @@ function workflowStepState({
   return {
     plumbing: inhousePlumbingCompleted ? "Complete" : "Pending",
     inspection: !inhousePlumbingCompleted ? "Waiting" : hasApprovedInspection ? "Complete" : hasScheduledInspection ? "Scheduled" : "Pending",
-    payment: hasPayment ? "Scheduled" : hasApprovedInspection ? "Ready" : "Waiting",
+    payment: hasPayment ? "Scheduled" : hasApprovedInspection && documentsReady ? "Ready" : hasApprovedInspection ? "Review docs" : "Waiting",
     conversion:
       applicationStatus === "converted" ? "Complete" : applicationStatus === "approved" ? "Ready" : "Waiting"
   };
@@ -224,7 +236,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const readyForPayment = applications.data.filter((item) => {
     const inspections = ((item.inspections as { status?: string }[] | undefined) ?? []);
     const payments = ((item.payments as { id: string }[] | undefined) ?? []).length;
-    return inspections.some((inspection) => inspection.status === "approved") && payments === 0;
+    const documents = ((item.documents as Document[] | undefined) ?? []);
+    return inspections.some((inspection) => inspection.status === "approved") && areDocumentsReadyForPayment(item as never, documents) && payments === 0;
   }).length;
   const readyForConversionEffective = applications.data.filter(
     (item) => queueStage(item as Record<string, unknown>) === "for-conversion"
@@ -244,6 +257,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       key: "under-review",
       title: "Under review",
       description: "Applicants with inspection activity still being reviewed."
+    },
+    {
+      key: "for-documents",
+      title: "For documents",
+      description: "Applicants with approved inspections waiting for document verification."
     },
     {
       key: "for-payment",
@@ -294,6 +312,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const canSchedulePayment = selectedInspections.some(
     (inspection) => inspection.status === "approved"
   );
+  const documentsReadyForPayment = areDocumentsReadyForPayment(
+    selectedApplication as never,
+    selectedDocuments
+  );
   const canMarkInstallationComplete =
     Boolean(selectedApplication) && selectedApplicationStatus !== "converted";
   const inspectionWorkflowComplete = canSchedulePayment;
@@ -307,13 +329,15 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
     inspections: selectedInspections,
     payments: selectedPayments,
     applicationStatus: selectedApplicationStatus,
-    inhousePlumbingCompleted
+    inhousePlumbingCompleted,
+    documentsReady: documentsReadyForPayment
   });
 
   let activeAction: string | null = null;
   if (selectedApplication) {
     if (!inhousePlumbingCompleted) activeAction = "inhouse-plumbing";
     else if (!inspectionWorkflowComplete) activeAction = "inspection";
+    else if (!documentsReadyForPayment) activeAction = "documents";
     else if (!latestSelectedPayment || latestSelectedPayment.status !== "paid") activeAction = "payment";
     else if (!selectedApplication.inhouse_installation_completed) activeAction = "mark-installation";
     else if (!selectedApplication.water_meter_installation_scheduled_at) activeAction = "water-meter-schedule";
@@ -641,7 +665,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     <p className="mt-2 text-sm text-muted-foreground">
                       {activeAction === "inhouse-plumbing" && "In-house plumbing must be completed by the applicant before scheduling an inspection."}
                       {activeAction === "inspection" && "Finish the remaining inspection steps before moving to payment scheduling."}
-                      {activeAction === "payment" && "Inspection is complete. Continue with payment confirmation."}
+                      {activeAction === "documents" && "Inspection is complete. Verify the uploaded documents or note the missing requirements before payment scheduling."}
+                      {activeAction === "payment" && "Inspection and documents are complete. Continue with payment confirmation."}
                       {activeAction === "mark-installation" && "Payment confirmed. Mark the installation as complete."}
                       {activeAction === "water-meter-schedule" && "Application fee paid. Schedule the water meter installation."}
                       {activeAction === "water-meter-complete" && "Water meter installation is scheduled. Wait for completion and mark it here."}
@@ -659,6 +684,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                             plumbers={plumbers}
                             currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
                             currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
+                            currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
+                            currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
                             isCompleted={false}
                             variant="admin"
                           />
@@ -688,12 +715,21 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                             classification={(selectedApplication as Record<string, unknown>).concessionaire_classification as string | null}
                           />
                         )}
+                        {activeAction === "documents" && (
+                          <DocumentWorkflowNoteForm
+                            applicationId={String(selectedApplication.id)}
+                            reviewNote={(selectedApplication.document_review_note as string | null | undefined) ?? null}
+                            submissionMode={(selectedApplication.document_submission_mode as string | null | undefined) ?? "online"}
+                          />
+                        )}
                         {activeAction === "mark-installation" && (
                           <InhouseInstallationForm
                             applicationId={String(selectedApplication.id)}
                             plumbers={plumbers}
                             currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
                             currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
+                            currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
+                            currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
                             isCompleted={Boolean(selectedApplication.inhouse_installation_completed)}
                             variant="admin"
                           />

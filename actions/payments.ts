@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
+import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { paymentScheduleSchema, paymentStatusSchema } from "@/schemas";
 import { validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
@@ -42,7 +43,7 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, organization_id")
+      .select("id, organization_id, document_submission_mode, document_review_note")
       .eq("id", parsed.data.applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -69,6 +70,24 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
       return {
         success: false,
         message: "Schedule the office payment only after the inspection is approved."
+      };
+    }
+
+    const { data: documents, error: documentsError } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("application_id", parsed.data.applicationId)
+      .eq("organization_id", profile.organization_id);
+
+    if (documentsError) {
+      return { success: false, message: documentsError.message };
+    }
+
+    if (!areDocumentsReadyForPayment(application, documents ?? [])) {
+      return {
+        success: false,
+        message:
+          "Verify all required documents first, or wait for the applicant to choose to bring the documents to the office."
       };
     }
 

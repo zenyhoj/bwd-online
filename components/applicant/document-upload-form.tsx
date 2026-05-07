@@ -13,10 +13,14 @@ import { Label } from "@/components/ui/label";
 
 type DocumentUploadFormProps = {
   applicationId: string;
+  allowedDocumentTypes?: string[];
 };
 
-export function DocumentUploadForm({ applicationId }: DocumentUploadFormProps) {
+export function DocumentUploadForm({ applicationId, allowedDocumentTypes }: DocumentUploadFormProps) {
   const [state, formAction, pending] = useActionState(uploadDocumentAction, initialActionState);
+  const documentEntries = Object.entries(documentTypeLabels).filter(([value]) =>
+    allowedDocumentTypes ? allowedDocumentTypes.includes(value) : true
+  );
 
   return (
     <Card>
@@ -32,9 +36,9 @@ export function DocumentUploadForm({ applicationId }: DocumentUploadFormProps) {
               id="documentType"
               name="documentType"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              defaultValue="tax_declaration_title"
+              defaultValue={documentEntries[0]?.[0] ?? "tax_declaration_title"}
             >
-              {Object.entries(documentTypeLabels).map(([value, label]) => (
+              {documentEntries.map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>

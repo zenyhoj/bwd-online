@@ -3,6 +3,7 @@ import "server-only";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { buildPaginatedResult } from "@/lib/pagination";
 import { getCurrentProfile } from "@/lib/auth";
+import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import type {
   AccreditedPlumber,
   ApplicantSeminarProgress,
@@ -170,7 +171,7 @@ export async function getAdminApplications(pagination: PaginationParams): Promis
   const { data, count, error } = await supabase
     .from("applications")
     .select(
-      "id, applicant_id, full_name, service_type, status, submitted_at, inhouse_installation_completed, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), documents(id,status), payments(id,status,paid_at,due_date), concessionaires(id)",
+      "id, applicant_id, full_name, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), documents(*), payments(id,status,paid_at,due_date), concessionaires(id)",
       { count: "exact" }
     )
     .eq("organization_id", profile.organization_id)
@@ -194,7 +195,7 @@ export async function getAdminApplicationsQueue(
   let query = supabase
     .from("applications")
     .select(
-      "id, applicant_id, full_name, service_type, status, submitted_at, inhouse_installation_completed, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), documents(id,status), payments(id,status,paid_at,due_date), concessionaires(id)",
+      "id, applicant_id, full_name, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), documents(*), payments(id,status,paid_at,due_date), concessionaires(id)",
       { count: "exact" }
     )
     .eq("organization_id", profile.organization_id)
@@ -240,7 +241,9 @@ export async function getAdminApplicationsQueue(
           const converted = (((record.concessionaires as { id?: string }[] | undefined) ?? []).length ?? 0) > 0;
           const hasApprovedInspection = inspections.some((inspection) => inspection.status === "approved");
           const hasScheduledInspection = inspections.length > 0;
+          const documents = ((record.documents as Document[] | undefined) ?? []);
           const installationComplete = Boolean(record.inhouse_installation_completed);
+          const documentsReady = areDocumentsReadyForPayment(record as never, documents);
           const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
           const waterMeterInstalled = Boolean(record.water_meter_installed_at);
           const effectiveStatus =
@@ -259,6 +262,8 @@ export async function getAdminApplicationsQueue(
             stage = "for-inspection";
           } else if (!hasApprovedInspection) {
             stage = "under-review";
+          } else if (!documentsReady) {
+            stage = "for-documents";
           } else if (payments.length === 0 || latestPayment?.status !== "paid") {
             stage = "for-payment";
           } else if (!waterMeterScheduled) {
@@ -272,7 +277,24 @@ export async function getAdminApplicationsQueue(
           return stage === filters.workflow;
         });
 
-  return buildPaginatedResult(workflowFiltered, workflowFiltered.length, pagination);
+  const sortedWorkflowRecords = [...workflowFiltered].sort((a, b) => {
+    const stageA = filters?.workflow && filters.workflow !== "all" ? filters.workflow : null;
+
+    if (stageA === "for-inspection") {
+      const aCompletedAt = new Date(String(a.inhouse_installation_completed_at ?? a.created_at ?? 0)).getTime();
+      const bCompletedAt = new Date(String(b.inhouse_installation_completed_at ?? b.created_at ?? 0)).getTime();
+
+      if (aCompletedAt !== bCompletedAt) {
+        return aCompletedAt - bCompletedAt;
+      }
+    }
+
+    const aSubmittedAt = new Date(String(a.submitted_at ?? a.created_at ?? 0)).getTime();
+    const bSubmittedAt = new Date(String(b.submitted_at ?? b.created_at ?? 0)).getTime();
+    return bSubmittedAt - aSubmittedAt;
+  });
+
+  return buildPaginatedResult(sortedWorkflowRecords, sortedWorkflowRecords.length, pagination);
 }
 
 export async function getAdminApplicationDetail(applicationId: string) {

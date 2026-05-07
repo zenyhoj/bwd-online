@@ -145,10 +145,14 @@ create table public.applications (
   address text not null,
   number_of_users integer not null check (number_of_users > 0),
   concessionaire_classification public.concessionaire_classification,
+  document_submission_mode text not null default 'online' check (document_submission_mode in ('online', 'office')),
+  document_review_note text,
   inhouse_installation_scheduled_at timestamptz,
   inhouse_installation_scheduled_by uuid references public.profiles (id) on delete set null,
   inhouse_installation_completed boolean not null default false,
   inhouse_installation_completed_at timestamptz,
+  inhouse_installation_proof_image_url text,
+  inhouse_installation_signed_at timestamptz,
   inhouse_installation_updated_by uuid references public.profiles (id) on delete set null,
   seminar_completed boolean not null default false,
   submitted_at timestamptz,
@@ -361,4 +365,8 @@ on conflict (id) do nothing;
 
 insert into storage.buckets (id, name, public)
 values ('seminar-media', 'seminar-media', true)
+on conflict (id) do update set public = true;
+
+insert into storage.buckets (id, name, public)
+values ('inhouse-installation-proofs', 'inhouse-installation-proofs', true)
 on conflict (id) do update set public = true;

@@ -323,6 +323,8 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           plumbers={plumbers}
           currentPlumberId={selectedApplication.accredited_plumber_id}
           currentCompletedAt={selectedApplication.inhouse_installation_completed_at}
+          currentProofImageUrl={selectedApplication.inhouse_installation_proof_image_url}
+          currentSignedAt={selectedApplication.inhouse_installation_signed_at}
           isCompleted={selectedApplication.inhouse_installation_completed}
         />
       ) : null}

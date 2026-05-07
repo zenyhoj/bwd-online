@@ -15,7 +15,8 @@ export const inhouseInstallationSchema = z.object({
   applicationId: z.string().uuid(),
   accreditedPlumberId: z.string().uuid(),
   completed: z.coerce.boolean(),
-  completedAt: z.string().optional()
+  completedAt: z.string().optional(),
+  signedAt: z.string().optional()
 });
 
 export const installationScheduleSchema = z.object({

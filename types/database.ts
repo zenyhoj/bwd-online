@@ -275,11 +275,15 @@ export type Database = {
           age: number;
           address: string;
             number_of_users: number;
-            concessionaire_classification: Database["public"]["Enums"]["concessionaire_classification"] | null;
+          concessionaire_classification: Database["public"]["Enums"]["concessionaire_classification"] | null;
             inhouse_installation_scheduled_at: string | null;
           inhouse_installation_scheduled_by: string | null;
           inhouse_installation_completed: boolean;
           inhouse_installation_completed_at: string | null;
+          document_submission_mode: string;
+          document_review_note: string | null;
+          inhouse_installation_proof_image_url: string | null;
+          inhouse_installation_signed_at: string | null;
           inhouse_installation_updated_by: string | null;
           seminar_completed: boolean;
           submitted_at: string | null;
@@ -306,6 +310,10 @@ export type Database = {
           inhouse_installation_scheduled_by?: string | null;
           inhouse_installation_completed?: boolean;
           inhouse_installation_completed_at?: string | null;
+          document_submission_mode?: string;
+          document_review_note?: string | null;
+          inhouse_installation_proof_image_url?: string | null;
+          inhouse_installation_signed_at?: string | null;
           inhouse_installation_updated_by?: string | null;
           seminar_completed?: boolean;
           submitted_at?: string | null;
@@ -332,6 +340,10 @@ export type Database = {
           inhouse_installation_scheduled_by?: string | null;
           inhouse_installation_completed?: boolean;
           inhouse_installation_completed_at?: string | null;
+          document_submission_mode?: string;
+          document_review_note?: string | null;
+          inhouse_installation_proof_image_url?: string | null;
+          inhouse_installation_signed_at?: string | null;
           inhouse_installation_updated_by?: string | null;
           seminar_completed?: boolean;
           submitted_at?: string | null;

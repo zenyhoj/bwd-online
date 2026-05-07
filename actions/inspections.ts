@@ -24,6 +24,34 @@ function toManilaISOString(value: string) {
   return toManilaDate(value).toISOString();
 }
 
+async function getFirstReadyForInspectionApplicationId({
+  supabase,
+  organizationId
+}: {
+  supabase: Awaited<ReturnType<typeof getActionContext>>["supabase"];
+  organizationId: string;
+}) {
+  const { data, error } = await supabase
+    .from("applications")
+    .select("id, inhouse_installation_completed, inhouse_installation_completed_at, created_at, inspections(id)")
+    .eq("organization_id", organizationId)
+    .eq("inhouse_installation_completed", true)
+    .order("inhouse_installation_completed_at", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    return { id: null as string | null, error };
+  }
+
+  const firstReady =
+    (data ?? []).find((application) => {
+      const inspections = (application.inspections as { id?: string }[] | undefined) ?? [];
+      return inspections.length === 0;
+    }) ?? null;
+
+  return { id: firstReady?.id ?? null, error: null };
+}
+
 function getSchemaMismatchMessage(message: string) {
   if (!message.includes("material_list") || !message.includes("inspections")) {
     return null;
@@ -72,6 +100,24 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
       return {
         success: false,
         message: "In-house plumbing must be completed before scheduling an inspection."
+      };
+    }
+
+    const { id: nextEligibleApplicationId, error: nextEligibleError } =
+      await getFirstReadyForInspectionApplicationId({
+        supabase,
+        organizationId: profile.organization_id
+      });
+
+    if (nextEligibleError) {
+      return { success: false, message: nextEligibleError.message };
+    }
+
+    if (nextEligibleApplicationId && nextEligibleApplicationId !== parsed.data.applicationId) {
+      return {
+        success: false,
+        message:
+          "Inspection scheduling follows a first finished, first served rule. Schedule the earliest completed in-house plumbing application first."
       };
     }
 
