@@ -18,6 +18,11 @@ type SeminarModuleListProps = {
   items: SeminarItem[];
   progress: ApplicantSeminarProgress[];
   applicantId: string;
+  completionCta?: {
+    href: string;
+    label: string;
+    description: string;
+  } | null;
 };
 
 type SeminarItemCardProps = {
@@ -29,6 +34,11 @@ type SeminarItemCardProps = {
   isLocked: boolean;
   allCompleted: boolean;
   applicantId: string;
+  completionCta?: {
+    href: string;
+    label: string;
+    description: string;
+  } | null;
 };
 
 function SeminarMedia({ item }: { item: SeminarItem }) {
@@ -93,7 +103,7 @@ function SeminarMedia({ item }: { item: SeminarItem }) {
   return null;
 }
 
-export function SeminarModuleList({ items, progress, applicantId }: SeminarModuleListProps) {
+export function SeminarModuleList({ items, progress, applicantId, completionCta }: SeminarModuleListProps) {
   const completedIds = new Set(progress.filter((entry) => entry.completed).map((entry) => entry.seminar_item_id));
   const remainingCount = items.filter((item) => !completedIds.has(item.id)).length;
   const allCompleted = items.length > 0 && remainingCount === 0;
@@ -120,6 +130,7 @@ export function SeminarModuleList({ items, progress, applicantId }: SeminarModul
             isLocked={isLocked}
             allCompleted={allCompleted}
             applicantId={applicantId}
+            completionCta={completionCta}
           />
         );
       })}
@@ -135,7 +146,8 @@ function SeminarItemCard({
   isFinalItem,
   isLocked,
   allCompleted,
-  applicantId
+  applicantId,
+  completionCta
 }: SeminarItemCardProps) {
   const [state, formAction, pending] = useActionState(updateSeminarProgressAction, initialActionState);
   const justFinishedSeries = isLastPendingItem && state.success;
@@ -178,11 +190,13 @@ function SeminarItemCard({
               <div className="space-y-1">
                 <p className="text-base font-semibold text-foreground">Seminar finished</p>
                 <p className="text-sm text-foreground/80">
-                  Your next step is to proceed with the application form.
+                  {completionCta?.description ?? "Your next step is to proceed with the application form."}
                 </p>
               </div>
               <Button asChild className="min-w-[220px]">
-                <a href={`/applicant/applications/new?applicant=${applicantId}`}>Proceed to application</a>
+                <a href={completionCta?.href ?? `/applicant/applications/new?applicant=${applicantId}`}>
+                  {completionCta?.label ?? "Proceed to application"}
+                </a>
               </Button>
             </div>
           </div>
