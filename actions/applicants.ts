@@ -12,6 +12,7 @@ const applicantSchema = z.object({
   middleInitial: z.string().trim().max(3).optional(),
   sex: z.enum(["Male", "Female"]),
   age: z.coerce.number().int().min(1).max(120),
+  numberOfUsers: z.coerce.number().int().min(1).max(100),
   address: z.string().min(10, "Address must be at least 10 characters"),
   cellphoneNumber: z.string().min(11).max(20),
   purposeOfSeminar: z.enum(["new_service", "reconnection", "change_name", "others"]).optional()
@@ -26,6 +27,7 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
       middleInitial: formData.get("middleInitial"),
       sex: formData.get("sex"),
       age: formData.get("age"),
+      numberOfUsers: formData.get("numberOfUsers"),
       address: formData.get("address"),
       cellphoneNumber: formData.get("cellphoneNumber"),
       purposeOfSeminar: formData.get("purposeOfSeminar")
@@ -38,22 +40,32 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
     const middleInitial = parsed.data.middleInitial?.trim();
     const fullName = `${parsed.data.lastName}, ${parsed.data.firstName}${middleInitial ? ` ${middleInitial}` : ""}`.trim();
 
-    const { error } = await supabase.from("applicants").insert({
-      organization_id: profile.organization_id,
-      profile_id: profile.id,
-      full_name: fullName,
-      gender: parsed.data.sex,
-      age: parsed.data.age,
-      address: parsed.data.address,
-      cellphone_number: parsed.data.cellphoneNumber,
-      purpose_of_seminar: parsed.data.purposeOfSeminar
-    });
+    const { data: applicant, error } = await supabase
+      .from("applicants")
+      .insert({
+        organization_id: profile.organization_id,
+        profile_id: profile.id,
+        full_name: fullName,
+        gender: parsed.data.sex,
+        age: parsed.data.age,
+        number_of_users: parsed.data.numberOfUsers,
+        address: parsed.data.address,
+        cellphone_number: parsed.data.cellphoneNumber,
+        purpose_of_seminar: parsed.data.purposeOfSeminar
+      })
+      .select("id")
+      .single();
 
-    if (error) {
-      return { success: false, message: error.message };
+    if (error || !applicant) {
+      return { success: false, message: error?.message ?? "Unable to create applicant." };
     }
 
     revalidatePath("/applicant");
-    return { success: true, message: "Applicant created successfully." };
+    revalidatePath("/applicant/seminar");
+    return {
+      success: true,
+      message: "Applicant created successfully. Continue with the seminar modules.",
+      redirectTo: `/applicant/seminar?applicant=${applicant.id}`
+    };
   });
 }

@@ -99,6 +99,7 @@ create table public.applicants (
   address text,
   cellphone_number text,
   purpose_of_seminar public.seminar_purpose,
+  number_of_users integer check (number_of_users > 0),
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );

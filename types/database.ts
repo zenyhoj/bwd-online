@@ -47,6 +47,7 @@ export type Database = {
           address: string | null;
           cellphone_number: string | null;
           purpose_of_seminar: Database["public"]["Enums"]["seminar_purpose"] | null;
+          number_of_users: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -60,6 +61,7 @@ export type Database = {
           address?: string | null;
           cellphone_number?: string | null;
           purpose_of_seminar?: Database["public"]["Enums"]["seminar_purpose"] | null;
+          number_of_users?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -73,6 +75,7 @@ export type Database = {
           address?: string | null;
           cellphone_number?: string | null;
           purpose_of_seminar?: Database["public"]["Enums"]["seminar_purpose"] | null;
+          number_of_users?: number | null;
           created_at?: string;
           updated_at?: string;
         };

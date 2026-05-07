@@ -55,12 +55,12 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Application details</CardTitle>
-        <CardDescription>
-          Your registered information is pre-filled. Just enter the number of users to submit.
-        </CardDescription>
-      </CardHeader>
+        <CardHeader>
+          <CardTitle>Application details</CardTitle>
+          <CardDescription>
+          Your registered information is pre-filled. Review the saved number of users, then complete the application.
+          </CardDescription>
+        </CardHeader>
       <CardContent className="space-y-6">
         {/* Read-only applicant info display */}
         <div className="rounded-lg border border-border/60 bg-muted/10 p-4">
@@ -123,6 +123,7 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
               type="number"
               min={1}
               max={100}
+              defaultValue={applicant?.number_of_users ?? undefined}
               required
               placeholder="How many people will use this connection?"
               aria-invalid={hasError("numberOfUsers")}

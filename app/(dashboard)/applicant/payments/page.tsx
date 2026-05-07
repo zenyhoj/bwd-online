@@ -1,9 +1,12 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
+import { areDocumentsReadyForPayment, getDocumentRequirementRows } from "@/lib/document-workflow";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getApplicants, getApplicantApplications } from "@/lib/queries";
 
@@ -79,6 +82,8 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
   const { data: payments } = application
     ? await supabase.from("payments").select("*").eq("application_id", application.id).order("due_date", { ascending: true })
     : { data: [] };
+  const documentRows = application ? getDocumentRequirementRows(application.documents ?? []) : [];
+  const documentsReady = application ? areDocumentsReadyForPayment(application, application.documents ?? []) : false;
 
   return (
     <div className="space-y-6">
@@ -114,10 +119,43 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
+          {application && (payments ?? []).length === 0 && !documentsReady ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+              <p className="font-medium text-primary">Documents are required before payment scheduling</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The admin can only schedule your payment after all required documents are verified, or after you choose to bring the documents to the office.
+              </p>
+              <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+                {documentRows
+                  .filter((row) => row.status !== "verified")
+                  .map((row) => (
+                    <li key={row.type}>
+                      {row.label}
+                      {row.status === "rejected" && row.reviewNote ? ` - ${row.reviewNote}` : row.status === "missing" ? " - not uploaded yet" : ""}
+                    </li>
+                  ))}
+              </ul>
+              <div className="mt-4">
+                <Button asChild>
+                  <Link
+                    href={
+                      `/applicant/documents?${new URLSearchParams({
+                        ...(effectiveApplicantId ? { applicant: effectiveApplicantId } : {}),
+                        ...(application?.id ? { application: application.id } : {})
+                      }).toString()}`
+                    }
+                  >
+                    Go to documents
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
           {(payments ?? []).length === 0 ? (
             <div className="rounded-xl border border-dashed border-border py-10 text-center text-sm text-muted-foreground">
               No payment schedule has been set yet.<br />
-              The admin will schedule your office payment after the inspection is approved.
+              The admin will schedule your office payment after inspection approval and document verification.
             </div>
           ) : (
             <div className="space-y-3">

@@ -82,51 +82,51 @@ export function InspectionSchedulerForm({
 
   if (existingInspection) {
     return (
-      <Card className="border-border/70 shadow-sm">
-        <CardHeader className="space-y-2 border-b border-border/60 pb-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <Card className="overflow-hidden border-border/70 shadow-sm">
+        <CardHeader className="space-y-3 border-b border-border/60 bg-muted/[0.04] pb-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <CardTitle className="text-3xl font-semibold tracking-tight">Inspection scheduled</CardTitle>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <CardTitle className="text-2xl font-semibold tracking-tight sm:text-3xl">Inspection scheduled</CardTitle>
+              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
                 Review the appointment details below and reschedule if the visit needs to move.
               </p>
             </div>
-            <div className="shrink-0">
+            <div className="self-start lg:shrink-0">
               <StatusBadge status={existingInspection.status ?? "scheduled"} />
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6 p-6">
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+        <CardContent className="space-y-6 p-4 sm:p-6">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Inspector</p>
-              <p className="mt-2 text-lg font-semibold leading-snug">{existingInspection.inspector_name ?? "-"}</p>
+              <p className="mt-2 text-xl font-semibold leading-snug">{existingInspection.inspector_name ?? "-"}</p>
             </div>
-            <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Scheduled at</p>
-              <p className="mt-2 text-lg font-semibold leading-snug">{formatDateTime(existingInspection.scheduled_at ?? null)}</p>
+              <p className="mt-2 text-xl font-semibold leading-snug">{formatDateTime(existingInspection.scheduled_at ?? null)}</p>
             </div>
-            <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+            <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm sm:col-span-2 xl:col-span-1">
               <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Status</p>
-              <div className="mt-2">
+              <div className="mt-3">
                 <StatusBadge status={existingInspection.status ?? "scheduled"} />
               </div>
             </div>
           </div>
 
           {existingInspection.status !== "approved" ? (
-            <div className="space-y-4 rounded-2xl border border-primary/15 bg-primary/[0.03] p-4 sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/[0.04] p-4 sm:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                  <p className="text-sm font-semibold">Need to change the appointment?</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-base font-semibold">Need to change the appointment?</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
                     Open the reschedule form to pick a new inspection date and time.
                   </p>
                 </div>
                 <Button
                   type="button"
                   variant={showReschedule ? "secondary" : "outline"}
-                  size="sm"
+                  className="w-full lg:w-auto"
                   onClick={() => setShowReschedule((value) => !value)}
                 >
                   {showReschedule ? "Hide form" : "Reschedule"}
@@ -148,11 +148,11 @@ export function InspectionSchedulerForm({
                       className="h-11"
                     />
                   </div>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                    <Button type="button" variant="ghost" onClick={() => setShowReschedule(false)}>
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <Button type="button" variant="ghost" onClick={() => setShowReschedule(false)} className="w-full sm:w-auto">
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={reschedulePending}>
+                    <Button type="submit" disabled={reschedulePending} className="w-full sm:w-auto">
                       {reschedulePending ? "Saving..." : "Confirm reschedule"}
                     </Button>
                   </div>

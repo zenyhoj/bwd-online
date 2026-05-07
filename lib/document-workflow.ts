@@ -3,10 +3,9 @@ import type { Application, Document, DocumentStatus, DocumentType } from "@/type
 
 export const requiredDocumentTypes = Object.keys(documentTypeLabels) as DocumentType[];
 
-type ApplicationDocumentWorkflowInput = Pick<
-  Application,
-  "document_submission_mode" | "document_review_note"
->;
+type ApplicationDocumentWorkflowInput = Partial<
+  Pick<Application, "document_submission_mode" | "document_review_note">
+> | null | undefined;
 
 export type DocumentRequirementRow = {
   type: DocumentType;
@@ -35,7 +34,7 @@ export function getDocumentRequirementRows(documents: Document[]): DocumentRequi
 }
 
 export function isOfficeDocumentSubmission(application: ApplicationDocumentWorkflowInput) {
-  return application.document_submission_mode === "office";
+  return application?.document_submission_mode === "office";
 }
 
 export function areDocumentsReadyForPayment(application: ApplicationDocumentWorkflowInput, documents: Document[]) {

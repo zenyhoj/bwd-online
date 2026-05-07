@@ -373,7 +373,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
             </div>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+        <Card className="relative overflow-hidden border-l-4 border-l-primary">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
@@ -381,8 +381,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                 <p className="mt-1 text-3xl font-bold">{readyForInspection}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">need scheduling</p>
               </div>
-              <div className="rounded-xl bg-amber-500/10 p-3">
-                <Wrench className="h-6 w-6 text-amber-500" />
+              <div className="rounded-xl bg-primary/10 p-3">
+                <Wrench className="h-6 w-6 text-primary" />
               </div>
             </div>
           </CardContent>

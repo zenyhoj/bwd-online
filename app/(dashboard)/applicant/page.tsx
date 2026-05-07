@@ -6,6 +6,7 @@ import { InhouseInstallationForm } from "@/components/shared/inhouse-installatio
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { getAccreditedPlumbers, getApplicants, getApplicantApplications, getApplicantSeminarState } from "@/lib/queries";
 
@@ -82,12 +83,14 @@ function getPrimaryAction({
   allCompleted,
   hasApplication,
   hasPayment,
+  documentsReady,
   selectedApplicantId,
   selectedApplicationId
 }: {
   allCompleted: boolean;
   hasApplication: boolean;
   hasPayment: boolean;
+  documentsReady: boolean;
   selectedApplicantId?: string | null;
   selectedApplicationId?: string | null;
 }) {
@@ -119,9 +122,16 @@ function getPrimaryAction({
     };
   }
 
+  if (!documentsReady) {
+    return {
+      href: selectedApplicationId ? `/applicant/documents?application=${selectedApplicationId}` : "/applicant/documents",
+      label: "Upload documents"
+    };
+  }
+
   return {
     href: selectedApplicationId ? `/applicant/documents?application=${selectedApplicationId}` : "/applicant/documents",
-    label: "Open documents"
+    label: "Review documents"
   };
 }
 
@@ -153,6 +163,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const latestPayment = selectedApplication ? getLatestPayment(selectedApplication) : null;
   const effectiveWorkflowStatus = selectedApplication ? getEffectiveWorkflowStatus(selectedApplication) : null;
   const latestInspectionSchedule = selectedApplication ? getScheduledInspectionDate(selectedApplication) : null;
+  const documentsReady = selectedApplication ? areDocumentsReadyForPayment(selectedApplication, selectedApplication.documents ?? []) : false;
   const selectedApplicantName = selectedApplicant?.full_name ?? "No applicant selected";
 
   const historyView = getStringParam(resolvedSearchParams, "history") === "all" ? "all" : "selected";
@@ -162,6 +173,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
     allCompleted: seminarState.allCompleted,
     hasApplication: Boolean(selectedApplication),
     hasPayment: Boolean(latestPayment),
+    documentsReady,
     selectedApplicantId: selectedApplicant?.id,
     selectedApplicationId: selectedApplication?.id
   });
@@ -213,6 +225,15 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               Seminar {seminarState.completedCount}/{seminarState.items.length || 0}
             </span>
           </div>
+
+          {selectedApplication && !latestPayment && !documentsReady ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+              <p className="font-medium text-primary">Next step: upload documents</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your application cannot be scheduled for payment yet. Upload the required documents first, or inform BWD that you will bring them to the office.
+              </p>
+            </div>
+          ) : null}
 
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-lg border border-border/70 p-3">
