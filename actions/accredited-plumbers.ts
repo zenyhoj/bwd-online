@@ -18,6 +18,12 @@ function isFutureDate(value: string) {
   return selected.getTime() > today.getTime();
 }
 
+function toStartOfDay(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
 function isMissingInstallationScheduleColumn(message?: string | null) {
   return message?.includes("inhouse_installation_scheduled_at") ?? false;
 }
@@ -310,7 +316,10 @@ export async function updateInhouseInstallationAction(
       return parsed.error;
     }
 
-    if (parsed.data.completedAt && isFutureDate(parsed.data.completedAt)) {
+    const completedAtValue = typeof parsed.data.completedAt === "string" ? parsed.data.completedAt : undefined;
+    const signedAtValue = typeof parsed.data.signedAt === "string" ? parsed.data.signedAt : undefined;
+
+    if (completedAtValue && isFutureDate(completedAtValue)) {
       return {
         success: false,
         message: "Completion date cannot be in the future.",
@@ -318,7 +327,7 @@ export async function updateInhouseInstallationAction(
       };
     }
 
-    if (parsed.data.signedAt && isFutureDate(parsed.data.signedAt)) {
+    if (signedAtValue && isFutureDate(signedAtValue)) {
       return {
         success: false,
         message: "Signed date cannot be in the future.",
@@ -365,12 +374,42 @@ export async function updateInhouseInstallationAction(
       };
     }
 
-    if (profile.role === "admin" && !parsed.data.signedAt) {
+    if (profile.role === "admin" && !signedAtValue) {
       return {
         success: false,
         message: "Enter the attendance sheet signed date.",
         fieldErrors: { signedAt: ["Attendance sheet signed date is required."] }
       };
+    }
+
+    if (profile.role === "applicant" && completedAtValue) {
+      const { data: latestSeminarProgress, error: seminarProgressError } = await supabase
+        .from("applicant_seminar_progress")
+        .select("completed_at")
+        .eq("applicant_id", application.applicant_id)
+        .eq("completed", true)
+        .order("completed_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (seminarProgressError) {
+        return { success: false, message: seminarProgressError.message };
+      }
+
+      if (latestSeminarProgress?.completed_at) {
+        const seminarCompletedDate = new Date(latestSeminarProgress.completed_at);
+        seminarCompletedDate.setHours(0, 0, 0, 0);
+
+        if (toStartOfDay(completedAtValue).getTime() < seminarCompletedDate.getTime()) {
+          return {
+            success: false,
+            message: "Completion date cannot be earlier than the online seminar completion date.",
+            fieldErrors: {
+              completedAt: ["Choose a date on or after the online seminar completion date."]
+            }
+          };
+        }
+      }
     }
 
     const { data: plumber, error: plumberError } = await supabase
@@ -386,8 +425,8 @@ export async function updateInhouseInstallationAction(
     }
 
     const completedAtIso =
-      parsed.data.completed && parsed.data.completedAt
-        ? new Date(`${parsed.data.completedAt}T00:00:00`).toISOString()
+      parsed.data.completed && completedAtValue
+        ? new Date(`${completedAtValue}T00:00:00`).toISOString()
         : parsed.data.completed
           ? new Date().toISOString()
           : null;
@@ -412,7 +451,7 @@ export async function updateInhouseInstallationAction(
       proofImageUrl = uploadResult.url;
     }
 
-    const signedAtIso = parsed.data.signedAt ? new Date(`${parsed.data.signedAt}T00:00:00`).toISOString() : null;
+    const signedAtIso = signedAtValue ? new Date(`${signedAtValue}T00:00:00`).toISOString() : null;
 
     const { error } = await supabase
       .from("applications")

@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const optionalDateString = z.preprocess(
+  (value) => (value == null || value === "" ? undefined : value),
+  z.string().optional()
+);
+
 export const accreditedPlumberSchema = z.object({
   fullName: z.string().min(3),
   licenseNumber: z.string().trim().optional(),
@@ -15,8 +20,8 @@ export const inhouseInstallationSchema = z.object({
   applicationId: z.string().uuid(),
   accreditedPlumberId: z.string().uuid(),
   completed: z.coerce.boolean(),
-  completedAt: z.string().optional(),
-  signedAt: z.string().optional()
+  completedAt: optionalDateString,
+  signedAt: optionalDateString
 });
 
 export const installationScheduleSchema = z.object({

@@ -83,6 +83,7 @@ function getPrimaryAction({
   allCompleted,
   hasApplication,
   hasPayment,
+  inhouseCompleted,
   documentsReady,
   selectedApplicantId,
   selectedApplicationId
@@ -90,6 +91,7 @@ function getPrimaryAction({
   allCompleted: boolean;
   hasApplication: boolean;
   hasPayment: boolean;
+  inhouseCompleted: boolean;
   documentsReady: boolean;
   selectedApplicantId?: string | null;
   selectedApplicationId?: string | null;
@@ -119,6 +121,15 @@ function getPrimaryAction({
     return {
       href: selectedApplicationId ? `/applicant/payments?application=${selectedApplicationId}` : "/applicant/payments",
       label: "Open payments"
+    };
+  }
+
+  if (!inhouseCompleted) {
+    return {
+      href: selectedApplicationId
+        ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}#inhouse-installation`
+        : "/applicant#inhouse-installation",
+      label: "Complete inhouse plumbing"
     };
   }
 
@@ -164,6 +175,14 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const effectiveWorkflowStatus = selectedApplication ? getEffectiveWorkflowStatus(selectedApplication) : null;
   const latestInspectionSchedule = selectedApplication ? getScheduledInspectionDate(selectedApplication) : null;
   const documentsReady = selectedApplication ? areDocumentsReadyForPayment(selectedApplication, selectedApplication.documents ?? []) : false;
+  const inhouseCompleted = Boolean(selectedApplication?.inhouse_installation_completed);
+  const onlineSeminarCompletedAt =
+    seminarState.allCompleted
+      ? [...seminarState.progress]
+          .filter((entry) => entry.completed && entry.completed_at)
+          .sort((a, b) => new Date(String(b.completed_at)).getTime() - new Date(String(a.completed_at)).getTime())[0]
+          ?.completed_at ?? null
+      : null;
   const selectedApplicantName = selectedApplicant?.full_name ?? "No applicant selected";
 
   const historyView = getStringParam(resolvedSearchParams, "history") === "all" ? "all" : "selected";
@@ -173,10 +192,12 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
     allCompleted: seminarState.allCompleted,
     hasApplication: Boolean(selectedApplication),
     hasPayment: Boolean(latestPayment),
+    inhouseCompleted,
     documentsReady,
     selectedApplicantId: selectedApplicant?.id,
     selectedApplicationId: selectedApplication?.id
   });
+  const showPrimaryActionButton = !(selectedApplication && !latestPayment && !inhouseCompleted);
 
   const selectedHistoryHref = (() => {
     const query = new URLSearchParams();
@@ -200,14 +221,22 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
         <p className="text-sm text-muted-foreground">Choose the applicant record you want to view.</p>
       </div>
 
-      <ApplicantSwitcher
-        applicants={applicants}
-        selectedApplicantId={selectedApplicant?.id}
-        basePath="/applicant"
-        queryParams={{ history: historyView === "all" ? "all" : undefined }}
-        title="Records"
-        description="Switch records."
-      />
+      {applicants.length > 1 ? (
+        <ApplicantSwitcher
+          applicants={applicants}
+          selectedApplicantId={selectedApplicant?.id}
+          basePath="/applicant"
+          queryParams={{ history: historyView === "all" ? "all" : undefined }}
+          title="Records"
+          description="Switch records."
+        />
+      ) : (
+        <div className="flex justify-end">
+          <Button asChild size="sm">
+            <Link href="/applicant/new">Add Applicant</Link>
+          </Button>
+        </div>
+      )}
 
       <Card className="border-border/70 shadow-sm">
         <CardContent className="space-y-4 p-6">
@@ -226,11 +255,20 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </span>
           </div>
 
-          {selectedApplication && !latestPayment && !documentsReady ? (
+          {selectedApplication && !latestPayment && !inhouseCompleted ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+              <p className="font-medium text-primary">Next step: complete inhouse plumbing</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Mark the inhouse plumbing as completed first, including the plumber and proof photo, before moving to document review and payment scheduling.
+              </p>
+            </div>
+          ) : null}
+
+          {selectedApplication && !latestPayment && inhouseCompleted && !documentsReady ? (
             <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
               <p className="font-medium text-primary">Next step: upload documents</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your application cannot be scheduled for payment yet. Upload the required documents first, or inform BWD that you will bring them to the office.
+                Your inhouse plumbing is already complete. Upload the required documents next, or inform BWD that you will bring them to the office before payment can be scheduled.
               </p>
             </div>
           ) : null}
@@ -266,14 +304,33 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           </div>
 
-          <Button asChild className="h-10 w-full md:w-auto">
-            <Link href={primaryAction.href}>
-              {primaryAction.label}
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          {showPrimaryActionButton ? (
+            <Button asChild className="h-10 w-full md:w-auto">
+              <Link href={primaryAction.href}>
+                {primaryAction.label}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          ) : null}
         </CardContent>
       </Card>
+
+      {selectedApplication ? (
+        <Card className="border-border/70 shadow-sm">
+          <CardContent className="p-6">
+            <InhouseInstallationForm
+              applicationId={selectedApplication.id}
+              plumbers={plumbers}
+              currentPlumberId={selectedApplication.accredited_plumber_id}
+            currentCompletedAt={selectedApplication.inhouse_installation_completed_at}
+            currentProofImageUrl={selectedApplication.inhouse_installation_proof_image_url}
+            currentSignedAt={selectedApplication.inhouse_installation_signed_at}
+            minimumCompletedAt={onlineSeminarCompletedAt}
+            isCompleted={selectedApplication.inhouse_installation_completed}
+          />
+        </CardContent>
+      </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -338,17 +395,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
         </CardContent>
       </Card>
 
-      {selectedApplication ? (
-        <InhouseInstallationForm
-          applicationId={selectedApplication.id}
-          plumbers={plumbers}
-          currentPlumberId={selectedApplication.accredited_plumber_id}
-          currentCompletedAt={selectedApplication.inhouse_installation_completed_at}
-          currentProofImageUrl={selectedApplication.inhouse_installation_proof_image_url}
-          currentSignedAt={selectedApplication.inhouse_installation_signed_at}
-          isCompleted={selectedApplication.inhouse_installation_completed}
-        />
-      ) : null}
     </div>
   );
 }

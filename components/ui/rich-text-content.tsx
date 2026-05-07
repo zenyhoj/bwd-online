@@ -108,6 +108,49 @@ export function RichTextContent({ value, className }: RichTextContentProps) {
           padding-left: 0.9rem;
           color: hsl(var(--foreground) / 0.85);
         }
+
+        .rich-text-content .rich-text-table-wrap {
+          margin: 0.85rem 0;
+          overflow-x: auto;
+          border-radius: calc(var(--radius) + 0.1rem);
+          border: 1px solid hsl(var(--border));
+          background: hsl(var(--background));
+        }
+
+        .rich-text-content .rich-text-table {
+          width: 100%;
+          min-width: 520px;
+          border-collapse: collapse;
+        }
+
+        .rich-text-content .rich-text-table th,
+        .rich-text-content .rich-text-table td {
+          padding: 0.8rem 0.95rem;
+          text-align: left;
+          vertical-align: top;
+          border-bottom: 1px solid hsl(var(--border));
+        }
+
+        .rich-text-content .rich-text-table thead {
+          background: hsl(var(--muted) / 0.45);
+        }
+
+        .rich-text-content .rich-text-table th {
+          color: hsl(var(--foreground));
+          font-size: 0.76rem;
+          font-weight: 700;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .rich-text-content .rich-text-table td {
+          color: hsl(var(--foreground) / 0.86);
+          line-height: 1.55;
+        }
+
+        .rich-text-content .rich-text-table tbody tr:last-child td {
+          border-bottom: 0;
+        }
       `}</style>
     </>
   );

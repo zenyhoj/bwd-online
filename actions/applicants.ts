@@ -18,6 +18,10 @@ const applicantSchema = z.object({
   purposeOfSeminar: z.enum(["new_service", "reconnection", "change_name", "others"]).optional()
 });
 
+const applicantUpdateSchema = applicantSchema.extend({
+  applicantId: z.string().uuid("Applicant ID is invalid")
+});
+
 export async function createApplicantAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   return withErrorHandling(async () => {
     const { supabase, profile } = await getActionContext();
@@ -66,6 +70,58 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
       success: true,
       message: "Applicant created successfully. Continue with the seminar modules.",
       redirectTo: `/applicant/seminar?applicant=${applicant.id}`
+    };
+  });
+}
+
+export async function updateApplicantAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+    const parsed = await parseFormData(applicantUpdateSchema, {
+      applicantId: formData.get("applicantId"),
+      lastName: formData.get("lastName"),
+      firstName: formData.get("firstName"),
+      middleInitial: formData.get("middleInitial"),
+      sex: formData.get("sex"),
+      age: formData.get("age"),
+      numberOfUsers: formData.get("numberOfUsers"),
+      address: formData.get("address"),
+      cellphoneNumber: formData.get("cellphoneNumber"),
+      purposeOfSeminar: formData.get("purposeOfSeminar")
+    });
+
+    if (parsed.error) {
+      return parsed.error;
+    }
+
+    const middleInitial = parsed.data.middleInitial?.trim();
+    const fullName = `${parsed.data.lastName}, ${parsed.data.firstName}${middleInitial ? ` ${middleInitial}` : ""}`.trim();
+
+    const { error } = await supabase
+      .from("applicants")
+      .update({
+        full_name: fullName,
+        gender: parsed.data.sex,
+        age: parsed.data.age,
+        number_of_users: parsed.data.numberOfUsers,
+        address: parsed.data.address,
+        cellphone_number: parsed.data.cellphoneNumber,
+        purpose_of_seminar: parsed.data.purposeOfSeminar
+      })
+      .eq("id", parsed.data.applicantId)
+      .eq("profile_id", profile.id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/applicant");
+    revalidatePath("/applicant/applications/new");
+    revalidatePath("/applicant/seminar");
+
+    return {
+      success: true,
+      message: "Applicant information updated."
     };
   });
 }

@@ -18,6 +18,7 @@ type InhouseInstallationFormProps = {
   currentCompletedAt?: string | null;
   currentProofImageUrl?: string | null;
   currentSignedAt?: string | null;
+  minimumCompletedAt?: string | null;
   isCompleted?: boolean;
   variant?: "applicant" | "admin";
 };
@@ -29,6 +30,7 @@ export function InhouseInstallationForm({
   currentCompletedAt,
   currentProofImageUrl,
   currentSignedAt,
+  minimumCompletedAt,
   isCompleted = false,
   variant = "applicant"
 }: InhouseInstallationFormProps) {
@@ -36,6 +38,7 @@ export function InhouseInstallationForm({
   const [state, formAction, pending] = useActionState(updateInhouseInstallationAction, initialActionState);
   const completionDateValue = currentCompletedAt ? currentCompletedAt.slice(0, 10) : "";
   const signedDateValue = currentSignedAt ? currentSignedAt.slice(0, 10) : "";
+  const minimumCompletedDateValue = minimumCompletedAt ? minimumCompletedAt.slice(0, 10) : undefined;
   const formResetKey = `${applicationId}:${currentPlumberId ?? ""}:${completionDateValue}:${signedDateValue}:${currentProofImageUrl ?? ""}:${isCompleted ? "done" : "pending"}`;
   const isReadOnly = variant === "admin" && isCompleted;
   const isApplicant = variant === "applicant";
@@ -48,7 +51,7 @@ export function InhouseInstallationForm({
   }, [router, state.redirectTo, state.success, variant]);
 
   return (
-    <div className="space-y-4">
+    <div id={variant === "applicant" ? "inhouse-installation" : undefined} className="space-y-4 scroll-mt-24">
       <h3 className="font-semibold">{variant === "admin" ? "Inhouse installation" : "Mark inhouse installation complete"}</h3>
       {plumbers.length === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -87,9 +90,15 @@ export function InhouseInstallationForm({
                   name="completedAt"
                   type="date"
                   defaultValue={completionDateValue}
+                  min={minimumCompletedDateValue}
                   required
                   className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
+                {minimumCompletedDateValue ? (
+                  <p className="text-xs text-muted-foreground">
+                    Choose a completion date on or after the online seminar completion date.
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor={`proofImage-${applicationId}`}>Photo proof of the plumber</Label>

@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PencilLine } from "lucide-react";
 
+import { updateApplicantAction } from "@/actions/applicants";
 import { createApplicationAction } from "@/actions/applications";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
@@ -20,6 +22,29 @@ type ApplicationFormProps = {
   applicant: Applicant | null;
 };
 
+const PURPOSE_LABELS = {
+  new_service: "New Service",
+  reconnection: "Reconnection",
+  change_name: "Change Name",
+  others: "Others"
+} as const;
+
+function parseApplicantName(fullName: string | null | undefined) {
+  const value = fullName ?? "";
+  const [namePart, ...rest] = value.split(",");
+  const lastName = namePart?.trim() ?? "";
+  const firstAndMI = rest.join(",").trim();
+  const firstNameParts = firstAndMI.split(" ").filter(Boolean);
+  const middleInitial = firstNameParts.length > 1 ? firstNameParts[firstNameParts.length - 1].replace(".", "") : "";
+  const firstName = firstNameParts.slice(0, middleInitial ? -1 : undefined).join(" ");
+
+  return {
+    firstName,
+    lastName,
+    middleInitial
+  };
+}
+
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   return (
     <div className="space-y-1.5">
@@ -31,9 +56,132 @@ function InfoRow({ label, value }: { label: string; value: string | number | nul
   );
 }
 
+function ApplicantEditForm({
+  applicantId,
+  applicant,
+  onDone
+}: {
+  applicantId: string;
+  applicant: Applicant | null;
+  onDone: () => void;
+}) {
+  const [state, formAction, pending] = useActionState(updateApplicantAction, initialActionState);
+  const { firstName, lastName, middleInitial } = parseApplicantName(applicant?.full_name);
+
+  useEffect(() => {
+    if (state.success) {
+      onDone();
+    }
+  }, [onDone, state.success]);
+
+  return (
+    <div className="mt-4 rounded-xl border border-border/70 bg-background p-4">
+      <div className="mb-4 space-y-1">
+        <p className="text-sm font-semibold text-foreground">Edit applicant information</p>
+        <p className="text-sm text-muted-foreground">
+          Update the saved registration details before submitting the application.
+        </p>
+      </div>
+
+      <form action={formAction} className="space-y-4">
+        <input type="hidden" name="applicantId" value={applicantId} />
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="editFirstName">First name</Label>
+            <Input id="editFirstName" name="firstName" defaultValue={firstName} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editLastName">Last name</Label>
+            <Input id="editLastName" name="lastName" defaultValue={lastName} required />
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="editMiddleInitial">Middle initial</Label>
+            <Input id="editMiddleInitial" name="middleInitial" defaultValue={middleInitial} maxLength={3} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editSex">Sex</Label>
+            <select
+              id="editSex"
+              name="sex"
+              defaultValue={applicant?.gender ?? "Male"}
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="editAge">Age</Label>
+            <Input id="editAge" name="age" type="number" min={1} max={120} defaultValue={applicant?.age ?? undefined} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editCellphoneNumber">Cellphone</Label>
+            <Input id="editCellphoneNumber" name="cellphoneNumber" defaultValue={applicant?.cellphone_number ?? ""} required />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="editAddress">Address</Label>
+          <Input id="editAddress" name="address" defaultValue={applicant?.address ?? ""} required />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="editNumberOfUsers">Number of users</Label>
+            <Input
+              id="editNumberOfUsers"
+              name="numberOfUsers"
+              type="number"
+              min={1}
+              max={100}
+              defaultValue={applicant?.number_of_users ?? undefined}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editPurposeOfSeminar">Purpose of seminar</Label>
+            <select
+              id="editPurposeOfSeminar"
+              name="purposeOfSeminar"
+              defaultValue={applicant?.purpose_of_seminar ?? "new_service"}
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="new_service">New Service</option>
+              <option value="reconnection">Reconnection</option>
+              <option value="change_name">Change Name</option>
+              <option value="others">Others</option>
+            </select>
+          </div>
+        </div>
+
+        <FormMessage state={state} />
+
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onDone}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={pending}>
+            Save applicant information
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(createApplicationAction, initialActionState);
+  const [isEditingApplicant, setIsEditingApplicant] = useState(false);
   const fieldErrors = state.fieldErrors ?? {};
   const errorText = (name: string) => fieldErrors[name]?.[0];
   const hasError = (name: string) => Boolean(errorText(name));
@@ -42,41 +190,67 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
     if (state.success && state.redirectTo) {
       router.push(state.redirectTo);
     }
-  }, [state.success, state.redirectTo, router]);
+  }, [router, state.redirectTo, state.success]);
 
-  // Parse name parts from full_name (stored as "LastName, FirstName MI")
-  const fullName = applicant?.full_name ?? "";
-  const [namePart, ...rest] = fullName.split(",");
-  const lastName = namePart?.trim() ?? "";
-  const firstAndMI = rest.join(",").trim();
-  const firstNameParts = firstAndMI.split(" ").filter(Boolean);
-  const middleInitial = firstNameParts.length > 1 ? firstNameParts[firstNameParts.length - 1].replace(".", "") : "";
-  const firstName = firstNameParts.slice(0, middleInitial ? -1 : undefined).join(" ");
+  const { firstName, lastName, middleInitial } = parseApplicantName(applicant?.full_name);
 
   return (
     <Card>
-        <CardHeader>
-          <CardTitle>Application details</CardTitle>
-          <CardDescription>
+      <CardHeader>
+        <CardTitle>Application details</CardTitle>
+        <CardDescription>
           Your registered information is pre-filled. Review the saved number of users, then complete the application.
-          </CardDescription>
-        </CardHeader>
+        </CardDescription>
+      </CardHeader>
       <CardContent className="space-y-6">
-        {/* Read-only applicant info display */}
         <div className="rounded-lg border border-border/60 bg-muted/10 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Applicant information (from registration)
-          </p>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                Applicant information (from registration)
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Review the saved details below. If anything is wrong, update it before submitting the application.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant={isEditingApplicant ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setIsEditingApplicant((current) => !current)}
+              className="h-auto min-w-[220px] justify-start rounded-xl border-primary/20 px-4 py-3 text-left shadow-sm hover:border-primary/35 hover:bg-primary/[0.06]"
+            >
+              <span className="inline-flex items-center gap-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <PencilLine className="h-4 w-4" />
+                </span>
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold text-foreground">
+                    {isEditingApplicant ? "Close editor" : "Edit applicant information"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {isEditingApplicant ? "Return to read-only view" : "Correct name, address, phone, and more"}
+                  </span>
+                </span>
+              </span>
+            </Button>
+          </div>
+
           <div className="grid gap-3 md:grid-cols-2">
             <InfoRow label="Full name" value={applicant?.full_name} />
             <InfoRow label="Sex" value={applicant?.gender} />
             <InfoRow label="Age" value={applicant?.age} />
             <InfoRow label="Cellphone" value={applicant?.cellphone_number} />
             <InfoRow label="Address" value={applicant?.address} />
+            <InfoRow label="Purpose" value={applicant?.purpose_of_seminar ? PURPOSE_LABELS[applicant.purpose_of_seminar] : null} />
+            <InfoRow label="Number of users" value={applicant?.number_of_users} />
           </div>
+
+          {isEditingApplicant ? (
+            <ApplicantEditForm applicantId={applicantId} applicant={applicant} onDone={() => setIsEditingApplicant(false)} />
+          ) : null}
         </div>
 
-        {/* Hidden fields carrying applicant data to the action */}
         <form action={formAction} className="space-y-4">
           <input type="hidden" name="applicantId" value={applicantId} />
           <input type="hidden" name="lastName" value={lastName} />
@@ -87,53 +261,55 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
           <input type="hidden" name="address" value={applicant?.address ?? ""} />
           <input type="hidden" name="cellphoneNumber" value={applicant?.cellphone_number ?? ""} />
 
-          {/* Classification */}
-          <div className="space-y-2">
-            <Label htmlFor="classification">
-              Connection classification <span className="text-destructive">*</span>
-            </Label>
-            <select
-              id="classification"
-              name="classification"
-              required
-              className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="">Select classification...</option>
-              {CLASSIFICATION_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            {hasError("classification") ? (
-              <p className="text-xs text-destructive">{errorText("classification")}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                Determines the application fee. Residential/Commercial C: ₱3,000 · Commercial A&B: ₱4,000 · Industrial/Bulk: ₱5,000
-              </p>
-            )}
-          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="classification">
+                Connection classification <span className="text-destructive">*</span>
+              </Label>
+              <select
+                id="classification"
+                name="classification"
+                required
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Select classification...</option>
+                {CLASSIFICATION_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              {hasError("classification") ? (
+                <p className="text-xs text-destructive">{errorText("classification")}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Determines the application fee. Residential/Commercial C: P3,000 · Commercial A&B: P4,000 · Industrial/Bulk: P5,000
+                </p>
+              )}
+            </div>
 
-          {/* Number of users */}
-          <div className="space-y-2">
-            <Label htmlFor="numberOfUsers">
-              Number of users <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="numberOfUsers"
-              name="numberOfUsers"
-              type="number"
-              min={1}
-              max={100}
-              defaultValue={applicant?.number_of_users ?? undefined}
-              required
-              placeholder="How many people will use this connection?"
-              aria-invalid={hasError("numberOfUsers")}
-              className={hasError("numberOfUsers") ? "border-destructive focus-visible:ring-destructive" : undefined}
-            />
-            {hasError("numberOfUsers") ? (
-              <p className="text-xs text-destructive">{errorText("numberOfUsers")}</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">Enter the total number of people who will use this water connection.</p>
-            )}
+            <div className="space-y-2">
+              <Label htmlFor="numberOfUsers">
+                Number of users <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="numberOfUsers"
+                name="numberOfUsers"
+                type="number"
+                min={1}
+                max={100}
+                defaultValue={applicant?.number_of_users ?? undefined}
+                required
+                placeholder="How many people will use this connection?"
+                aria-invalid={hasError("numberOfUsers")}
+                className={hasError("numberOfUsers") ? "border-destructive focus-visible:ring-destructive" : undefined}
+              />
+              {hasError("numberOfUsers") ? (
+                <p className="text-xs text-destructive">{errorText("numberOfUsers")}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Enter the total number of people who will use this water connection.</p>
+              )}
+            </div>
           </div>
 
           <FormMessage state={state} />

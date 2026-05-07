@@ -25,7 +25,9 @@ type SeminarItemCardProps = {
   index: number;
   completed: boolean;
   isLastPendingItem: boolean;
+  isFinalItem: boolean;
   isLocked: boolean;
+  allCompleted: boolean;
   applicantId: string;
 };
 
@@ -114,33 +116,30 @@ export function SeminarModuleList({ items, progress, applicantId }: SeminarModul
             index={index}
             completed={completed}
             isLastPendingItem={!completed && remainingCount === 1}
+            isFinalItem={index === items.length - 1}
             isLocked={isLocked}
+            allCompleted={allCompleted}
             applicantId={applicantId}
           />
         );
       })}
-      {allCompleted ? (
-        <Card className="border-0 bg-[linear-gradient(135deg,rgba(47,160,183,0.14),rgba(255,179,26,0.22))]">
-          <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-1">
-              <p className="text-lg font-semibold">Seminar finished</p>
-              <p className="text-sm text-foreground/80">
-                Your next step is to submit your application.
-              </p>
-            </div>
-            <Button asChild className="min-w-[240px]">
-              <a href={`/applicant/applications/new?applicant=${applicantId}`}>Proceed to application</a>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }
 
-function SeminarItemCard({ item, index, completed, isLastPendingItem, isLocked, applicantId }: SeminarItemCardProps) {
+function SeminarItemCard({
+  item,
+  index,
+  completed,
+  isLastPendingItem,
+  isFinalItem,
+  isLocked,
+  allCompleted,
+  applicantId
+}: SeminarItemCardProps) {
   const [state, formAction, pending] = useActionState(updateSeminarProgressAction, initialActionState);
   const justFinishedSeries = isLastPendingItem && state.success;
+  const showSeriesCompletionCTA = justFinishedSeries || (allCompleted && completed && isFinalItem);
   const statusLabel = completed ? "Completed" : isLocked ? "Locked" : "Pending";
 
   return (
@@ -155,7 +154,7 @@ function SeminarItemCard({ item, index, completed, isLastPendingItem, isLocked, 
         </span>
       </CardHeader>
       <CardContent className="space-y-5">
-        <RichTextContent value={item.description} className="text-[1.09375rem] leading-8 text-foreground/85" />
+        <RichTextContent value={item.description} className="text-[1.02rem] leading-7 text-foreground/85" />
         <SeminarMedia item={item} />
         <form action={formAction} className="flex flex-wrap items-center gap-3">
           <input type="hidden" name="applicantId" value={applicantId} />
@@ -173,14 +172,19 @@ function SeminarItemCard({ item, index, completed, isLastPendingItem, isLocked, 
             This seminar unlocks after you complete the previous seminar item.
           </p>
         ) : null}
-        {justFinishedSeries ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 p-4">
-            <p className="text-sm font-medium text-emerald-900">
-              You finished the full seminar series. Continue now to submit your application.
-            </p>
-            <Button asChild className="mt-3">
-              <a href={`/applicant/applications/new?applicant=${applicantId}`}>Proceed to application</a>
-            </Button>
+        {showSeriesCompletionCTA ? (
+          <div className="rounded-2xl border border-primary/25 bg-[linear-gradient(135deg,rgba(47,160,183,0.10),rgba(251,188,3,0.18))] p-4 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="space-y-1">
+                <p className="text-base font-semibold text-foreground">Seminar finished</p>
+                <p className="text-sm text-foreground/80">
+                  Your next step is to proceed with the application form.
+                </p>
+              </div>
+              <Button asChild className="min-w-[220px]">
+                <a href={`/applicant/applications/new?applicant=${applicantId}`}>Proceed to application</a>
+              </Button>
+            </div>
           </div>
         ) : null}
       </CardContent>
