@@ -95,6 +95,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
   const fileInputRef = useRef<HTMLInputElement>(null);
   const quillRef = useRef<QuillInstance | null>(null);
   const onChangeRef = useRef(onChange);
+  const lastEditorHtmlRef = useRef(normalizeEditorHtml(value));
 
   async function handleImageSelection(event: ChangeEvent<HTMLInputElement>) {
     const editor = quillRef.current;
@@ -142,6 +143,10 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    lastEditorHtmlRef.current = normalizeEditorHtml(value);
+  }, []);
 
   useEffect(() => {
     let isDisposed = false;
@@ -202,12 +207,15 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
         quill.clipboard.dangerouslyPasteHTML(value);
       }
 
+      lastEditorHtmlRef.current = normalizeEditorHtml(quill.root.innerHTML);
+
       textChangeHandler = () => {
         if (!quillRef.current) {
           return;
         }
 
         const nextValue = normalizeEditorHtml(quill.root.innerHTML);
+        lastEditorHtmlRef.current = nextValue;
         onChangeRef.current(nextValue);
       };
 
@@ -239,14 +247,13 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
       return;
     }
 
-    const currentHtml = normalizeEditorHtml(quill.root.innerHTML);
-
-    if (currentHtml === normalizedValue) {
+    if (lastEditorHtmlRef.current === normalizedValue) {
       return;
     }
 
     const selection = quill.getSelection();
     quill.clipboard.dangerouslyPasteHTML(normalizedValue || "");
+    lastEditorHtmlRef.current = normalizeEditorHtml(quill.root.innerHTML);
 
     if (selection) {
       quill.setSelection(selection.index, selection.length);

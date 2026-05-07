@@ -30,11 +30,66 @@ import { RichTextContent } from "@/components/ui/rich-text-content";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { getSeminarImageUrls } from "@/lib/seminar-media";
 import type { SeminarItem } from "@/types";
 
 type SeminarItemFormProps = {
   items: SeminarItem[];
 };
+
+type SortableImageCardProps = {
+  index: number;
+  onDelete: (url: string) => void;
+  pending: boolean;
+  title: string;
+  url: string;
+};
+
+function SortableImageCard({ index, onDelete, pending, title, url }: SortableImageCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: url
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`overflow-hidden rounded-lg border border-border/80 bg-background ${isDragging ? "opacity-70 ring-2 ring-primary" : ""}`}
+    >
+      <img
+        src={url}
+        alt={`${title} image ${index + 1}`}
+        className="h-32 w-full object-cover"
+      />
+      <div className="flex items-center justify-between gap-2 p-2">
+        <div
+          className="flex cursor-grab items-center gap-1 text-muted-foreground hover:text-foreground active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag to reorder image ${index + 1}`}
+          title="Drag to reorder"
+        >
+          <GripVertical className="h-4 w-4" />
+          <span className="text-xs">Image {index + 1}</span>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => onDelete(url)}
+          disabled={pending}
+        >
+          Delete
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function DeleteSeminarButton({ seminarItemId }: { seminarItemId: string }) {
   const [state, formAction, pending] = useActionState(deleteSeminarItemAction, initialActionState);
@@ -52,9 +107,12 @@ function DeleteSeminarButton({ seminarItemId }: { seminarItemId: string }) {
 
 function SeminarItemRow({ item }: { item: SeminarItem }) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const [state, formAction, pending] = useActionState(updateSeminarItemAction, initialActionState);
   const [mediaType, setMediaType] = useState<string>(item.media_type);
   const [description, setDescription] = useState<string>(item.description);
+  const imageUrls = getSeminarImageUrls(item);
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>(imageUrls);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
@@ -66,6 +124,16 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
     transition,
     zIndex: isDragging ? 10 : 1
   };
+  const imageSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (state.success) {
@@ -76,7 +144,27 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
   useEffect(() => {
     setDescription(item.description);
     setMediaType(item.media_type);
-  }, [item.description, item.media_type]);
+    setExistingImageUrls(imageUrls);
+  }, [item.description, item.media_type, item.media_url, item.media_urls]);
+
+  const handleImageDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    setExistingImageUrls((current) => {
+      const oldIndex = current.findIndex((url) => url === active.id);
+      const newIndex = current.findIndex((url) => url === over.id);
+
+      if (oldIndex === -1 || newIndex === -1) {
+        return current;
+      }
+
+      return arrayMove(current, oldIndex, newIndex);
+    });
+  };
 
   if (isEditing) {
     return (
@@ -84,6 +172,7 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
         <form action={formAction} className="grid gap-4 md:grid-cols-2">
           <input type="hidden" name="id" value={item.id} />
           {item.media_url ? <input type="hidden" name="existingMediaUrl" value={item.media_url} /> : null}
+          <input type="hidden" name="existingMediaUrls" value={JSON.stringify(existingImageUrls)} />
 
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor={`title-${item.id}`}>Title</Label>
@@ -143,18 +232,85 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
 
             {mediaType === "image" || mediaType === "pdf" ? (
               <>
-                <Label htmlFor={`mediaFile-${item.id}`}>Upload New File (Optional)</Label>
-                <Input
-                  id={`mediaFile-${item.id}`}
-                  name="mediaFile"
-                  type="file"
-                  accept={mediaType === "pdf" ? "application/pdf" : "image/*"}
-                />
-                {item.media_url && (mediaType === "image" || mediaType === "pdf") ? (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Leave blank to keep current file: <a href={item.media_url} target="_blank" rel="noreferrer" className="underline">{item.media_url.split("/").pop()}</a>
-                  </p>
-                ) : null}
+                {mediaType === "image" ? (
+                  <>
+                    <Label htmlFor={`mediaFiles-${item.id}`}>Upload New Images (Optional)</Label>
+                    <Input
+                      id={`mediaFiles-${item.id}`}
+                      name="mediaFiles"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                    />
+                    {existingImageUrls.length > 0 ? (
+                      <div className="space-y-1 text-xs text-muted-foreground mt-1">
+                        <p>Drag images to reorder them. Remove any image you no longer want, then save changes.</p>
+                        {isMounted ? (
+                          <DndContext sensors={imageSensors} collisionDetection={closestCenter} onDragEnd={handleImageDragEnd}>
+                            <SortableContext items={existingImageUrls} strategy={verticalListSortingStrategy}>
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                {existingImageUrls.map((url, index) => (
+                                  <SortableImageCard
+                                    key={url}
+                                    index={index}
+                                    onDelete={(imageUrl) => setExistingImageUrls((current) => current.filter((entry) => entry !== imageUrl))}
+                                    pending={pending}
+                                    title={item.title}
+                                    url={url}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        ) : (
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {existingImageUrls.map((url, index) => (
+                              <div key={url} className="overflow-hidden rounded-lg border border-border/80 bg-background">
+                                <img
+                                  src={url}
+                                  alt={`${item.title} image ${index + 1}`}
+                                  className="h-32 w-full object-cover"
+                                />
+                                <div className="flex items-center justify-between gap-2 p-2">
+                                  <span className="text-xs text-muted-foreground">Image {index + 1}</span>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setExistingImageUrls((current) => current.filter((entry) => entry !== url))}
+                                    disabled={pending}
+                                  >
+                                    Delete
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                    {existingImageUrls.length === 0 ? (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        No existing images will be kept. Upload new images before saving if you still want a gallery.
+                      </p>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <Label htmlFor={`mediaFile-${item.id}`}>Upload New File (Optional)</Label>
+                    <Input
+                      id={`mediaFile-${item.id}`}
+                      name="mediaFile"
+                      type="file"
+                      accept="application/pdf"
+                    />
+                    {item.media_url ? (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Leave blank to keep current file: <a href={item.media_url} target="_blank" rel="noreferrer" className="underline">{item.media_url.split("/").pop()}</a>
+                      </p>
+                    ) : null}
+                  </>
+                )}
               </>
             ) : null}
           </div>
@@ -172,6 +328,7 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
               onClick={() => {
                 setDescription(item.description);
                 setMediaType(item.media_type);
+                setExistingImageUrls(imageUrls);
                 setIsEditing(false);
               }}
               disabled={pending}
@@ -210,6 +367,11 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
           </div>
           <h3 className="text-lg font-semibold">{item.title}</h3>
           <RichTextContent value={item.description} className="max-w-3xl" />
+          {imageUrls.length > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {imageUrls.length} image{imageUrls.length > 1 ? "s" : ""} attached
+            </p>
+          ) : null}
           {item.media_url ? (
             <p className="text-xs text-muted-foreground">
               Media URL:{" "}
@@ -331,13 +493,28 @@ export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
 
             {mediaType === "image" || mediaType === "pdf" ? (
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="mediaFile">Upload File</Label>
-                <Input
-                  id="mediaFile"
-                  name="mediaFile"
-                  type="file"
-                  accept={mediaType === "pdf" ? "application/pdf" : "image/*"}
-                />
+                {mediaType === "image" ? (
+                  <>
+                    <Label htmlFor="mediaFiles">Upload Images</Label>
+                    <Input
+                      id="mediaFiles"
+                      name="mediaFiles"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Label htmlFor="mediaFile">Upload File</Label>
+                    <Input
+                      id="mediaFile"
+                      name="mediaFile"
+                      type="file"
+                      accept="application/pdf"
+                    />
+                  </>
+                )}
               </div>
             ) : null}
 

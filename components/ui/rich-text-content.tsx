@@ -36,7 +36,11 @@ export function RichTextContent({ value, className }: RichTextContentProps) {
         .rich-text-content h1,
         .rich-text-content h2,
         .rich-text-content h3 {
-          margin: 0 0 0.85rem;
+          margin: 0 0 0.55rem;
+        }
+
+        .rich-text-content p {
+          line-height: 1.45;
         }
 
         .rich-text-content ul,

@@ -154,6 +154,7 @@ export type Database = {
           description: string;
           media_type: string;
           media_url: string | null;
+          media_urls: string[] | null;
           display_order: number;
           is_active: boolean;
           created_by: string | null;
@@ -167,6 +168,7 @@ export type Database = {
           description: string;
           media_type?: string;
           media_url?: string | null;
+          media_urls?: string[] | null;
           display_order?: number;
           is_active?: boolean;
           created_by?: string | null;
@@ -180,6 +182,7 @@ export type Database = {
           description?: string;
           media_type?: string;
           media_url?: string | null;
+          media_urls?: string[] | null;
           display_order?: number;
           is_active?: boolean;
           created_by?: string | null;

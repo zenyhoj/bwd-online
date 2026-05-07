@@ -6,6 +6,53 @@ import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_h
 import { deleteSeminarItemSchema, editSeminarItemSchema, reorderSeminarItemsSchema, seminarItemSchema, seminarProgressSchema } from "@/schemas";
 import type { ActionState } from "@/types";
 
+type ActionContext = Awaited<ReturnType<typeof getActionContext>>;
+
+function isMissingMediaUrlsColumn(error: { code?: string; message?: string } | null) {
+  return (
+    error?.code === "PGRST204" &&
+    (error.message?.includes("'media_urls'") ?? false)
+  );
+}
+
+async function uploadSeminarFiles(
+  supabase: ActionContext["supabase"],
+  organizationId: string,
+  files: File[]
+) {
+  const uploadedUrls: string[] = [];
+
+  for (const file of files) {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `${organizationId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage.from("seminar-media").upload(filePath, file);
+
+    if (uploadError) {
+      throw new Error(`Failed to upload file: ${uploadError.message}`);
+    }
+
+    const { data: publicUrlData } = supabase.storage.from("seminar-media").getPublicUrl(filePath);
+    uploadedUrls.push(publicUrlData.publicUrl);
+  }
+
+  return uploadedUrls;
+}
+
+function parseExistingMediaUrls(rawValue: FormDataEntryValue | null) {
+  if (typeof rawValue !== "string" || rawValue.trim().length === 0) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawValue);
+    return Array.isArray(parsed) ? parsed.filter((url): url is string => typeof url === "string" && url.length > 0) : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function updateSeminarProgressAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   return withErrorHandling(async () => {
     const { supabase, profile } = await getActionContext();
@@ -107,7 +154,8 @@ export async function createSeminarItemAction(_prevState: ActionState, formData:
       description: formData.get("description"),
       mediaType: formData.get("mediaType"),
       mediaUrl: formData.get("mediaUrl"),
-      mediaFile: formData.get("mediaFile")
+      mediaFile: formData.get("mediaFile"),
+      mediaFiles: formData.getAll("mediaFiles")
     });
 
     if (parsed.error) {
@@ -127,32 +175,56 @@ export async function createSeminarItemAction(_prevState: ActionState, formData:
     }
 
     let finalMediaUrl = parsed.data.mediaUrl || null;
+    let finalMediaUrls: string[] | null = null;
 
-    if (parsed.data.mediaFile && parsed.data.mediaFile instanceof File && parsed.data.mediaFile.size > 0) {
-      const file = parsed.data.mediaFile;
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `${profile.organization_id}/${fileName}`;
+    if (parsed.data.mediaType === "image") {
+      const imageFiles = (parsed.data.mediaFiles ?? []).filter(
+        (file): file is File => file instanceof File && file.size > 0
+      );
 
-      const { error: uploadError } = await supabase.storage.from("seminar-media").upload(filePath, file);
-
-      if (uploadError) {
-        return { success: false, message: "Failed to upload file: " + uploadError.message };
+      if (imageFiles.length > 0) {
+        try {
+          finalMediaUrls = await uploadSeminarFiles(supabase, profile.organization_id, imageFiles);
+          finalMediaUrl = finalMediaUrls[0] ?? null;
+        } catch (error) {
+          return { success: false, message: error instanceof Error ? error.message : "Failed to upload images." };
+        }
       }
-
-      const { data: publicUrlData } = supabase.storage.from("seminar-media").getPublicUrl(filePath);
-      finalMediaUrl = publicUrlData.publicUrl;
+    } else if (parsed.data.mediaFile && parsed.data.mediaFile instanceof File && parsed.data.mediaFile.size > 0) {
+      try {
+        const [uploadedUrl] = await uploadSeminarFiles(supabase, profile.organization_id, [parsed.data.mediaFile]);
+        finalMediaUrl = uploadedUrl ?? null;
+      } catch (error) {
+        return { success: false, message: error instanceof Error ? error.message : "Failed to upload file." };
+      }
     }
 
-    const { error } = await supabase.from("seminar_items").insert({
+    const payload = {
       organization_id: profile.organization_id,
       title: parsed.data.title,
       description: parsed.data.description,
       media_type: parsed.data.mediaType,
       media_url: finalMediaUrl,
+      media_urls: parsed.data.mediaType === "image" ? finalMediaUrls : null,
       display_order: (lastItem?.display_order ?? -1) + 1,
       created_by: profile.id
-    });
+    };
+
+    let { error } = await supabase.from("seminar_items").insert(payload);
+
+    if (isMissingMediaUrlsColumn(error)) {
+      const fallbackResult = await supabase.from("seminar_items").insert({
+        organization_id: payload.organization_id,
+        title: payload.title,
+        description: payload.description,
+        media_type: payload.media_type,
+        media_url: payload.media_url,
+        display_order: payload.display_order,
+        created_by: payload.created_by
+      });
+
+      error = fallbackResult.error;
+    }
 
     if (error) {
       return { success: false, message: error.message };
@@ -211,6 +283,7 @@ export async function updateSeminarItemAction(_prevState: ActionState, formData:
       mediaType: formData.get("mediaType"),
       mediaUrl: formData.get("mediaUrl"),
       mediaFile: formData.get("mediaFile"),
+      mediaFiles: formData.getAll("mediaFiles"),
       isActive: formData.get("isActive")
     });
 
@@ -219,42 +292,69 @@ export async function updateSeminarItemAction(_prevState: ActionState, formData:
     }
 
     let finalMediaUrl = parsed.data.mediaUrl || null;
+    let finalMediaUrls: string[] | null = null;
 
-    if (parsed.data.mediaFile && parsed.data.mediaFile instanceof File && parsed.data.mediaFile.size > 0) {
-      const file = parsed.data.mediaFile;
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `${profile.organization_id}/${fileName}`;
+    if (parsed.data.mediaType === "image") {
+      const keptExistingImageUrls = parseExistingMediaUrls(formData.get("existingMediaUrls"));
+      const imageFiles = (parsed.data.mediaFiles ?? []).filter(
+        (file): file is File => file instanceof File && file.size > 0
+      );
 
-      const { error: uploadError } = await supabase.storage.from("seminar-media").upload(filePath, file);
-
-      if (uploadError) {
-        return { success: false, message: "Failed to upload file: " + uploadError.message };
+      if (imageFiles.length > 0) {
+        try {
+          const uploadedImageUrls = await uploadSeminarFiles(supabase, profile.organization_id, imageFiles);
+          finalMediaUrls = [...keptExistingImageUrls, ...uploadedImageUrls];
+          finalMediaUrl = finalMediaUrls[0] ?? null;
+        } catch (error) {
+          return { success: false, message: error instanceof Error ? error.message : "Failed to upload images." };
+        }
+      } else {
+        finalMediaUrls = keptExistingImageUrls;
+        finalMediaUrl = finalMediaUrls[0] ?? null;
       }
-
-      const { data: publicUrlData } = supabase.storage.from("seminar-media").getPublicUrl(filePath);
-      finalMediaUrl = publicUrlData.publicUrl;
+    } else if (parsed.data.mediaFile && parsed.data.mediaFile instanceof File && parsed.data.mediaFile.size > 0) {
+      try {
+        const [uploadedUrl] = await uploadSeminarFiles(supabase, profile.organization_id, [parsed.data.mediaFile]);
+        finalMediaUrl = uploadedUrl ?? null;
+      } catch (error) {
+        return { success: false, message: error instanceof Error ? error.message : "Failed to upload file." };
+      }
     } else if (!finalMediaUrl && formData.get("existingMediaUrl")) {
-      // Keep existing media URL if a new file/url wasn't provided but it was already set
-      // (Unless they explicitly cleared it and passed no new file)
-      // Actually, if mediaType is video and they cleared the URL, finalMediaUrl is null.
-      // If it's image/pdf and they didn't upload a new file, we should keep the old URL.
-      if (parsed.data.mediaType === "image" || parsed.data.mediaType === "pdf") {
+      if (parsed.data.mediaType === "pdf") {
         finalMediaUrl = formData.get("existingMediaUrl") as string;
       }
     }
 
-    const { error } = await supabase
-      .from("seminar_items")
-      .update({
+    const payload = {
         title: parsed.data.title,
         description: parsed.data.description,
         media_type: parsed.data.mediaType,
         media_url: finalMediaUrl,
+        media_urls: parsed.data.mediaType === "image" ? finalMediaUrls : null,
         is_active: parsed.data.isActive
-      })
+      };
+
+    let { error } = await supabase
+      .from("seminar_items")
+      .update(payload)
       .eq("id", parsed.data.id)
       .eq("organization_id", profile.organization_id);
+
+    if (isMissingMediaUrlsColumn(error)) {
+      const fallbackResult = await supabase
+        .from("seminar_items")
+        .update({
+          title: payload.title,
+          description: payload.description,
+          media_type: payload.media_type,
+          media_url: payload.media_url,
+          is_active: payload.is_active
+        })
+        .eq("id", parsed.data.id)
+        .eq("organization_id", profile.organization_id);
+
+      error = fallbackResult.error;
+    }
 
     if (error) {
       return { success: false, message: error.message };

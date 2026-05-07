@@ -149,6 +149,7 @@ create table public.seminar_items (
   description text not null,
   media_type text not null default 'text' check (media_type in ('text', 'image', 'video', 'pdf')),
   media_url text,
+  media_urls text[],
   display_order integer not null default 0,
   is_active boolean not null default true,
   created_by uuid references public.profiles (id) on delete set null,

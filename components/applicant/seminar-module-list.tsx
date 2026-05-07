@@ -10,6 +10,7 @@ import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RichTextContent } from "@/components/ui/rich-text-content";
+import { getSeminarImageUrls } from "@/lib/seminar-media";
 import { cn } from "@/lib/utils";
 import type { ApplicantSeminarProgress, SeminarItem } from "@/types";
 
@@ -29,13 +30,30 @@ type SeminarItemCardProps = {
 };
 
 function SeminarMedia({ item }: { item: SeminarItem }) {
-  if (item.media_type === "image" && item.media_url) {
+  const imageUrls = getSeminarImageUrls(item);
+
+  if (imageUrls.length === 1) {
     return (
       <img
-        src={item.media_url}
+        src={imageUrls[0]}
         alt={item.title}
         className="w-full h-auto rounded-xl ring-1 ring-border/80"
       />
+    );
+  }
+
+  if (imageUrls.length > 1) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2">
+        {imageUrls.map((url, index) => (
+          <img
+            key={`${item.id}-${index}`}
+            src={url}
+            alt={`${item.title} image ${index + 1}`}
+            className="h-auto w-full rounded-xl ring-1 ring-border/80"
+          />
+        ))}
+      </div>
     );
   }
 

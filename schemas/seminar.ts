@@ -18,7 +18,8 @@ export const seminarItemSchema = z.object({
   ),
   mediaType: z.enum(["text", "image", "video", "pdf"]),
   mediaUrl: z.string().url().optional().or(z.literal("")).or(z.null()),
-  mediaFile: z.any().optional() // Using z.any() because File is tricky to validate directly on the server without custom logic sometimes, though z.instanceof(File) works in newer Zod
+  mediaFile: z.any().optional(),
+  mediaFiles: z.array(z.any()).optional()
 });
 
 export const deleteSeminarItemSchema = z.object({
