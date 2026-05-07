@@ -144,7 +144,7 @@ function SeminarItemCard({ item, index, completed, isLastPendingItem, isLocked, 
   const statusLabel = completed ? "Completed" : isLocked ? "Locked" : "Pending";
 
   return (
-    <Card className={cn(isLocked && "border-dashed border-muted-foreground/40 bg-muted/30 opacity-75")}>
+    <Card className={cn(isLocked && "border-dashed border-muted-foreground/40 bg-muted/20")}>
       <CardHeader className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Seminar {index + 1}</p>
@@ -155,7 +155,7 @@ function SeminarItemCard({ item, index, completed, isLastPendingItem, isLocked, 
         </span>
       </CardHeader>
       <CardContent className="space-y-5">
-        <RichTextContent value={item.description} />
+        <RichTextContent value={item.description} className="text-[1.09375rem] leading-8 text-foreground/85" />
         <SeminarMedia item={item} />
         <form action={formAction} className="flex flex-wrap items-center gap-3">
           <input type="hidden" name="applicantId" value={applicantId} />

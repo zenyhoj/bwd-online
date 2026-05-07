@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { applicationStatusSchema } from "@/schemas";
+import type { ConcessionaireClassification } from "@/lib/fee-schedule";
 import type { ActionState } from "@/types";
 
 export async function createApplicationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -81,7 +82,7 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       seminar_completed: true,
       status: "submitted",
       submitted_at: new Date().toISOString(),
-      concessionaire_classification: classification as "residential_commercial_c" | "commercial_a_b" | "commercial_industrial_bulk"
+      concessionaire_classification: classification as ConcessionaireClassification
     });
 
     if (error) {

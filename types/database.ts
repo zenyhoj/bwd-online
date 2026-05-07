@@ -274,8 +274,9 @@ export type Database = {
           gender: string;
           age: number;
           address: string;
-          number_of_users: number;
-          inhouse_installation_scheduled_at: string | null;
+            number_of_users: number;
+            concessionaire_classification: Database["public"]["Enums"]["concessionaire_classification"] | null;
+            inhouse_installation_scheduled_at: string | null;
           inhouse_installation_scheduled_by: string | null;
           inhouse_installation_completed: boolean;
           inhouse_installation_completed_at: string | null;
@@ -299,8 +300,9 @@ export type Database = {
           gender: string;
           age: number;
           address: string;
-          number_of_users: number;
-          inhouse_installation_scheduled_at?: string | null;
+            number_of_users: number;
+            concessionaire_classification?: Database["public"]["Enums"]["concessionaire_classification"] | null;
+            inhouse_installation_scheduled_at?: string | null;
           inhouse_installation_scheduled_by?: string | null;
           inhouse_installation_completed?: boolean;
           inhouse_installation_completed_at?: string | null;
@@ -324,8 +326,9 @@ export type Database = {
           gender?: string;
           age?: number;
           address?: string;
-          number_of_users?: number;
-          inhouse_installation_scheduled_at?: string | null;
+            number_of_users?: number;
+            concessionaire_classification?: Database["public"]["Enums"]["concessionaire_classification"] | null;
+            inhouse_installation_scheduled_at?: string | null;
           inhouse_installation_scheduled_by?: string | null;
           inhouse_installation_completed?: boolean;
           inhouse_installation_completed_at?: string | null;
@@ -874,6 +877,20 @@ export type Database = {
     Functions: Record<string, never>;
     Enums: {
       app_role: "applicant" | "admin" | "inspector";
+      concessionaire_classification:
+        | "residential"
+        | "commercial_c"
+        | "industrial"
+        | "commercial_b"
+        | "commercial_c_1"
+        | "commercial"
+        | "commercial_a"
+        | "government"
+        | "special"
+        | "bulksale"
+        | "unbilled"
+        | "special_2"
+        | "government_2";
       customer_type: "residential" | "commercial" | "government" | "industrial" | "others";
       application_service_type: "new_connection" | "reconnection";
       application_status:

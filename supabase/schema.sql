@@ -8,6 +8,21 @@ create extension if not exists "pgcrypto";
 
 create type public.app_role as enum ('applicant', 'admin', 'inspector');
 create type public.customer_type as enum ('residential', 'commercial', 'government', 'industrial', 'others');
+create type public.concessionaire_classification as enum (
+  'residential',
+  'commercial_c',
+  'industrial',
+  'commercial_b',
+  'commercial_c_1',
+  'commercial',
+  'commercial_a',
+  'government',
+  'special',
+  'bulksale',
+  'unbilled',
+  'special_2',
+  'government_2'
+);
 create type public.application_service_type as enum ('new_connection', 'reconnection');
 create type public.application_status as enum (
   'draft',
@@ -129,6 +144,7 @@ create table public.applications (
   age integer not null check (age > 0),
   address text not null,
   number_of_users integer not null check (number_of_users > 0),
+  concessionaire_classification public.concessionaire_classification,
   inhouse_installation_scheduled_at timestamptz,
   inhouse_installation_scheduled_by uuid references public.profiles (id) on delete set null,
   inhouse_installation_completed boolean not null default false,
