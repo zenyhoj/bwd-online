@@ -218,14 +218,17 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
   const readyForInspection = applications.data.filter((item) => {
     const inspections = ((item.inspections as { id?: string }[] | undefined) ?? []);
-    return inspections.length === 0;
+    const inhousePlumbingCompleted = Boolean(item.inhouse_installation_completed);
+    return inhousePlumbingCompleted && inspections.length === 0;
   }).length;
   const readyForPayment = applications.data.filter((item) => {
     const inspections = ((item.inspections as { status?: string }[] | undefined) ?? []);
     const payments = ((item.payments as { id: string }[] | undefined) ?? []).length;
     return inspections.some((inspection) => inspection.status === "approved") && payments === 0;
   }).length;
-  const readyForConversionEffective = applications.data.filter((item) => getEffectiveApplicationStatus(item as Record<string, unknown>) === "approved").length;
+  const readyForConversionEffective = applications.data.filter(
+    (item) => queueStage(item as Record<string, unknown>) === "for-conversion"
+  ).length;
   const workflowStages = [
     {
       key: "for-inhouse-plumbing",
@@ -248,9 +251,19 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       description: "Applicants with approved inspections waiting for office payment scheduling."
     },
     {
+      key: "for-water-meter-schedule",
+      title: "For water meter scheduling",
+      description: "Applicants with paid fees waiting for water meter installation scheduling."
+    },
+    {
+      key: "for-water-meter-complete",
+      title: "For water meter completion",
+      description: "Applicants with scheduled water meter installations awaiting completion."
+    },
+    {
       key: "for-conversion",
       title: "For conversion",
-      description: "Applicants ready for final conversion."
+      description: "Applicants with completed workflow steps ready for final conversion."
     },
     {
       key: "completed",

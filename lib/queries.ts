@@ -241,6 +241,8 @@ export async function getAdminApplicationsQueue(
           const hasApprovedInspection = inspections.some((inspection) => inspection.status === "approved");
           const hasScheduledInspection = inspections.length > 0;
           const installationComplete = Boolean(record.inhouse_installation_completed);
+          const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
+          const waterMeterInstalled = Boolean(record.water_meter_installed_at);
           const effectiveStatus =
             converted || status === "converted"
               ? "converted"
@@ -251,15 +253,19 @@ export async function getAdminApplicationsQueue(
           let stage = "under-review";
           if (effectiveStatus === "converted") {
             stage = "completed";
+          } else if (!installationComplete) {
+            stage = "for-inhouse-plumbing";
           } else if (!hasScheduledInspection) {
             stage = "for-inspection";
           } else if (!hasApprovedInspection) {
             stage = "under-review";
-          } else if (payments.length === 0) {
+          } else if (payments.length === 0 || latestPayment?.status !== "paid") {
             stage = "for-payment";
-          } else if (!installationComplete) {
-            stage = "for-installation";
-          } else if (effectiveStatus === "approved") {
+          } else if (!waterMeterScheduled) {
+            stage = "for-water-meter-schedule";
+          } else if (!waterMeterInstalled) {
+            stage = "for-water-meter-complete";
+          } else {
             stage = "for-conversion";
           }
 
