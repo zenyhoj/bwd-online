@@ -46,7 +46,20 @@ create type public.inspection_status as enum (
 create type public.document_type as enum (
   'tax_declaration_title',
   'authorization_letter',
-  'water_permit'
+  'water_permit',
+  'valid_id',
+  'authorized_representative',
+  'proof_of_ownership',
+  'owner_valid_id',
+  'representative_authorization_letter',
+  'representative_valid_id',
+  'organization_spa',
+  'lot_title',
+  'tax_declaration',
+  'deed_of_sale',
+  'lot_owner_authorization',
+  'lot_owner_valid_id',
+  'water_permit_receipt'
 );
 create type public.document_status as enum ('pending', 'verified', 'rejected');
 create type public.payment_status as enum ('scheduled', 'paid', 'overdue', 'cancelled');

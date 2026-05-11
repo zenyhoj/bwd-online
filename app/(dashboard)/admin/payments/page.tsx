@@ -51,7 +51,7 @@ export default async function AdminPaymentsPage() {
     return (
       existingPayments === 0 &&
       inspections.some((inspection) => inspection.status === "approved") &&
-      areDocumentsReadyForPayment(application, documents)
+      areDocumentsReadyForPayment(application)
     );
   });
 

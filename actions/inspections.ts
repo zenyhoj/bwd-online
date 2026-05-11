@@ -11,10 +11,6 @@ function isPastDateTime(value: string) {
   return toManilaDate(value).getTime() < Date.now();
 }
 
-function toDateOnlyISOString(value: string) {
-  return new Date(`${value}T00:00:00.000Z`).toISOString();
-}
-
 function toManilaDate(value: string) {
   const normalized = value.length === 16 ? `${value}:00+08:00` : `${value}+08:00`;
   return new Date(normalized);
@@ -186,7 +182,7 @@ export async function rescheduleInspectionAction(_prevState: ActionState, formDa
 
     const { data: inspection, error: fetchError } = await supabase
       .from("inspections")
-      .select("application_id")
+      .select("application_id, scheduled_at")
       .eq("id", parsed.data.inspectionId)
       .single();
 
@@ -249,6 +245,20 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
       return { success: false, message: fetchError?.message ?? "Inspection not found." };
     }
 
+    const scheduledAt = (inspection as { scheduled_at?: string | null }).scheduled_at;
+
+    if (scheduledAt) {
+      const inspectedAtTime = toManilaDate(parsed.data.inspectedAt).getTime();
+      const scheduledAtTime = new Date(scheduledAt).getTime();
+
+      if (inspectedAtTime < scheduledAtTime) {
+        return {
+          success: false,
+          message: "Actual inspection date and time cannot be earlier than the scheduled inspection date and time."
+        };
+      }
+    }
+
     const { data: application, error: applicationError } = await supabase
       .from("applications")
       .select("accredited_plumber_id, accredited_plumbers(full_name)")
@@ -281,7 +291,7 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
         reference_account_number: parsed.data.referenceAccountNumber,
         reference_account_name: parsed.data.referenceAccountName,
         account_number: parsed.data.accountNumber,
-        inspected_at: toDateOnlyISOString(parsed.data.inspectedAt)
+        inspected_at: toManilaISOString(parsed.data.inspectedAt)
       })
       .eq("id", parsed.data.inspectionId);
 

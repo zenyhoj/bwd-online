@@ -17,7 +17,6 @@ export function DocumentSubmissionPreferenceForm({
   submissionMode
 }: DocumentSubmissionPreferenceFormProps) {
   const [state, officeAction, officePending] = useActionState(setDocumentSubmissionModeAction, initialActionState);
-  const [, onlineAction, onlinePending] = useActionState(setDocumentSubmissionModeAction, initialActionState);
 
   return (
     <div className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-4">
@@ -29,27 +28,36 @@ export function DocumentSubmissionPreferenceForm({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <form action={officeAction}>
-          <input type="hidden" name="applicationId" value={applicationId} />
-          <input type="hidden" name="submissionMode" value="office" />
-          <Button type="submit" variant={submissionMode === "office" ? "secondary" : "outline"} disabled={officePending}>
-            Bring documents to office
-          </Button>
-        </form>
-        <form action={onlineAction}>
-          <input type="hidden" name="applicationId" value={applicationId} />
-          <input type="hidden" name="submissionMode" value="online" />
-          <Button type="submit" variant={submissionMode === "online" ? "secondary" : "outline"} disabled={onlinePending}>
-            Continue online upload
-          </Button>
-        </form>
+        {submissionMode !== "office" ? (
+          <form action={officeAction}>
+            <input type="hidden" name="applicationId" value={applicationId} />
+            <input type="hidden" name="submissionMode" value="office" />
+            <Button type="submit" variant="outline" disabled={officePending}>
+              Bring documents to office
+            </Button>
+          </form>
+        ) : null}
+
+        {submissionMode === "office" ? (
+          <form action={officeAction}>
+            <input type="hidden" name="applicationId" value={applicationId} />
+            <input type="hidden" name="submissionMode" value="online" />
+            <Button type="submit" variant="outline" disabled={officePending}>
+              Switch back to online upload
+            </Button>
+          </form>
+        ) : null}
       </div>
 
       {submissionMode === "office" ? (
         <p className="text-sm text-muted-foreground">
           BWD has been informed that you will bring the documentary requirements to the office.
         </p>
-      ) : null}
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Online upload is the default. Use this option only if you need to submit the documents at the office.
+        </p>
+      )}
 
       <FormMessage state={state} />
     </div>

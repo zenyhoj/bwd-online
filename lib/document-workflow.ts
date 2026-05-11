@@ -1,14 +1,15 @@
-import { documentTypeLabels } from "@/lib/constants";
-import type { Application, Document, DocumentStatus, DocumentType } from "@/types";
+import { applicationDocumentTypes, documentTypeLabels } from "@/lib/constants";
+import type { Application, Document, DocumentStatus } from "@/types";
+import type { ApplicationDocumentType } from "@/lib/constants";
 
-export const requiredDocumentTypes = Object.keys(documentTypeLabels) as DocumentType[];
+export const requiredDocumentTypes = applicationDocumentTypes;
 
 type ApplicationDocumentWorkflowInput = Partial<
-  Pick<Application, "document_submission_mode" | "document_review_note">
+  Pick<Application, "document_submission_mode" | "document_review_note" | "status">
 > | null | undefined;
 
 export type DocumentRequirementRow = {
-  type: DocumentType;
+  type: ApplicationDocumentType;
   label: string;
   document: Document | null;
   status: DocumentStatus | "missing";
@@ -37,10 +38,17 @@ export function isOfficeDocumentSubmission(application: ApplicationDocumentWorkf
   return application?.document_submission_mode === "office";
 }
 
-export function areDocumentsReadyForPayment(application: ApplicationDocumentWorkflowInput, documents: Document[]) {
+export function areDocumentsReadyForPayment(application: ApplicationDocumentWorkflowInput) {
   if (isOfficeDocumentSubmission(application)) {
     return true;
   }
 
-  return getDocumentRequirementRows(documents).every((row) => row.status === "verified");
+  const readyStatuses = [
+    "documents_verified",
+    "payment_scheduled",
+    "approved",
+    "converted"
+  ];
+
+  return application?.status ? readyStatuses.includes(application.status) : false;
 }

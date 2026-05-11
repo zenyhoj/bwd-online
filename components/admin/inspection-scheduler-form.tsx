@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CalendarClock, UserRound } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 
 import { rescheduleInspectionAction, scheduleInspectionAction } from "@/actions/inspections";
@@ -97,26 +98,38 @@ export function InspectionSchedulerForm({
           </div>
         </CardHeader>
         <CardContent className="space-y-6 p-4 sm:p-6">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Inspector</p>
-              <p className="mt-2 text-xl font-semibold leading-snug">{existingInspection.inspector_name ?? "-"}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Scheduled at</p>
-              <p className="mt-2 text-xl font-semibold leading-snug">{formatDateTime(existingInspection.scheduled_at ?? null)}</p>
-            </div>
-            <div className="rounded-2xl border border-border/70 bg-background p-4 shadow-sm sm:col-span-2 xl:col-span-1">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Status</p>
-              <div className="mt-3">
+          <div className="rounded-xl border border-border/70 bg-background shadow-sm">
+            <div className="divide-y divide-border/70">
+              <div className="flex min-w-0 items-start gap-3 p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <UserRound className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Inspector</p>
+                  <p className="mt-1 text-base font-semibold leading-6">{existingInspection.inspector_name ?? "-"}</p>
+                </div>
+              </div>
+
+              <div className="flex min-w-0 items-start gap-3 p-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <CalendarClock className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Schedule</p>
+                  <p className="mt-1 text-base font-semibold leading-6">{formatDateTime(existingInspection.scheduled_at ?? null)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 bg-muted/20 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Current status</p>
                 <StatusBadge status={existingInspection.status ?? "scheduled"} />
               </div>
             </div>
           </div>
 
           {existingInspection.status !== "approved" ? (
-            <div className="space-y-4 rounded-2xl border border-primary/20 bg-primary/[0.04] p-4 sm:p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/[0.04] p-4 sm:p-5">
+              <div className="space-y-4">
                 <div>
                   <p className="text-base font-semibold">Need to change the appointment?</p>
                   <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -126,7 +139,7 @@ export function InspectionSchedulerForm({
                 <Button
                   type="button"
                   variant={showReschedule ? "secondary" : "outline"}
-                  className="w-full lg:w-auto"
+                  className="w-full"
                   onClick={() => setShowReschedule((value) => !value)}
                 >
                   {showReschedule ? "Hide form" : "Reschedule"}

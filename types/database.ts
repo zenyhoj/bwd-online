@@ -920,7 +920,23 @@ export type Database = {
         | "rejected"
         | "converted";
       inspection_status: "scheduled" | "in_progress" | "approved" | "rejected" | "rescheduled";
-      document_type: "tax_declaration_title" | "authorization_letter" | "water_permit";
+      document_type:
+        | "tax_declaration_title"
+        | "authorization_letter"
+        | "water_permit"
+        | "valid_id"
+        | "authorized_representative"
+        | "proof_of_ownership"
+        | "owner_valid_id"
+        | "representative_authorization_letter"
+        | "representative_valid_id"
+        | "organization_spa"
+        | "lot_title"
+        | "tax_declaration"
+        | "deed_of_sale"
+        | "lot_owner_authorization"
+        | "lot_owner_valid_id"
+        | "water_permit_receipt";
       document_status: "pending" | "verified" | "rejected";
       payment_status: "scheduled" | "paid" | "overdue" | "cancelled";
       payment_type: "inspection_fee" | "connection_fee" | "materials" | "other";

@@ -15,7 +15,7 @@ export const inspectionUpdateSchema = z.object({
   inspectionId: z.string().uuid(),
   status: z.enum(["in_progress", "approved", "rejected", "rescheduled"]),
   plumbingApproved: z.boolean(),
-  inspectedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  inspectedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/),
   remarks: z.string().min(5),
   materialList: z.string().trim().min(3),
   latitude: z.coerce.number().min(-90).max(90),

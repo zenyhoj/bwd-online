@@ -11,7 +11,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { getAccreditedPlumbers, getApplicants, getApplicantApplications, getApplicantSeminarState } from "@/lib/queries";
 
 function getScheduledInspectionDate(application: {
-  inspections?: { scheduled_at?: string | null; inspected_at?: string | null }[];
+  inspections?: { scheduled_at?: string | null; inspected_at?: string | null; status?: string | null }[];
 }) {
   const scheduledDates =
     (application.inspections ?? [])
@@ -20,6 +20,12 @@ function getScheduledInspectionDate(application: {
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
   return scheduledDates[0] ?? null;
+}
+
+function hasApprovedInspection(application: {
+  inspections?: { status?: string | null }[];
+}) {
+  return application.inspections?.some((inspection) => inspection.status === "approved") ?? false;
 }
 
 function getLatestPayment(application: {
@@ -84,6 +90,7 @@ function getPrimaryAction({
   hasApplication,
   hasPayment,
   inhouseCompleted,
+  inspectionApproved,
   documentsReady,
   selectedApplicantId,
   selectedApplicationId
@@ -92,6 +99,7 @@ function getPrimaryAction({
   hasApplication: boolean;
   hasPayment: boolean;
   inhouseCompleted: boolean;
+  inspectionApproved: boolean;
   documentsReady: boolean;
   selectedApplicantId?: string | null;
   selectedApplicationId?: string | null;
@@ -130,6 +138,13 @@ function getPrimaryAction({
         ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}#inhouse-installation`
         : "/applicant#inhouse-installation",
       label: "Complete inhouse plumbing"
+    };
+  }
+
+  if (!inspectionApproved) {
+    return {
+      href: selectedApplicationId ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}` : "/applicant",
+      label: "View inspection status"
     };
   }
 
@@ -174,7 +189,11 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const latestPayment = selectedApplication ? getLatestPayment(selectedApplication) : null;
   const effectiveWorkflowStatus = selectedApplication ? getEffectiveWorkflowStatus(selectedApplication) : null;
   const latestInspectionSchedule = selectedApplication ? getScheduledInspectionDate(selectedApplication) : null;
-  const documentsReady = selectedApplication ? areDocumentsReadyForPayment(selectedApplication, selectedApplication.documents ?? []) : false;
+  const inspectionApproved = selectedApplication ? hasApprovedInspection(selectedApplication) : false;
+  const documentsReady =
+    selectedApplication && inspectionApproved
+      ? areDocumentsReadyForPayment(selectedApplication)
+      : false;
   const inhouseCompleted = Boolean(selectedApplication?.inhouse_installation_completed);
   const onlineSeminarCompletedAt =
     seminarState.allCompleted
@@ -193,6 +212,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
     hasApplication: Boolean(selectedApplication),
     hasPayment: Boolean(latestPayment),
     inhouseCompleted,
+    inspectionApproved,
     documentsReady,
     selectedApplicantId: selectedApplicant?.id,
     selectedApplicationId: selectedApplication?.id
@@ -264,11 +284,20 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           ) : null}
 
-          {selectedApplication && !latestPayment && inhouseCompleted && !documentsReady ? (
+          {selectedApplication && !latestPayment && inhouseCompleted && !inspectionApproved ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+              <p className="font-medium text-primary">Next step: wait for inspection approval</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Document upload opens after the in-house inspection is approved.
+              </p>
+            </div>
+          ) : null}
+
+          {selectedApplication && !latestPayment && inhouseCompleted && inspectionApproved && !documentsReady ? (
             <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
               <p className="font-medium text-primary">Next step: upload documents</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your inhouse plumbing is already complete. Upload the required documents next, or inform BWD that you will bring them to the office before payment can be scheduled.
+                Your inspection is approved. Upload the required documents next, or inform BWD that you will bring them to the office before payment can be scheduled.
               </p>
             </div>
           ) : null}

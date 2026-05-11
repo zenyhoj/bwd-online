@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { CheckCircle2, ClipboardList, CreditCard, Wrench } from "lucide-react";
+import { CalendarClock, CheckCircle2, ClipboardList, CreditCard, Wrench } from "lucide-react";
 
 import { WaterMeterSchedulerForm } from "@/components/admin/water-meter-scheduler-form";
 import { WaterMeterCompletionForm } from "@/components/admin/water-meter-completion-form";
-import { DocumentReviewForm } from "@/components/admin/document-review-form";
-import { DocumentWorkflowNoteForm } from "@/components/admin/document-workflow-note-form";
+import { DocumentVerificationPanel } from "@/components/admin/document-verification-panel";
 import { InspectionSchedulerForm } from "@/components/admin/inspection-scheduler-form";
 import { InstallationSchedulerForm } from "@/components/admin/installation-scheduler-form";
 import { PaymentSchedulerForm } from "@/components/admin/payment-scheduler-form";
@@ -16,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
-import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
+import { areDocumentsReadyForPayment, getDocumentRequirementRows } from "@/lib/document-workflow";
 import { parsePagination } from "@/lib/pagination";
 import {
   getAccreditedPlumbers,
@@ -99,7 +98,7 @@ function nextAction(record: Record<string, unknown>) {
   const hasScheduledInspection = inspections.length > 0;
   const inhousePlumbingComplete = Boolean(record.inhouse_installation_completed);
   const documents = ((record.documents as Document[] | undefined) ?? []);
-  const documentsReady = areDocumentsReadyForPayment(record as never, documents);
+  const documentsReady = areDocumentsReadyForPayment(record as never);
   const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
 
@@ -132,7 +131,7 @@ function queueStage(record: Record<string, unknown>) {
   const hasScheduledInspection = inspections.length > 0;
   const inhousePlumbingComplete = Boolean(record.inhouse_installation_completed);
   const documents = ((record.documents as Document[] | undefined) ?? []);
-  const documentsReady = areDocumentsReadyForPayment(record as never, documents);
+  const documentsReady = areDocumentsReadyForPayment(record as never);
   const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
 
@@ -212,8 +211,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const q = getStringParam(resolvedSearchParams, "q") ?? "";
   const workflow = getStringParam(resolvedSearchParams, "workflow") ?? "all";
 
-  const [applications, inspectors, plumbers] = await Promise.all([
+  const [applications, priorityApplications, inspectors, plumbers] = await Promise.all([
     getAdminApplicationsQueue(pagination, { q, workflow }),
+    getAdminApplicationsQueue({ page: 1, pageSize: 1000 }, { q, workflow: "all" }),
     getOrganizationInspectors(),
     getAccreditedPlumbers()
   ]);
@@ -228,18 +228,23 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const noQueueResults = applications.data.length === 0;
   const hasMatchesInOtherStages = Boolean(searchMatchesAcrossAllStages && searchMatchesAcrossAllStages.count > 0);
 
-  const readyForInspection = applications.data.filter((item) => {
+  const priorityRecords = priorityApplications.data as Record<string, unknown>[];
+  const readyForInspection = priorityRecords.filter((item) => {
     const inspections = ((item.inspections as { id?: string }[] | undefined) ?? []);
     const inhousePlumbingCompleted = Boolean(item.inhouse_installation_completed);
     return inhousePlumbingCompleted && inspections.length === 0;
   }).length;
-  const readyForPayment = applications.data.filter((item) => {
+  const awaitingInspectionResult = priorityRecords.filter((item) => {
+    const inspections = ((item.inspections as { status?: string }[] | undefined) ?? []);
+    return inspections.some((inspection) => inspection.status !== "approved" && inspection.status !== "rejected");
+  }).length;
+  const readyForPayment = priorityRecords.filter((item) => {
     const inspections = ((item.inspections as { status?: string }[] | undefined) ?? []);
     const payments = ((item.payments as { id: string }[] | undefined) ?? []).length;
     const documents = ((item.documents as Document[] | undefined) ?? []);
-    return inspections.some((inspection) => inspection.status === "approved") && areDocumentsReadyForPayment(item as never, documents) && payments === 0;
+    return inspections.some((inspection) => inspection.status === "approved") && areDocumentsReadyForPayment(item as never) && payments === 0;
   }).length;
-  const readyForConversionEffective = applications.data.filter(
+  const readyForConversionEffective = priorityRecords.filter(
     (item) => queueStage(item as Record<string, unknown>) === "for-conversion"
   ).length;
   const workflowStages = [
@@ -292,6 +297,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
 
   const selectedDocuments = ((selectedApplication?.documents as Document[] | undefined) ?? []);
+  const selectedDocumentRequirements = getDocumentRequirementRows(selectedDocuments);
   const selectedPayments = ((selectedApplication?.payments as Payment[] | undefined) ?? []);
   const latestSelectedPayment = selectedPayments[0] ?? null;
   const canScheduleInstallation = latestSelectedPayment?.status === "paid";
@@ -312,10 +318,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const canSchedulePayment = selectedInspections.some(
     (inspection) => inspection.status === "approved"
   );
-  const documentsReadyForPayment = areDocumentsReadyForPayment(
-    selectedApplication as never,
-    selectedDocuments
-  );
+  const documentsReadyForPayment = areDocumentsReadyForPayment(selectedApplication as never);
   const canMarkInstallationComplete =
     Boolean(selectedApplication) && selectedApplicationStatus !== "converted";
   const inspectionWorkflowComplete = canSchedulePayment;
@@ -358,7 +361,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
@@ -377,12 +380,26 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Ready for inspection</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Need schedule</p>
                 <p className="mt-1 text-3xl font-bold">{readyForInspection}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">need scheduling</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">inspection appointments</p>
               </div>
               <div className="rounded-xl bg-primary/10 p-3">
                 <Wrench className="h-6 w-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Awaiting result</p>
+                <p className="mt-1 text-3xl font-bold">{awaitingInspectionResult}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">scheduled inspections</p>
+              </div>
+              <div className="rounded-xl bg-amber-500/10 p-3">
+                <CalendarClock className="h-6 w-6 text-amber-500" />
               </div>
             </div>
           </CardContent>
@@ -465,6 +482,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                   <TableRow>
                     <TableHead>Applicant</TableHead>
                     <TableHead>Stage</TableHead>
+                    <TableHead>Next action</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Submitted</TableHead>
                     <TableHead></TableHead>
@@ -498,6 +516,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                           <span className="inline-block rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium whitespace-nowrap">
                             {queueStageLabel(recordStage)}
                           </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-medium">{nextAction(record)}</span>
                         </TableCell>
                         <TableCell>
                           <StatusBadge status={getEffectiveApplicationStatus(record)} />
@@ -715,13 +736,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                             classification={(selectedApplication as Record<string, unknown>).concessionaire_classification as string | null}
                           />
                         )}
-                        {activeAction === "documents" && (
-                          <DocumentWorkflowNoteForm
-                            applicationId={String(selectedApplication.id)}
-                            reviewNote={(selectedApplication.document_review_note as string | null | undefined) ?? null}
-                            submissionMode={(selectedApplication.document_submission_mode as string | null | undefined) ?? "online"}
-                          />
-                        )}
+                        {activeAction === "documents" && null}
                         {activeAction === "mark-installation" && (
                           <InhouseInstallationForm
                             applicationId={String(selectedApplication.id)}
@@ -757,10 +772,15 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-4">Document verification</p>
                   <div className="space-y-4">
                     {selectedDocuments.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No uploaded documents yet.</p>
-                    ) : (
-                      selectedDocuments.map((document) => <DocumentReviewForm key={document.id} document={document} />)
-                    )}
+                      <p className="text-sm text-muted-foreground">
+                        No uploaded documents yet. Use the note form above to list lacking documents for the applicant.
+                      </p>
+                    ) : null}
+                    <DocumentVerificationPanel 
+                      applicationId={String(selectedApplication.id)}
+                      applicationStatus={String(selectedApplication.status)}
+                      requirements={selectedDocumentRequirements} 
+                    />
                   </div>
                 </div>
               </CardContent>

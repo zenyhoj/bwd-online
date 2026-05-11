@@ -111,19 +111,19 @@ export function PaymentSchedulerForm({
         </p>
       </div>
 
-      <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+      <form action={formAction} className="flex flex-col gap-5">
         {payment ? <input type="hidden" name="paymentId" value={payment.id} /> : null}
         {!payment ? <input type="hidden" name="applicationId" value={applicationId} /> : null}
 
         {payment ? (
-          <>
+          <div className="space-y-5">
             {/* Action Selector */}
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2">
               <Label htmlFor={`mode-${payment.id}`}>Action</Label>
               <select
                 id={`mode-${payment.id}`}
                 name="status"
-                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 value={mode}
                 onChange={(e) => setMode(e.target.value as "scheduled" | "paid")}
               >
@@ -133,10 +133,10 @@ export function PaymentSchedulerForm({
             </div>
 
             {mode === "paid" ? (
-              <>
+              <div className="grid gap-5 sm:grid-cols-2">
                 {/* Official receipt amount */}
                 <div className="space-y-2">
-                  <Label htmlFor={`amount-${payment.id}`}>Official receipt amount</Label>
+                  <Label htmlFor={`amount-${payment.id}`}>Receipt amount</Label>
                   <Input
                     id={`amount-${payment.id}`}
                     name="amount"
@@ -152,12 +152,12 @@ export function PaymentSchedulerForm({
 
                 {/* Official receipt no. */}
                 <div className="space-y-2">
-                  <Label htmlFor={`or-${payment.id}`}>Official receipt no.</Label>
+                  <Label htmlFor={`or-${payment.id}`}>Receipt number</Label>
                   <Input
                     id={`or-${payment.id}`}
                     name="officialReceiptNumber"
                     defaultValue={payment.official_receipt_number ?? ""}
-                    placeholder="Enter official receipt number"
+                    placeholder="E.g. 123456"
                     className="h-11"
                   />
                 </div>
@@ -180,32 +180,29 @@ export function PaymentSchedulerForm({
                     className="h-11"
                   />
                 </div>
-              </>
+              </div>
             ) : (
-              <>
-                {/* Reschedule: Office payment date and time */}
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor={`officePaymentAt-${payment.id}`}>New office payment date and time</Label>
-                  <Input
-                    id={`officePaymentAt-${payment.id}`}
-                    name="officePaymentAt"
-                    type="datetime-local"
-                    min={minOfficePaymentAt || undefined}
-                    defaultValue={
-                      payment.office_payment_at
-                        ? new Date(new Date(payment.office_payment_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-                        : minOfficePaymentAt
-                    }
-                    required
-                    className="h-11"
-                  />
-                </div>
-              </>
+              <div className="space-y-2">
+                <Label htmlFor={`officePaymentAt-${payment.id}`}>New office payment date and time</Label>
+                <Input
+                  id={`officePaymentAt-${payment.id}`}
+                  name="officePaymentAt"
+                  type="datetime-local"
+                  min={minOfficePaymentAt || undefined}
+                  defaultValue={
+                    payment.office_payment_at
+                      ? new Date(new Date(payment.office_payment_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                      : minOfficePaymentAt
+                  }
+                  required
+                  className="h-11"
+                />
+              </div>
             )}
-          </>
+          </div>
         ) : (
-          <>
-            <div className="space-y-2 sm:col-span-2">
+          <div className="grid gap-5">
+            <div className="space-y-2">
               <Label htmlFor={`paymentType-${applicationId}`}>Payment type</Label>
               <Input
                 id={`paymentType-${applicationId}`}
@@ -216,7 +213,7 @@ export function PaymentSchedulerForm({
               />
               <input type="hidden" name="paymentType" value="inspection_fee" />
             </div>
-            <div className="space-y-2 sm:col-span-2">
+            <div className="space-y-2">
               <Label htmlFor={`officePaymentAt-${applicationId}`}>Office payment date and time</Label>
               <Input
                 id={`officePaymentAt-${applicationId}`}
@@ -228,20 +225,18 @@ export function PaymentSchedulerForm({
                 className="h-11"
               />
             </div>
-          </>
+          </div>
         )}
 
         {!payment && !canSchedule ? (
-          <div className="sm:col-span-2 rounded-lg border border-border/80 bg-muted/40 p-3 text-sm text-muted-foreground">
+          <div className="rounded-lg border border-border/80 bg-muted/40 p-3 text-sm text-muted-foreground">
             {scheduleHint ?? "Office payment can be scheduled after the inspector approves the inhouse inspection."}
           </div>
         ) : null}
 
-        <div className="sm:col-span-2">
-          <FormMessage state={state} />
-        </div>
-        <div className="sm:col-span-2">
-          <Button type="submit" disabled={!payment && !canSchedule} loading={pending} className="w-full sm:w-auto">
+        <div className="space-y-4 pt-2">
+          {state.message && <FormMessage state={state} />}
+          <Button type="submit" disabled={!payment && !canSchedule} loading={pending} className="w-full sm:w-auto px-6">
             {payment ? (mode === "paid" ? "Confirm payment" : "Save new schedule") : "Set office payment date"}
           </Button>
         </div>

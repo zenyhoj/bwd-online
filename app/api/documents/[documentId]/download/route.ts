@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentProfile } from "@/lib/auth";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 type DocumentDownloadRouteProps = {
   params: Promise<{ documentId: string }>;
@@ -10,22 +10,44 @@ type DocumentDownloadRouteProps = {
 export async function GET(_request: Request, { params }: DocumentDownloadRouteProps) {
   const { documentId } = await params;
   const profile = await getCurrentProfile();
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
+  const requestUrl = new URL(_request.url);
+  const forceDownload = requestUrl.searchParams.get("download") === "1";
 
   const { data: document, error } = await supabase
     .from("documents")
-    .select("id, file_path")
+    .select("id, file_path, organization_id, applicant_id")
     .eq("id", documentId)
-    .single();
+    .maybeSingle();
 
   if (error || !document) {
     return NextResponse.json({ message: "Document not found." }, { status: 404 });
   }
 
+  if (profile.role === "admin" && document.organization_id !== profile.organization_id) {
+    return NextResponse.json({ message: "Document not found." }, { status: 404 });
+  }
+
+  if (profile.role === "applicant") {
+    const { data: applicant, error: applicantError } = await supabase
+      .from("applicants")
+      .select("id")
+      .eq("profile_id", profile.id)
+      .maybeSingle();
+
+    if (applicantError || !applicant || applicant.id !== document.applicant_id) {
+      return NextResponse.json({ message: "Document not found." }, { status: 404 });
+    }
+  }
+
+  if (profile.role !== "admin" && profile.role !== "applicant") {
+    return NextResponse.json({ message: "You are not allowed to access this document." }, { status: 403 });
+  }
+
   const { data: signedUrl, error: signedUrlError } = await supabase.storage
     .from("application-documents")
     .createSignedUrl(document.file_path, 60, {
-      download: true
+      download: forceDownload
     });
 
   if (signedUrlError || !signedUrl?.signedUrl) {

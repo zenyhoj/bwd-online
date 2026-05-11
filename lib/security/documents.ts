@@ -9,7 +9,13 @@ const ALLOWED_DOCUMENT_MIME_TYPES = new Set([
 ]);
 
 const ALLOWED_DOCUMENT_EXTENSIONS = new Set([".pdf", ".jpg", ".jpeg", ".png"]);
-const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024;
+const MAX_DOCUMENT_SIZE_BYTES = 1024 * 1024;
+
+const MIME_TYPE_EXTENSIONS: Record<string, Set<string>> = {
+  "application/pdf": new Set([".pdf"]),
+  "image/jpeg": new Set([".jpg", ".jpeg"]),
+  "image/png": new Set([".png"])
+};
 
 function getFileExtension(fileName: string) {
   const lastDot = fileName.lastIndexOf(".");
@@ -45,7 +51,9 @@ export async function validateDocumentFile(file: File) {
   }
 
   if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
-    throw new Error("Document uploads are limited to 10 MB.");
+    throw new Error(
+      "Each document must be less than 1 MB. Compress the file before uploading: for images, lower the resolution or quality; for PDFs, use a PDF compressor or scan in grayscale/standard quality."
+    );
   }
 
   const extension = getFileExtension(file.name);
@@ -53,13 +61,13 @@ export async function validateDocumentFile(file: File) {
     throw new Error("Only PDF, JPG, JPEG, and PNG files are allowed.");
   }
 
-  if (!ALLOWED_DOCUMENT_MIME_TYPES.has(file.type)) {
-    throw new Error("The uploaded document type is not allowed.");
+  const detectedMimeType = await detectMagicMimeType(file);
+  if (!detectedMimeType || !ALLOWED_DOCUMENT_MIME_TYPES.has(detectedMimeType)) {
+    throw new Error("The uploaded file content is not a valid PDF, JPG, JPEG, or PNG file.");
   }
 
-  const detectedMimeType = await detectMagicMimeType(file);
-  if (!detectedMimeType || detectedMimeType !== file.type) {
-    throw new Error("The uploaded file content does not match its declared type.");
+  if (!MIME_TYPE_EXTENSIONS[detectedMimeType]?.has(extension)) {
+    throw new Error("The uploaded file extension does not match the actual file type.");
   }
 
   return {

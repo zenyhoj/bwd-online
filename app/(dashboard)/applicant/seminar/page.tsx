@@ -46,8 +46,10 @@ export default async function ApplicantSeminarPage({
       : null;
   const hasApplication = Boolean(selectedApplication);
   const inhouseCompleted = Boolean(selectedApplication?.inhouse_installation_completed);
-  const documentsReady = selectedApplication
-    ? areDocumentsReadyForPayment(selectedApplication, selectedApplication.documents ?? [])
+  const inspectionApproved =
+    selectedApplication?.inspections?.some((inspection) => inspection.status === "approved") ?? false;
+  const documentsReady = selectedApplication && inspectionApproved
+    ? areDocumentsReadyForPayment(selectedApplication)
     : false;
 
   const completionCta = !hasApplication
@@ -63,7 +65,13 @@ export default async function ApplicantSeminarPage({
           description: "Your next step is to mark the inhouse plumbing as complete."
         }
       : !latestPayment && !documentsReady
-        ? {
+        ? !inspectionApproved
+          ? {
+              href: `/applicant?applicant=${applicantId}&application=${selectedApplication?.id ?? ""}`,
+              label: "View inspection status",
+              description: "Your next step is to wait for the in-house inspection approval before document upload opens."
+            }
+          : {
             href: `/applicant/documents?application=${selectedApplication?.id ?? ""}`,
             label: "Upload documents",
             description: "Your next step is to upload the required documents before payment can be scheduled."

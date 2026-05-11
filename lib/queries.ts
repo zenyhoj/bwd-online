@@ -185,6 +185,67 @@ export async function getAdminApplications(pagination: PaginationParams): Promis
   return buildPaginatedResult((data ?? []) as Record<string, unknown>[], count ?? 0, pagination);
 }
 
+function getAdminQueueStage(record: Record<string, unknown>) {
+  const status = String(record.status);
+  const inspections =
+    ((record.inspections as {
+      id?: string;
+      status?: string;
+      scheduled_at?: string | null;
+    }[] | undefined) ?? []);
+  const payments = ((record.payments as { id?: string; status?: string; paid_at?: string | null; due_date?: string | null }[] | undefined) ?? []);
+  const latestPayment =
+    [...payments].sort((a, b) => {
+      const aTime = new Date(a.paid_at ?? a.due_date ?? 0).getTime();
+      const bTime = new Date(b.paid_at ?? b.due_date ?? 0).getTime();
+      return bTime - aTime;
+    })[0] ?? null;
+  const converted = (((record.concessionaires as { id?: string }[] | undefined) ?? []).length ?? 0) > 0;
+  const hasApprovedInspection = inspections.some((inspection) => inspection.status === "approved");
+  const hasScheduledInspection = inspections.length > 0;
+  const documents = ((record.documents as Document[] | undefined) ?? []);
+  const installationComplete = Boolean(record.inhouse_installation_completed);
+  const documentsReady = areDocumentsReadyForPayment(record as never);
+  const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
+  const waterMeterInstalled = Boolean(record.water_meter_installed_at);
+  const effectiveStatus =
+    converted || status === "converted"
+      ? "converted"
+      : latestPayment?.status === "paid" && installationComplete
+        ? "approved"
+        : status;
+
+  if (effectiveStatus === "converted") return "completed";
+  if (!installationComplete) return "for-inhouse-plumbing";
+  if (!hasScheduledInspection) return "for-inspection";
+  if (!hasApprovedInspection) return "under-review";
+  if (!documentsReady) return "for-documents";
+  if (payments.length === 0 || latestPayment?.status !== "paid") return "for-payment";
+  if (!waterMeterScheduled) return "for-water-meter-schedule";
+  if (!waterMeterInstalled) return "for-water-meter-complete";
+  return "for-conversion";
+}
+
+const adminQueueStagePriority: Record<string, number> = {
+  "for-inspection": 10,
+  "for-documents": 20,
+  "for-payment": 30,
+  "for-water-meter-schedule": 40,
+  "for-water-meter-complete": 50,
+  "for-conversion": 60,
+  "under-review": 70,
+  "for-inhouse-plumbing": 80,
+  completed: 90
+};
+
+function getAdminQueueSortTime(record: Record<string, unknown>, stage: string) {
+  if (stage === "for-inspection") {
+    return new Date(String(record.inhouse_installation_completed_at ?? record.created_at ?? 0)).getTime();
+  }
+
+  return new Date(String(record.submitted_at ?? record.created_at ?? 0)).getTime();
+}
+
 export async function getAdminApplicationsQueue(
   pagination: PaginationParams,
   filters?: { q?: string; status?: string; workflow?: string }
@@ -223,78 +284,32 @@ export async function getAdminApplicationsQueue(
   const workflowFiltered =
     !filters?.workflow || filters.workflow === "all"
       ? allRecords
-      : allRecords.filter((record) => {
-          const status = String(record.status);
-          const inspections =
-            ((record.inspections as {
-              id?: string;
-              status?: string;
-              scheduled_at?: string | null;
-            }[] | undefined) ?? []);
-          const payments = ((record.payments as { id?: string; status?: string; paid_at?: string | null; due_date?: string | null }[] | undefined) ?? []);
-          const latestPayment =
-            [...payments].sort((a, b) => {
-              const aTime = new Date(a.paid_at ?? a.due_date ?? 0).getTime();
-              const bTime = new Date(b.paid_at ?? b.due_date ?? 0).getTime();
-              return bTime - aTime;
-            })[0] ?? null;
-          const converted = (((record.concessionaires as { id?: string }[] | undefined) ?? []).length ?? 0) > 0;
-          const hasApprovedInspection = inspections.some((inspection) => inspection.status === "approved");
-          const hasScheduledInspection = inspections.length > 0;
-          const documents = ((record.documents as Document[] | undefined) ?? []);
-          const installationComplete = Boolean(record.inhouse_installation_completed);
-          const documentsReady = areDocumentsReadyForPayment(record as never, documents);
-          const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
-          const waterMeterInstalled = Boolean(record.water_meter_installed_at);
-          const effectiveStatus =
-            converted || status === "converted"
-              ? "converted"
-              : latestPayment?.status === "paid" && installationComplete
-                ? "approved"
-                : status;
-
-          let stage = "under-review";
-          if (effectiveStatus === "converted") {
-            stage = "completed";
-          } else if (!installationComplete) {
-            stage = "for-inhouse-plumbing";
-          } else if (!hasScheduledInspection) {
-            stage = "for-inspection";
-          } else if (!hasApprovedInspection) {
-            stage = "under-review";
-          } else if (!documentsReady) {
-            stage = "for-documents";
-          } else if (payments.length === 0 || latestPayment?.status !== "paid") {
-            stage = "for-payment";
-          } else if (!waterMeterScheduled) {
-            stage = "for-water-meter-schedule";
-          } else if (!waterMeterInstalled) {
-            stage = "for-water-meter-complete";
-          } else {
-            stage = "for-conversion";
-          }
-
-          return stage === filters.workflow;
-        });
+      : allRecords.filter((record) => getAdminQueueStage(record) === filters.workflow);
 
   const sortedWorkflowRecords = [...workflowFiltered].sort((a, b) => {
-    const stageA = filters?.workflow && filters.workflow !== "all" ? filters.workflow : null;
+    const stageA = getAdminQueueStage(a);
+    const stageB = getAdminQueueStage(b);
+    const priorityA = adminQueueStagePriority[stageA] ?? 999;
+    const priorityB = adminQueueStagePriority[stageB] ?? 999;
 
-    if (stageA === "for-inspection") {
-      const aCompletedAt = new Date(String(a.inhouse_installation_completed_at ?? a.created_at ?? 0)).getTime();
-      const bCompletedAt = new Date(String(b.inhouse_installation_completed_at ?? b.created_at ?? 0)).getTime();
-
-      if (aCompletedAt !== bCompletedAt) {
-        return aCompletedAt - bCompletedAt;
-      }
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
     }
 
-    const aSubmittedAt = new Date(String(a.submitted_at ?? a.created_at ?? 0)).getTime();
-    const bSubmittedAt = new Date(String(b.submitted_at ?? b.created_at ?? 0)).getTime();
-    return bSubmittedAt - aSubmittedAt;
+    const timeA = getAdminQueueSortTime(a, stageA);
+    const timeB = getAdminQueueSortTime(b, stageB);
+
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
+
+    return String(a.full_name ?? "").localeCompare(String(b.full_name ?? ""));
   });
 
-  return buildPaginatedResult(sortedWorkflowRecords, sortedWorkflowRecords.length, pagination);
+  const from = (pagination.page - 1) * pagination.pageSize;
+  const to = from + pagination.pageSize;
+
+  return buildPaginatedResult(sortedWorkflowRecords.slice(from, to), sortedWorkflowRecords.length, pagination);
 }
 
 export async function getAdminApplicationDetail(applicationId: string) {

@@ -32,13 +32,16 @@ const applicationFeeGuide = [
 ];
 
 const documentaryRequirements = [
-  "Photocopy of valid ID.",
-  "For an authorized representative: authorization letter from applicant and photocopy of valid ID.",
-  "For accounts named after organizations or establishments: Special Power of Attorney (SPA).",
-  "Proof of ownership: Title or Tax Declaration. Attach the Deed of Sale if ownership transfer is not yet updated.",
-  "If not the lot owner: authorization from the lot and house owner, plus ID of the lot owner.",
-  "Official receipt of Water Permit (Php 130.00 to be paid at the LGU).",
-  "Cellphone number."
+  "Photocopy of Valid ID (owner).",
+  "Authorization Letter from Applicant (authorized representative).",
+  "Photocopy of Valid ID (authorized representative).",
+  "Special Power of Attorney (SPA for accounts named after organizations or establishments).",
+  "Lot Title.",
+  "Tax Declaration.",
+  "Deed of Sale (if the title is not under the applicant name).",
+  "Authorization from the Lot and House Owner (if not lot owner).",
+  "ID of Lot Owner.",
+  "Official Receipt of Water Permit."
 ];
 
 function formatScheduledAmount(amount: number) {
@@ -82,8 +85,13 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
   const { data: payments } = application
     ? await supabase.from("payments").select("*").eq("application_id", application.id).order("due_date", { ascending: true })
     : { data: [] };
+  const inspectionApproved =
+    application?.inspections?.some((inspection) => inspection.status === "approved") ?? false;
   const documentRows = application ? getDocumentRequirementRows(application.documents ?? []) : [];
-  const documentsReady = application ? areDocumentsReadyForPayment(application, application.documents ?? []) : false;
+  const documentsReady =
+    application && inspectionApproved
+      ? areDocumentsReadyForPayment(application)
+      : false;
 
   return (
     <div className="space-y-6">
@@ -119,7 +127,16 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
-          {application && (payments ?? []).length === 0 && !documentsReady ? (
+          {application && (payments ?? []).length === 0 && !inspectionApproved ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+              <p className="font-medium text-primary">Inspection approval required</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Document upload and payment scheduling open after the in-house inspection is approved.
+              </p>
+            </div>
+          ) : null}
+
+          {application && (payments ?? []).length === 0 && inspectionApproved && !documentsReady ? (
             <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
               <p className="font-medium text-primary">Documents are required before payment scheduling</p>
               <p className="mt-1 text-sm text-muted-foreground">

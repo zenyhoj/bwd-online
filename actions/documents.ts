@@ -11,6 +11,12 @@ import {
   documentWorkflowNoteSchema
 } from "@/schemas";
 import type { ActionState } from "@/types";
+import { getDocumentRequirementRows } from "@/lib/document-workflow";
+import { documentTypeLabels, type ApplicationDocumentType } from "@/lib/constants";
+
+function isMissingDocumentEnumValue(message?: string | null) {
+  return message?.includes("invalid input value for enum document_type") ?? false;
+}
 
 async function getManagedApplication({
   supabase,
@@ -68,9 +74,28 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
       return { success: false, message: "You are not allowed to upload documents for this application." };
     }
 
+    const { data: approvedInspection, error: inspectionError } = await supabase
+      .from("inspections")
+      .select("id")
+      .eq("application_id", parsed.data.applicationId)
+      .eq("status", "approved")
+      .limit(1)
+      .maybeSingle();
+
+    if (inspectionError) {
+      return { success: false, message: inspectionError.message };
+    }
+
+    if (!approvedInspection) {
+      return {
+        success: false,
+        message: "Documents can be uploaded after the in-house inspection is approved."
+      };
+    }
+
     const existingDocument = await supabase
       .from("documents")
-      .select("id, status")
+      .select("id, status, file_path")
       .eq("application_id", parsed.data.applicationId)
       .eq("document_type", parsed.data.documentType)
       .maybeSingle();
@@ -115,13 +140,47 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
       : await supabase.from("documents").insert(payload);
 
     if (error) {
+      await supabase.storage.from("application-documents").remove([path]);
+
+      if (isMissingDocumentEnumValue(error.message)) {
+        return {
+          success: false,
+          message:
+            "The database has not been updated for the new document requirements yet. Please ask the administrator to run supabase/applicant-document-requirements.sql, then try uploading again."
+        };
+      }
+
       return { success: false, message: error.message };
     }
+
+    // Explicitly purge the old file from storage to free up space
+    if (
+      existingDocument.data?.file_path &&
+      existingDocument.data.file_path !== path
+    ) {
+      const { error: removeError } = await supabase.storage
+        .from("application-documents")
+        .remove([existingDocument.data.file_path]);
+      
+      if (removeError) {
+        console.error("Failed to remove old document file:", removeError);
+        // We don't return error here because the new one is already saved
+      }
+    }
+
+    const { data: allDocs } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("application_id", parsed.data.applicationId);
+
+    const requirementRows = getDocumentRequirementRows(allDocs ?? []);
+    const anyRejected = requirementRows.some((row) => row.status === "rejected");
 
     await supabase
       .from("applications")
       .update({
-        document_submission_mode: "online"
+        document_submission_mode: "online",
+        ...(anyRejected ? {} : { document_review_note: null })
       })
       .eq("id", parsed.data.applicationId);
 
@@ -225,6 +284,11 @@ export async function updateDocumentWorkflowNoteAction(
 export async function reviewDocumentAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   return withErrorHandling(async () => {
     const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Only administrators can review documents." };
+    }
+
     const parsed = await parseFormData(documentReviewSchema, {
       documentId: formData.get("documentId"),
       status: formData.get("status"),
@@ -233,6 +297,17 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
 
     if (parsed.error) {
       return parsed.error;
+    }
+
+    const { data: document, error: documentError } = await supabase
+      .from("documents")
+      .select("id, application_id, organization_id, document_type, file_path")
+      .eq("id", parsed.data.documentId)
+      .eq("organization_id", profile.organization_id)
+      .maybeSingle();
+
+    if (documentError || !document) {
+      return { success: false, message: documentError?.message ?? "Document not found." };
     }
 
     const { error } = await supabase
@@ -249,9 +324,126 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
       return { success: false, message: error.message };
     }
 
+    if (parsed.data.status === "rejected") {
+      const { error: removeError } = await supabase.storage
+        .from("application-documents")
+        .remove([document.file_path]);
+
+      if (removeError) {
+        console.error("Failed to remove rejected document file:", removeError);
+        // Do not return error here, the document status is already updated
+      }
+    }
+
+    const { data: documents, error: documentsError } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("application_id", document.application_id)
+      .eq("organization_id", profile.organization_id);
+
+    if (documentsError) {
+      return { success: false, message: documentsError.message };
+    }
+
+    const requirementRows = getDocumentRequirementRows(documents ?? []);
+    const allDocumentsVerified = requirementRows.every((row) => row.status === "verified");
+    const anyRejected = requirementRows.some((row) => row.status === "rejected");
+
+    let applicationUpdate: Record<string, unknown> | null = null;
+
+    if (parsed.data.status === "rejected") {
+      applicationUpdate = {
+        status: "inspection_completed",
+        document_review_note: `Please reupload ${documentTypeLabels[document.document_type as ApplicationDocumentType] ?? "the selected document"}: ${parsed.data.reviewNotes ?? ""}`
+      };
+    } else if (allDocumentsVerified) {
+      applicationUpdate = {
+        status: "documents_verified",
+        document_review_note: null
+      };
+    } else if (!anyRejected) {
+      applicationUpdate = {
+        document_review_note: null
+      };
+    }
+
+    if (applicationUpdate) {
+      const { error: applicationError } = await supabase
+        .from("applications")
+        .update(applicationUpdate)
+        .eq("id", document.application_id)
+        .eq("organization_id", profile.organization_id);
+
+      if (applicationError) {
+        return { success: false, message: applicationError.message };
+      }
+    }
+
     revalidatePath("/admin");
     revalidatePath("/applicant");
     revalidatePath("/applicant/documents");
     return { success: true, message: "Document review saved." };
   });
 }
+
+export async function completeDocumentVerificationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Unauthorized." };
+    }
+
+    const applicationId = formData.get("applicationId");
+
+    if (typeof applicationId !== "string" || !applicationId) {
+      return { success: false, message: "Invalid application ID." };
+    }
+
+    // Verify application exists and belongs to the admin's organization
+    const { data: application, error: applicationError } = await supabase
+      .from("applications")
+      .select("id, status")
+      .eq("id", applicationId)
+      .eq("organization_id", profile.organization_id)
+      .maybeSingle();
+
+    if (applicationError || !application) {
+      return { success: false, message: applicationError?.message ?? "Application not found." };
+    }
+
+    // Verify there are no rejected documents
+    const { data: documents, error: documentsError } = await supabase
+      .from("documents")
+      .select("status")
+      .eq("application_id", applicationId)
+      .eq("organization_id", profile.organization_id);
+
+    if (documentsError) {
+      return { success: false, message: documentsError.message };
+    }
+
+    if (documents?.some((doc) => doc.status === "rejected")) {
+      return { success: false, message: "Cannot complete verification while there are rejected documents." };
+    }
+
+    // Update application status
+    const { error: updateError } = await supabase
+      .from("applications")
+      .update({
+        status: "documents_verified",
+        document_review_note: null
+      })
+      .eq("id", applicationId)
+      .eq("organization_id", profile.organization_id);
+
+    if (updateError) {
+      return { success: false, message: updateError.message };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/applicant");
+    return { success: true, message: "Document verification completed." };
+  });
+}
+
