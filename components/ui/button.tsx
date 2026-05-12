@@ -6,21 +6,21 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center rounded-[var(--button-radius,0.5rem)] text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-[linear-gradient(135deg,hsl(var(--accent)),#ff8f00)] text-black shadow-[0_12px_30px_-16px_rgba(255,164,28,0.8)] hover:brightness-105",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/92",
-        outline: "border border-input bg-background/90 text-foreground hover:bg-accent/20",
-        ghost: "text-muted-foreground hover:bg-accent/15 hover:text-foreground",
+          "bg-primary text-primary-foreground shadow-sm hover:brightness-110",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        outline: "border border-input bg-background text-foreground hover:bg-secondary/50",
+        ghost: "text-muted-foreground hover:bg-secondary hover:text-foreground",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90"
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-6"
+        default: "h-11 px-6 py-2",
+        sm: "h-9 px-4",
+        lg: "h-12 px-8 text-base"
       }
     },
     defaultVariants: {
@@ -63,7 +63,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <Loader2 className="h-4 w-4 animate-spin" />
           </span>
         )}
-        <span className={cn(loading && "opacity-0")}>{children}</span>
+        <span className={cn("flex items-center justify-center gap-2", loading && "opacity-0")}>
+          {children}
+        </span>
       </button>
     );
   }

@@ -80,14 +80,8 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-lg border-border/70 bg-card shadow-xl ring-1 ring-black/5">
-      <CardHeader className="space-y-1 pb-3">
-        <CardTitle className="text-3xl tracking-tight">Create account</CardTitle>
-        <CardDescription className="text-sm text-muted-foreground/80">
-          Register to access the online water district services.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card className="mx-auto w-full border-none shadow-none bg-transparent">
+      <CardContent className="p-0">
         {!mounted ? (
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
@@ -272,9 +266,9 @@ export function RegisterForm() {
               Create account
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-muted-foreground font-medium pt-2">
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-primary underline underline-offset-4">
+              <Link href="/login" className="font-bold text-primary hover:underline underline-offset-4">
                 Sign in
               </Link>
             </p>

@@ -38,22 +38,22 @@ export default async function AdminExportPage() {
   const hasPending = (pendingCount ?? 0) > 0;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Export Documents</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your quarterly document backups and download verification records.
+    <div className="space-y-10 pb-10">
+      <div className="max-w-3xl space-y-2">
+        <h1 className="text-4xl font-bold tracking-tight text-foreground">Document Management</h1>
+        <p className="text-base text-muted-foreground font-medium">
+          Secure quarterly backups and storage maintenance for the water application records.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Export Date</CardTitle>
             <History className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold tracking-tight">
               {org?.last_document_export_at ? formatDateTime(org.last_document_export_at) : "Never exported"}
             </div>
           </CardContent>
@@ -65,7 +65,7 @@ export default async function AdminExportPage() {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl font-bold tracking-tight">
               {nextScheduledAt ? formatDateTime(nextScheduledAt.toISOString()).split(",")[0] : "ASAP"}
             </div>
             <p className="text-xs text-muted-foreground mt-1">Based on a 90-day cycle</p>
@@ -78,7 +78,7 @@ export default async function AdminExportPage() {
             <FileCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingCount ?? 0}</div>
+            <div className="text-xl font-bold tracking-tight">{pendingCount ?? 0}</div>
             <p className="text-xs text-muted-foreground mt-1">Since last export</p>
           </CardContent>
         </Card>

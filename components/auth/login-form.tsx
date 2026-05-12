@@ -64,12 +64,8 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>Access the online water application system.</CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Card className="mx-auto w-full border-none shadow-none bg-transparent">
+      <CardContent className="p-0">
         {!mounted ? (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -123,10 +119,10 @@ export function LoginForm() {
             Sign in
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground font-medium pt-2">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-medium text-primary underline underline-offset-4">
-              Register
+            <Link href="/register" className="font-bold text-primary hover:underline underline-offset-4">
+              Register now
             </Link>
           </p>
         </form>

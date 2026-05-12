@@ -376,58 +376,67 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
             </div>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-primary">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
+        <Card className="border-none bg-primary/5 shadow-none group transition-all hover:bg-primary/10">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Need schedule</p>
-                <p className="mt-1 text-3xl font-bold">{readyForInspection}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">inspection appointments</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary mb-2">Need Schedule</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold tracking-tighter">{readyForInspection}</span>
+                  <span className="text-sm font-medium text-muted-foreground">apps</span>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">inspection appointments pending</p>
               </div>
-              <div className="rounded-xl bg-primary/10 p-3">
-                <Wrench className="h-6 w-6 text-primary" />
+              <div className="rounded-full bg-primary text-primary-foreground p-3 shadow-lg shadow-primary/20">
+                <Wrench className="h-5 w-5" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-amber-500">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
+        <Card className="border-none bg-amber-500/5 shadow-none group transition-all hover:bg-amber-500/10">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Awaiting result</p>
-                <p className="mt-1 text-3xl font-bold">{awaitingInspectionResult}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">scheduled inspections</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-600 mb-2">Awaiting Result</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold tracking-tighter text-amber-600">{awaitingInspectionResult}</span>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">scheduled inspections</p>
               </div>
-              <div className="rounded-xl bg-amber-500/10 p-3">
-                <CalendarClock className="h-6 w-6 text-amber-500" />
+              <div className="rounded-full bg-amber-500 text-white p-3 shadow-lg shadow-amber-500/20">
+                <CalendarClock className="h-5 w-5" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-violet-500">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
+        <Card className="border-none bg-indigo-600/5 shadow-none group transition-all hover:bg-indigo-600/10">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Ready for payment</p>
-                <p className="mt-1 text-3xl font-bold">{readyForPayment}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">awaiting payment</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-2">Ready for Payment</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold tracking-tighter text-indigo-600">{readyForPayment}</span>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">awaiting payment schedule</p>
               </div>
-              <div className="rounded-xl bg-violet-500/10 p-3">
-                <CreditCard className="h-6 w-6 text-violet-500" />
+              <div className="rounded-full bg-indigo-600 text-white p-3 shadow-lg shadow-indigo-600/20">
+                <CreditCard className="h-5 w-5" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="relative overflow-hidden border-l-4 border-l-emerald-500">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between">
+        <Card className="border-none bg-emerald-600/5 shadow-none group transition-all hover:bg-emerald-600/10">
+          <CardContent className="p-8">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Ready for conversion</p>
-                <p className="mt-1 text-3xl font-bold">{readyForConversionEffective}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">can be converted</p>
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-600 mb-2">Ready for Conversion</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-5xl font-bold tracking-tighter text-emerald-600">{readyForConversionEffective}</span>
+                </div>
+                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">can be converted to account</p>
               </div>
-              <div className="rounded-xl bg-emerald-500/10 p-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+              <div className="rounded-full bg-emerald-600 text-white p-3 shadow-lg shadow-emerald-600/20">
+                <CheckCircle2 className="h-5 w-5" />
               </div>
             </div>
           </CardContent>
@@ -439,18 +448,20 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
           <CardTitle>Application queue</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <form className="grid gap-3 md:grid-cols-[1fr_220px_auto]">
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Search applicant name"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            />
+          <form className="grid gap-4 md:grid-cols-[1fr_240px_auto]">
+            <div className="relative">
+              <input
+                type="text"
+                name="q"
+                defaultValue={q}
+                placeholder="Search applicant name..."
+                className="flex h-11 w-full rounded-full border border-border bg-background px-6 py-2 text-sm font-medium transition-all focus:ring-2 focus:ring-primary/20 outline-none"
+              />
+            </div>
             <select
               name="workflow"
               defaultValue={workflow}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="flex h-11 w-full rounded-full border border-border bg-background px-6 py-2 text-sm font-bold transition-all focus:ring-2 focus:ring-primary/20 outline-none"
             >
               <option value="all">All workflow stages</option>
               {workflowStages.map((stage) => (

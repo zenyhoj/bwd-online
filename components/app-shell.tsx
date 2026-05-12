@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -116,26 +117,22 @@ function NavContent({
 }) {
   return (
     <>
-      <div className="mb-6 overflow-hidden rounded-2xl border border-border/70 bg-[linear-gradient(160deg,rgba(30,44,74,0.08),rgba(255,164,28,0.12))] p-4">
+      <div className="mb-6 p-1">
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-[0.28em] text-muted-foreground">BWD Online</p>
-          <p className="text-2xl font-semibold leading-tight">{profile.full_name}</p>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">BWD Online</p>
+          <p className="text-2xl font-bold leading-tight tracking-tight">{profile.full_name}</p>
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
               {roleCopy[profile.role].label}
-            </span>
-            <span className="rounded-full bg-secondary px-2.5 py-1 text-[11px] font-medium capitalize text-secondary-foreground">
-              {profile.role}
             </span>
           </div>
         </div>
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+        <p className="mt-4 text-xs leading-5 text-muted-foreground font-medium">
           {roleCopy[profile.role].blurb}
         </p>
       </div>
-      <div className="mb-3 flex items-center justify-between px-1">
-        <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">Navigation</p>
-        <span className="text-[11px] text-muted-foreground">{navItems.length} items</span>
+      <div className="mb-3 flex items-center justify-between px-4">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80">Navigation</p>
       </div>
       <nav className="space-y-0.5">
         {navItems.map((item) => {
@@ -143,26 +140,31 @@ function NavContent({
             !item.download && (pathname === item.href || (item.href !== `/${profile.role}` && pathname.startsWith(`${item.href}/`)));
           const badge = navBadges[item.href] ?? 0;
 
-          const sharedClasses = `group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all ${
+          const sharedClasses = `group flex items-center gap-2.5 rounded-full px-4 py-2.5 text-sm transition-all ${
             isActive
-              ? "bg-[linear-gradient(135deg,rgba(255,164,28,0.14),rgba(30,44,74,0.04))] font-medium text-foreground"
-              : "text-muted-foreground hover:bg-muted/35 hover:text-foreground"
+              ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground font-medium"
           }`;
 
           const content = (
             <>
               <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
+                className={`flex h-4 w-4 shrink-0 items-center justify-center transition-colors ${
                   isActive
-                    ? "bg-background/85 text-primary shadow-sm ring-1 ring-primary/15"
-                    : "text-muted-foreground group-hover:bg-background/75 group-hover:text-foreground"
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground group-hover:text-foreground"
                 }`}
               >
-                <item.icon className="h-3.5 w-3.5 shrink-0" />
+                <item.icon className="h-4 w-4 shrink-0" />
               </span>
               <span className="flex-1">{item.label}</span>
               {badge > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold leading-none text-primary-foreground">
+                <span className={cn(
+                  "flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold leading-none shadow-sm",
+                  isActive 
+                    ? "bg-white text-primary" 
+                    : "bg-primary text-primary-foreground"
+                )}>
                   {badge > 99 ? "99+" : badge}
                 </span>
               )}
@@ -197,14 +199,15 @@ function NavContent({
         })}
       </nav>
       {isSuperAdmin && (
-        <DocumentPurgeButton className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all text-muted-foreground hover:bg-muted/35 hover:text-foreground" />
+        <div className="mt-4 px-4 pt-4 border-t border-border">
+          <DocumentPurgeButton className="group flex w-full items-center gap-2.5 rounded-full px-4 py-2.5 text-sm font-medium transition-all text-muted-foreground hover:bg-secondary hover:text-foreground" />
+        </div>
       )}
-      <div className="mt-8 rounded-2xl border border-border/70 bg-muted/20 p-3">
-        <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">Session</p>
+      <div className="mt-auto px-1 pt-8">
         <form action={signOutAction}>
           <button
             type="submit"
-            className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-border/80 bg-background/80 px-3 py-0 text-sm font-medium leading-none text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-border bg-background px-6 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground active:scale-[0.98]"
           >
             <span className="flex h-full items-center justify-center gap-2 leading-none">
               <LogOut className="h-4 w-4 shrink-0" />
@@ -229,10 +232,10 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
   return (
     <div className="min-h-screen bg-transparent print:bg-white">
       {/* Mobile top bar */}
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-border/60 bg-background/95 px-4 py-3 backdrop-blur-sm lg:hidden print:hidden">
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 py-4 lg:hidden print:hidden">
         <div className="space-y-0.5">
-          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">BWD Online</p>
-          <p className="text-sm font-semibold leading-none">{profile.full_name}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">BWD Online</p>
+          <p className="text-sm font-bold leading-none">{profile.full_name}</p>
         </div>
         <Button
           variant="ghost"
@@ -280,8 +283,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
       {/* Desktop layout */}
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:px-6 lg:py-8 lg:grid-cols-[240px_1fr] print:block print:max-w-none print:p-0 print:m-0">
         {/* Desktop sidebar */}
-        <Card className="relative hidden h-fit overflow-hidden border-border/70 p-4 shadow-sm print:hidden lg:block">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(255,164,28,0.16),transparent_65%)]" />
+        <Card className="relative hidden h-fit overflow-hidden border-border p-4 lg:block print:hidden shadow-none bg-background/50">
           <NavContent
             navItems={navItems}
             pathname={pathname}

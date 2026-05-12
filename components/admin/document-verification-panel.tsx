@@ -52,27 +52,27 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, re
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {isVerificationComplete && (
-        <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1.5">
-            <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-              Documents Verified
+        <div className="flex flex-col gap-6 rounded-2xl bg-primary/5 p-8 sm:flex-row sm:items-center sm:justify-between border border-primary/10">
+          <div className="space-y-2">
+            <p className="text-lg font-bold text-foreground flex items-center gap-3 tracking-tight">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              Verification Complete
             </p>
-            <p className="text-sm text-muted-foreground max-w-2xl">
-              All required documents have been successfully verified. You can download a ZIP backup of these files for offline record keeping.
+            <p className="text-sm text-muted-foreground max-w-xl font-medium leading-relaxed">
+              All document requirements have been fulfilled. The application can now proceed to the next stage of the workflow.
             </p>
           </div>
-          <Button asChild className="shrink-0 w-full sm:w-auto">
+          <Button asChild className="shrink-0 w-full sm:w-auto" size="lg">
             <a href={`/api/applications/${applicationId}/export-documents`} download>
               <Download className="mr-2 h-4 w-4" />
-              Download Backup (ZIP)
+              Download ZIP Archive
             </a>
           </Button>
         </div>
       )}
-      <div className="rounded-xl border border-border/70 bg-background overflow-hidden">
+      <div className="rounded-2xl border border-border bg-background overflow-hidden shadow-none">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
