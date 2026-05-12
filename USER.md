@@ -44,6 +44,12 @@ This section guides you through applying for a new water connection or a reconne
 - Visit the BWD Office to pay the required Installation Fees, Meter Deposit, and other charges.
 - After payment is verified, your status will change to **For Water Meter Scheduling**, and BWD personnel will arrive to tap your connection to the mainline.
 
+### 7. Mobile App & Notifications
+- **Install the App**: You can "download" this portal directly to your phone for faster access. 
+  - **Android (Chrome)**: Tap the menu (three dots) and select **"Install app"**.
+  - **iPhone (Safari)**: Tap the **Share** icon and select **"Add to Home Screen"**.
+- **Stay Updated**: To receive real-time updates on your application status (e.g., when an inspector is scheduled), go to the **Settings** section in your menu and click **"Enable Notifications"**.
+
 ---
 
 ## 🛡️ Section 2: For Administrators & Office Staff
@@ -80,6 +86,7 @@ Once an application reaches the appropriate stage (e.g., after an inspection is 
 ### 5. Managing Seminars & Dynamic Content
 - Admins can upload and manage the video content for the Online Seminar.
 - **Dynamic Plumber Injection**: To display the official plumbers list inside a seminar module, simply type the shortcode `{{PLUMBERS_LIST}}` anywhere in the description. The system will automatically replace this text with a professional, searchable table for the applicant.
+- **Push Notifications**: The system automatically notifies applicants via push notification whenever you update their application status, keeping them informed without manual emails or calls.
 
 ---
 
