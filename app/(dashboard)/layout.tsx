@@ -1,10 +1,11 @@
 import { AppShell } from "@/components/app-shell";
-import { getCurrentProfile } from "@/lib/auth";
+import { getCurrentProfile, isSuperAdmin } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getApplicants, getApplicantSeminarState, getLatestApplicantApplication } from "@/lib/queries";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
+  const superAdmin = await isSuperAdmin();
   const supabase = createSupabaseAdminClient();
 
   let applicantNavMode: "preseminar" | "hasApplication" | "newApplication" | undefined;
@@ -84,11 +85,30 @@ export default async function DashboardLayout({ children }: { children: React.Re
         .eq("organization_id", profile.organization_id)
         .eq("status", "scheduled");
       if ((unpaidPayments ?? 0) > 0) navBadges["/admin/payments"] = unpaidPayments ?? 0;
+
+      // Badge for Document Export (Quarterly)
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("last_document_export_at")
+        .eq("id", profile.organization_id)
+        .single();
+        
+      if (orgData) {
+        const lastExport = orgData.last_document_export_at as string | null;
+        if (!lastExport) {
+          navBadges["/admin/export"] = 1; // Needs initial export
+        } else {
+          const daysSinceLastExport = (Date.now() - new Date(lastExport).getTime()) / (1000 * 60 * 60 * 24);
+          if (daysSinceLastExport >= 80) {
+            navBadges["/admin/export"] = 1; // Nearing or past 90 days
+          }
+        }
+      }
     }
   }
 
   return (
-    <AppShell profile={profile} applicantNavMode={applicantNavMode} navBadges={navBadges}>
+    <AppShell profile={profile} applicantNavMode={applicantNavMode} navBadges={navBadges} isSuperAdmin={superAdmin}>
       {children}
     </AppShell>
   );

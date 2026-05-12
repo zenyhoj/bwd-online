@@ -35,6 +35,14 @@ export async function getCurrentProfile() {
   return profile as Profile;
 }
 
+export async function isSuperAdmin() {
+  const user = await getSessionUser();
+  if (!user || !user.email) return false;
+  
+  const superAdmins = ["joe.balingit@gmail.com"];
+  return superAdmins.includes(user.email);
+}
+
 export async function requireRole(role: AppRole) {
   const profile = await getCurrentProfile();
 

@@ -11,6 +11,7 @@ export type Database = {
           address: string | null;
           phone: string | null;
           email: string | null;
+          last_document_export_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -21,6 +22,7 @@ export type Database = {
           address?: string | null;
           phone?: string | null;
           email?: string | null;
+          last_document_export_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -31,6 +33,7 @@ export type Database = {
           address?: string | null;
           phone?: string | null;
           email?: string | null;
+          last_document_export_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -15,7 +15,8 @@ import {
   UserCog,
   UserRoundCheck,
   Users,
-  X
+  X,
+  Download
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -23,16 +24,20 @@ import { useState } from "react";
 import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DocumentPurgeButton } from "@/components/admin/document-purge-button";
 import type { AppRole, Profile } from "@/types";
 
 type AppShellProps = {
   profile: Profile;
   applicantNavMode?: "preseminar" | "hasApplication" | "newApplication";
   navBadges?: Record<string, number>;
+  isSuperAdmin?: boolean;
   children: React.ReactNode;
 };
 
-const navByRole: Record<AppRole, { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[]> = {
+type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; download?: boolean };
+
+const navByRole: Record<AppRole, NavItem[]> = {
   applicant: [
     { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
     { href: "/applicant/applications/new", label: "Information", icon: FileCheck2 },
@@ -48,7 +53,8 @@ const navByRole: Record<AppRole, { href: string; label: string; icon: React.Comp
     { href: "/admin/access", label: "Access", icon: UserCog },
     { href: "/admin/inspections", label: "Inspections", icon: SearchCheck },
     { href: "/admin/payments", label: "Payments", icon: CreditCard },
-    { href: "/admin/concessionaires", label: "Concessionaires", icon: UserRoundCheck }
+    { href: "/admin/concessionaires", label: "Concessionaires", icon: UserRoundCheck },
+    { href: "/admin/export", label: "Export Docs (ZIP)", icon: Download }
   ],
   inspector: [
     { href: "/inspector", label: "Assignments", icon: Users }
@@ -70,7 +76,7 @@ const roleCopy: Record<AppRole, { label: string; blurb: string }> = {
   }
 };
 
-function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplication") {
+function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplication"): NavItem[] {
   if (mode === "preseminar") {
     return [
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
@@ -98,12 +104,14 @@ function NavContent({
   pathname,
   navBadges,
   profile,
+  isSuperAdmin,
   onClose
 }: {
-  navItems: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }[];
+  navItems: NavItem[];
   pathname: string;
   navBadges: Record<string, number>;
   profile: Profile;
+  isSuperAdmin?: boolean;
   onClose?: () => void;
 }) {
   return (
@@ -132,21 +140,17 @@ function NavContent({
       <nav className="space-y-0.5">
         {navItems.map((item) => {
           const isActive =
-            pathname === item.href || (item.href !== `/${profile.role}` && pathname.startsWith(`${item.href}/`));
+            !item.download && (pathname === item.href || (item.href !== `/${profile.role}` && pathname.startsWith(`${item.href}/`)));
           const badge = navBadges[item.href] ?? 0;
 
-          return (
-            <Link
-              key={`${item.href}-${item.label}`}
-              href={item.href as never}
-              aria-current={isActive ? "page" : undefined}
-              onClick={onClose}
-              className={`group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all ${
-                isActive
-                  ? "bg-[linear-gradient(135deg,rgba(255,164,28,0.14),rgba(30,44,74,0.04))] font-medium text-foreground"
-                  : "text-muted-foreground hover:bg-muted/35 hover:text-foreground"
-              }`}
-            >
+          const sharedClasses = `group flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all ${
+            isActive
+              ? "bg-[linear-gradient(135deg,rgba(255,164,28,0.14),rgba(30,44,74,0.04))] font-medium text-foreground"
+              : "text-muted-foreground hover:bg-muted/35 hover:text-foreground"
+          }`;
+
+          const content = (
+            <>
               <span
                 className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
                   isActive
@@ -162,10 +166,39 @@ function NavContent({
                   {badge > 99 ? "99+" : badge}
                 </span>
               )}
+            </>
+          );
+
+          if (item.download) {
+            return (
+              <a
+                key={`${item.href}-${item.label}`}
+                href={item.href}
+                download
+                onClick={onClose}
+                className={sharedClasses}
+              >
+                {content}
+              </a>
+            );
+          }
+
+          return (
+            <Link
+              key={`${item.href}-${item.label}`}
+              href={item.href as never}
+              aria-current={isActive ? "page" : undefined}
+              onClick={onClose}
+              className={sharedClasses}
+            >
+              {content}
             </Link>
           );
         })}
       </nav>
+      {isSuperAdmin && (
+        <DocumentPurgeButton className="group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-all text-muted-foreground hover:bg-muted/35 hover:text-foreground" />
+      )}
       <div className="mt-8 rounded-2xl border border-border/70 bg-muted/20 p-3">
         <p className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-muted-foreground">Session</p>
         <form action={signOutAction}>
@@ -184,7 +217,7 @@ function NavContent({
   );
 }
 
-export function AppShell({ profile, applicantNavMode = "newApplication", navBadges = {}, children }: AppShellProps) {
+export function AppShell({ profile, applicantNavMode = "newApplication", navBadges = {}, isSuperAdmin = false, children }: AppShellProps) {
   const pathname = usePathname() ?? "";
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -237,6 +270,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
               pathname={pathname}
               navBadges={navBadges}
               profile={profile}
+              isSuperAdmin={isSuperAdmin}
               onClose={() => setMobileOpen(false)}
             />
           </div>
@@ -253,6 +287,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
             pathname={pathname}
             navBadges={navBadges}
             profile={profile}
+            isSuperAdmin={isSuperAdmin}
           />
         </Card>
 

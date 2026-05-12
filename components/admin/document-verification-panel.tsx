@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Download } from "lucide-react";
 
 import { completeDocumentVerificationAction } from "@/actions/documents";
 import { initialActionState } from "@/actions/state";
@@ -41,6 +41,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, re
   
   // If the application is already past the document verification stage, hide the complete button
   const showCompleteForm = applicationStatus === "inspection_completed" || applicationStatus === "under_review";
+  const isVerificationComplete = !showCompleteForm && canComplete && requirements.some((row) => row.document);
 
   if (requirements.length === 0) {
     return (
@@ -52,6 +53,25 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, re
 
   return (
     <div className="space-y-6">
+      {isVerificationComplete && (
+        <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              Documents Verified
+            </p>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              All required documents have been successfully verified. You can download a ZIP backup of these files for offline record keeping.
+            </p>
+          </div>
+          <Button asChild className="shrink-0 w-full sm:w-auto">
+            <a href={`/api/applications/${applicationId}/export-documents`} download>
+              <Download className="mr-2 h-4 w-4" />
+              Download Backup (ZIP)
+            </a>
+          </Button>
+        </div>
+      )}
       <div className="rounded-xl border border-border/70 bg-background overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/50">
