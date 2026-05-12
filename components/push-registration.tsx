@@ -28,14 +28,24 @@ export function PushRegistration() {
   }, []);
 
   const subscribe = async () => {
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      window.alert("Push notifications require a secure (HTTPS) connection.");
+      return;
+    }
+
     if (!VAPID_PUBLIC_KEY) {
-      console.error("VAPID public key not found");
+      window.alert("VAPID Public Key is missing. Please check your environment variables.");
       return;
     }
 
     setLoading(true);
     try {
       const registration = await navigator.serviceWorker.ready;
+      if (!registration) {
+        window.alert("Service Worker not ready. Please refresh and try again.");
+        return;
+      }
+
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: VAPID_PUBLIC_KEY,
@@ -46,11 +56,13 @@ export function PushRegistration() {
       if (result.success) {
         setSubscription(sub);
         setPermission("granted");
+        window.alert("Notifications successfully enabled!");
       } else {
         throw new Error(result.error);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to subscribe to push notifications:", error);
+      window.alert("Error: " + (error.message || "Unknown error occurred during subscription."));
     } finally {
       setLoading(false);
     }
