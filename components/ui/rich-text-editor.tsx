@@ -286,28 +286,53 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           border-color: hsl(var(--input));
         }
         .rich-text-editor-wrapper .ql-editor {
-          min-height: 150px;
+          min-height: 200px;
+          line-height: 1.6;
+          font-size: 0.95rem;
+          color: hsl(var(--foreground));
+        }
+        .rich-text-editor-wrapper .ql-editor p {
+          margin-bottom: 1rem;
+        }
+        .rich-text-editor-wrapper .ql-editor h1,
+        .rich-text-editor-wrapper .ql-editor h2,
+        .rich-text-editor-wrapper .ql-editor h3 {
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          font-weight: 700;
+          color: hsl(var(--foreground));
         }
         .rich-text-editor-wrapper .ql-editor img {
           display: block;
           max-width: 100%;
           height: auto;
-          margin: 0.85rem 0;
-          border-radius: calc(var(--radius) - 0.15rem);
+          margin: 1.5rem auto;
+          border-radius: var(--radius);
           border: 1px solid hsl(var(--border));
         }
         .rich-text-editor-wrapper .ql-editor .ql-video {
           display: block;
           width: 100%;
-          min-height: 320px;
-          margin: 0.85rem 0;
-          border-radius: calc(var(--radius) - 0.15rem);
+          aspect-ratio: 16 / 9;
+          margin: 1.5rem 0;
+          border-radius: var(--radius);
           border: 1px solid hsl(var(--border));
         }
         .rich-text-editor-wrapper .ql-editor:focus {
           outline: none;
-          box-shadow: 0 0 0 1px hsl(var(--ring));
         }
+        /* Table styles in editor */
+        .rich-text-editor-wrapper .ql-editor table {
+          border-collapse: collapse;
+          margin-bottom: 1rem;
+          width: 100%;
+        }
+        .rich-text-editor-wrapper .ql-editor td,
+        .rich-text-editor-wrapper .ql-editor th {
+          border: 1px solid hsl(var(--border));
+          padding: 0.5rem;
+        }
+
       `}</style>
     </div>
   );

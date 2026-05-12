@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { deleteSeminarItemSchema, editSeminarItemSchema, reorderSeminarItemsSchema, seminarItemSchema, seminarProgressSchema } from "@/schemas";
+import { normalizeRichText } from "@/lib/rich-text";
 import type { ActionState } from "@/types";
 
 type ActionContext = Awaited<ReturnType<typeof getActionContext>>;
@@ -202,7 +203,7 @@ export async function createSeminarItemAction(_prevState: ActionState, formData:
     const payload = {
       organization_id: profile.organization_id,
       title: parsed.data.title,
-      description: parsed.data.description,
+      description: normalizeRichText(parsed.data.description as string),
       media_type: parsed.data.mediaType,
       media_url: finalMediaUrl,
       media_urls: parsed.data.mediaType === "image" ? finalMediaUrls : null,
@@ -327,7 +328,7 @@ export async function updateSeminarItemAction(_prevState: ActionState, formData:
 
     const payload = {
         title: parsed.data.title,
-        description: parsed.data.description,
+        description: normalizeRichText(parsed.data.description as string),
         media_type: parsed.data.mediaType,
         media_url: finalMediaUrl,
         media_urls: parsed.data.mediaType === "image" ? finalMediaUrls : null,

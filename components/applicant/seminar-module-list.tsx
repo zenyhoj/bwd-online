@@ -1,8 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
-
-import { Download } from "lucide-react";
+import { useState, useEffect, useActionState } from "react";
+import { Download, ChevronLeft, ChevronRight, CheckCircle2, Lock } from "lucide-react";
 
 import { updateSeminarProgressAction } from "@/actions/seminar";
 import { initialActionState } from "@/actions/state";
@@ -10,6 +9,7 @@ import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RichTextContent } from "@/components/ui/rich-text-content";
+import { AccreditedPlumbersTable } from "./accredited-plumbers-table";
 import { getSeminarImageUrls } from "@/lib/seminar-media";
 import { cn } from "@/lib/utils";
 import type { ApplicantSeminarProgress, SeminarItem } from "@/types";
@@ -107,33 +107,127 @@ export function SeminarModuleList({ items, progress, applicantId, completionCta 
   const completedIds = new Set(progress.filter((entry) => entry.completed).map((entry) => entry.seminar_item_id));
   const remainingCount = items.filter((item) => !completedIds.has(item.id)).length;
   const allCompleted = items.length > 0 && remainingCount === 0;
-  let hasEncounteredPendingItem = false;
+
+  // Find the first uncompleted item index to set as initial active index
+  const firstUncompletedIndex = items.findIndex((item) => !completedIds.has(item.id));
+  const initialIndex = allCompleted ? items.length - 1 : Math.max(0, firstUncompletedIndex);
+  
+  const [activeIndex, setActiveIndex] = useState(initialIndex);
+
+  // Auto-advance if the current item was just completed
+  useEffect(() => {
+    const currentItem = items[activeIndex];
+    if (completedIds.has(currentItem.id) && activeIndex < items.length - 1 && !allCompleted) {
+      // Small delay for satisfaction
+      const timer = setTimeout(() => {
+        // Only advance if the next one is actually the one we SHOULD be on
+        const nextUncompleted = items.findIndex((item) => !completedIds.has(item.id));
+        if (nextUncompleted !== -1) {
+          setActiveIndex(nextUncompleted);
+        }
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [progress, allCompleted]);
+
+  const activeItem = items[activeIndex];
+  const isCompleted = completedIds.has(activeItem.id);
+  const isLocked = !isCompleted && items.slice(0, activeIndex).some(item => !completedIds.has(item.id));
 
   return (
-    <div className="grid gap-5">
-      {items.map((item, index) => {
-        const completed = completedIds.has(item.id);
-        const isLocked = !completed && hasEncounteredPendingItem;
+    <div className="space-y-8 max-w-4xl mx-auto">
+      {/* Chevron Stepper */}
+      <div className="flex flex-wrap items-center justify-center gap-y-3 mb-10 px-2">
+        {items.map((item, idx) => {
+          const itemCompleted = completedIds.has(item.id);
+          const current = idx === activeIndex;
+          const locked = !itemCompleted && items.slice(0, idx).some(prev => !completedIds.has(prev.id));
 
-        if (!completed && !hasEncounteredPendingItem) {
-          hasEncounteredPendingItem = true;
-        }
+          return (
+            <div key={idx} className="group relative">
+              {/* Grey Enhanced Tooltip (Below) */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none z-30 scale-95 group-hover:scale-100 mt-2">
+                <div className="relative bg-[#f1f3f5] text-[#495057] text-[10px] px-3 py-1.5 rounded-lg whitespace-nowrap shadow-[0_4px_12px_rgba(0,0,0,0.08)] font-light border border-[#dee2e6]">
+                  {item.title}
+                  {/* Arrow pointing UP */}
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#f1f3f5] rotate-45 border-l border-t border-[#dee2e6]" />
+                </div>
+              </div>
 
-        return (
-          <SeminarItemCard
-            key={item.id}
-            item={item}
-            index={index}
-            completed={completed}
-            isLastPendingItem={!completed && remainingCount === 1}
-            isFinalItem={index === items.length - 1}
-            isLocked={isLocked}
-            allCompleted={allCompleted}
-            applicantId={applicantId}
-            completionCta={completionCta}
-          />
-        );
-      })}
+              <button
+                onClick={() => setActiveIndex(idx)}
+                disabled={locked && !itemCompleted}
+                className={cn(
+                  "relative h-12 flex items-center justify-center transition-all duration-300 px-6 min-w-[80px]",
+                  // Chevron shape using clip-path
+                  "clip-chevron",
+                  current
+                    ? "bg-primary text-primary-foreground z-20 scale-105 shadow-lg shadow-primary/20"
+                    : itemCompleted
+                      ? "bg-emerald-500 text-white z-10 hover:bg-emerald-600"
+                      : "bg-muted text-muted-foreground hover:bg-muted-foreground/10"
+                )}
+                style={{
+                  clipPath: "polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%, 15px 50%)",
+                  marginLeft: idx === 0 ? "0" : "-15px"
+                }}
+              >
+                <div className="flex items-center gap-2 font-bold italic transition-transform duration-300 group-hover:scale-110">
+                  {itemCompleted ? (
+                    <CheckCircle2 className="h-4 w-4" />
+                  ) : locked ? (
+                    <Lock className="h-3.5 w-3.5" />
+                  ) : (
+                    <span className="text-sm">{idx + 1}</span>
+                  )}
+                </div>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="relative">
+        <SeminarItemCard
+          key={activeItem.id}
+          item={activeItem}
+          index={activeIndex}
+          completed={isCompleted}
+          isLastPendingItem={!isCompleted && remainingCount === 1}
+          isFinalItem={activeIndex === items.length - 1}
+          isLocked={isLocked}
+          allCompleted={allCompleted}
+          applicantId={applicantId}
+          completionCta={completionCta}
+        />
+      </div>
+
+      {/* Navigation Controls */}
+      <div className="flex items-center justify-between gap-4 pt-4">
+        <Button
+          variant="outline"
+          onClick={() => setActiveIndex(Math.max(0, activeIndex - 1))}
+          disabled={activeIndex === 0}
+          className="w-32"
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Previous
+        </Button>
+
+        <div className="hidden sm:block text-sm font-medium text-muted-foreground">
+          Module {activeIndex + 1} of {items.length}
+        </div>
+
+        <Button
+          variant={isCompleted || activeIndex < items.length - 1 ? "outline" : "default"}
+          onClick={() => setActiveIndex(Math.min(items.length - 1, activeIndex + 1))}
+          disabled={activeIndex === items.length - 1 || (!isCompleted && !allCompleted)}
+          className="w-32"
+        >
+          Next
+          <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -155,25 +249,52 @@ function SeminarItemCard({
   const statusLabel = completed ? "Completed" : isLocked ? "Locked" : "Pending";
 
   return (
-    <Card className={cn(isLocked && "border-dashed border-muted-foreground/40 bg-muted/20")}>
-      <CardHeader className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Seminar {index + 1}</p>
-          <CardTitle className="text-xl">{item.title}</CardTitle>
+    <Card className={cn("transition-all duration-300 shadow-xl border-border/40 overflow-hidden", isLocked && "border-dashed border-muted-foreground/40 bg-muted/20 opacity-80")}>
+      <CardHeader className="relative border-b border-border/50 bg-muted/5 p-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+               <span className="rounded-full bg-primary/10 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                Module {index + 1}
+              </span>
+              {completed && (
+                <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Completed
+                </span>
+              )}
+            </div>
+            <CardTitle className="text-2xl font-bold tracking-tight">{item.title}</CardTitle>
+          </div>
+          {isLocked && (
+             <span className="flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-600 ring-1 ring-inset ring-amber-700/10">
+              <Lock className="h-3 w-3" />
+              Locked
+            </span>
+          )}
         </div>
-        <span className="rounded-full bg-secondary px-3 py-1 text-sm text-secondary-foreground">
-          {statusLabel}
-        </span>
       </CardHeader>
       <CardContent className="space-y-5">
-        <RichTextContent value={item.description} className="text-[1.02rem] leading-7 text-foreground/85" />
+        <RichTextContent 
+          value={item.description} 
+          className="text-[1.02rem] leading-7 text-foreground/85" 
+          replacements={{
+            "{{PLUMBERS_LIST}}": <AccreditedPlumbersTable />
+          }}
+        />
         <SeminarMedia item={item} />
-        <form action={formAction} className="flex flex-wrap items-center gap-3">
+        <form action={formAction} className="flex flex-wrap items-center gap-3 pt-4">
           <input type="hidden" name="applicantId" value={applicantId} />
           <input type="hidden" name="seminarItemId" value={item.id} />
           <input type="hidden" name="completed" value="true" />
-          <Button type="submit" disabled={completed || isLocked} loading={pending}>
-            {completed ? "Completed" : isLocked ? "Complete previous seminar first" : "Mark as completed"}
+          <Button 
+            type="submit" 
+            disabled={completed || isLocked} 
+            loading={pending}
+            size="lg"
+            className={cn("min-w-[180px] font-bold shadow-lg transition-all", !completed && !isLocked && "hover:scale-105 active:scale-95")}
+          >
+            {completed ? "Completed" : isLocked ? "Previous module required" : "Mark as completed"}
           </Button>
           <div className="min-w-[240px] flex-1">
             <FormMessage state={state} />

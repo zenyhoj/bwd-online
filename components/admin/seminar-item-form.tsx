@@ -19,7 +19,7 @@ import {
   useSortable
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Pencil, Trash2 } from "lucide-react";
 
 import { createSeminarItemAction, deleteSeminarItemAction, updateSeminarItemAction, reorderSeminarItemsAction } from "@/actions/seminar";
 import { initialActionState } from "@/actions/state";
@@ -27,6 +27,7 @@ import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RichTextContent } from "@/components/ui/rich-text-content";
+import { AccreditedPlumbersTable } from "@/components/applicant/accredited-plumbers-table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -80,11 +81,12 @@ function SortableImageCard({ index, onDelete, pending, title, url }: SortableIma
         <Button
           type="button"
           variant="outline"
-          size="sm"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:bg-destructive/10"
           onClick={() => onDelete(url)}
           disabled={pending}
         >
-          Delete
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     </div>
@@ -97,8 +99,8 @@ function DeleteSeminarButton({ seminarItemId }: { seminarItemId: string }) {
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="seminarItemId" value={seminarItemId} />
-      <Button type="submit" variant="outline" loading={pending}>
-        Delete
+      <Button type="submit" variant="outline" size="icon" className="text-destructive hover:bg-destructive/10" loading={pending}>
+        <Trash2 className="h-4 w-4" />
       </Button>
       <FormMessage state={state} />
     </form>
@@ -366,7 +368,13 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
             <span>{item.is_active ? "Active" : "Inactive"}</span>
           </div>
           <h3 className="text-lg font-semibold">{item.title}</h3>
-          <RichTextContent value={item.description} className="max-w-3xl" />
+          <RichTextContent 
+            value={item.description} 
+            className="max-w-3xl" 
+            replacements={{
+              "{{PLUMBERS_LIST}}": <AccreditedPlumbersTable />
+            }}
+          />
           {imageUrls.length > 0 ? (
             <p className="text-xs text-muted-foreground">
               {imageUrls.length} image{imageUrls.length > 1 ? "s" : ""} attached
@@ -383,8 +391,8 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
         </div>
         </div>
       <div className="flex items-center gap-2 shrink-0">
-        <Button variant="outline" onClick={() => setIsEditing(true)}>
-          Edit
+        <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}>
+          <Pencil className="h-4 w-4" />
         </Button>
         <DeleteSeminarButton seminarItemId={item.id} />
       </div>
