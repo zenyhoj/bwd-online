@@ -25,12 +25,12 @@ export function ApplicantSwitcher({
 }: ApplicantSwitcherProps) {
   return (
     <Card className="border-border/70 shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <CardTitle>{title}</CardTitle>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        <Button asChild size="sm">
+        <Button asChild size="sm" className="w-full sm:w-auto shrink-0">
           <Link href="/applicant/new">
             <Plus className="mr-2 h-4 w-4" />
             Add Applicant
@@ -60,17 +60,17 @@ export function ApplicantSwitcher({
             <Link
               key={applicant.id}
               href={`${basePath}?${query.toString()}` as never}
-              className={`rounded-2xl border p-4 transition flex items-center justify-between gap-3 ${
+              className={`rounded-2xl border p-4 transition flex items-center justify-between gap-3 min-w-0 ${
                 isSelected
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border/80 bg-background hover:border-primary/40 hover:bg-muted/10"
               }`}
             >
-              <div className="flex items-center gap-3 min-w-0">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/50">
                   <User className="h-5 w-5 text-muted-foreground" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="font-medium truncate">{applicant.full_name}</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {applicant.address || "No address provided"}
@@ -78,7 +78,7 @@ export function ApplicantSwitcher({
                 </div>
               </div>
               {isSelected ? (
-                <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary whitespace-nowrap">
+                <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary whitespace-nowrap shrink-0">
                   Selected
                 </span>
               ) : null}

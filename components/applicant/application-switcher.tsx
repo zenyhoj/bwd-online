@@ -74,21 +74,21 @@ export function ApplicationSwitcher({
             <Link
               key={application.id}
               href={`${basePath}?${query.toString()}` as never}
-              className={`rounded-2xl border p-4 transition ${
+              className={`rounded-2xl border p-4 transition min-w-0 ${
                 isSelected
                   ? "border-primary bg-primary/5 shadow-sm"
                   : "border-border/80 bg-background hover:border-primary/40 hover:bg-muted/10"
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{application.full_name}</p>
-                  <p className="text-xs text-muted-foreground">
+              <div className="flex items-start justify-between gap-3 min-w-0">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{application.full_name}</p>
+                  <p className="text-xs text-muted-foreground truncate">
                     {application.service_type.replaceAll("_", " ")}
                   </p>
                 </div>
                 {isSelected ? (
-                  <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                  <span className="rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary whitespace-nowrap shrink-0">
                     Selected
                   </span>
                 ) : null}
