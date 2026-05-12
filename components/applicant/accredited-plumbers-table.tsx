@@ -100,16 +100,20 @@ export function AccreditedPlumbersTable() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex flex-wrap justify-end gap-2">
-                      {plumber.phone?.split("/").map((num: string, i: number) => (
-                        <a
-                          key={i}
-                          href={`tel:${num.trim()}`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground transition-all border border-primary/10 font-medium"
-                        >
-                          <Phone className="h-3.5 w-3.5" />
-                          {num.trim()}
-                        </a>
-                      ))}
+                      {(plumber.phone || plumber.contact_number)?.split("/").map((num: string, i: number) => {
+                        const cleanNum = num.trim();
+                        if (!cleanNum) return null;
+                        return (
+                          <a
+                            key={i}
+                            href={`tel:${cleanNum}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground transition-all border border-primary/10 font-medium"
+                          >
+                            <Phone className="h-3.5 w-3.5" />
+                            {cleanNum}
+                          </a>
+                        );
+                      })}
                     </div>
                   </td>
                 </tr>
@@ -153,16 +157,20 @@ export function AccreditedPlumbersTable() {
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                  {plumber.phone?.split("/").map((num: string, i: number) => (
-                    <a
-                      key={i}
-                      href={`tel:${num.trim()}`}
-                      className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold active:scale-[0.98] transition-transform shadow-md shadow-primary/20"
-                    >
-                      <Phone className="h-4 w-4" />
-                      Call {num.trim()}
-                    </a>
-                  ))}
+                  {(plumber.phone || plumber.contact_number)?.split("/").map((num: string, i: number) => {
+                    const cleanNum = num.trim();
+                    if (!cleanNum) return null;
+                    return (
+                      <a
+                        key={i}
+                        href={`tel:${cleanNum}`}
+                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold active:scale-[0.98] transition-transform shadow-md shadow-primary/20"
+                      >
+                        <Phone className="h-4 w-4" />
+                        Call {cleanNum}
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             </div>
