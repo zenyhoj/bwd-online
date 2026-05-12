@@ -7,11 +7,13 @@ export default function HomePage() {
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="mx-auto max-w-[800px] space-y-10 text-center">
         <div className="flex flex-col items-center">
-          <div className="mb-8 h-24 w-24 overflow-hidden rounded-3xl shadow-2xl shadow-primary/20 transition-transform hover:scale-105">
-            <img
+          <div className="relative mb-8 h-24 w-24 overflow-hidden rounded-3xl shadow-2xl shadow-primary/20 transition-transform hover:scale-105">
+            <Image
               src="/logo-main.jpg"
               alt="BWD Logo"
-              className="h-full w-full object-cover"
+              fill
+              priority
+              className="object-cover"
             />
           </div>
           <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-primary mb-4">BWD Online</p>

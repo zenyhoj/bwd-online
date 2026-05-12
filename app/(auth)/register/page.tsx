@@ -7,11 +7,13 @@ export default function RegisterPage() {
       {/* Left Column: Branding */}
       <div className="flex flex-1 flex-col items-center justify-center bg-primary/5 p-8 text-center md:p-10 border-r border-border/50">
         <div className="max-w-md w-full flex flex-col items-center space-y-6">
-          <div className="h-24 w-24 flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-xl shadow-primary/10 border border-border/50">
-            <img
+          <div className="relative h-24 w-24 flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-xl shadow-primary/10 border border-border/50">
+            <Image
               src="/logo-main.jpg"
               alt="BWD Logo"
-              className="max-h-full max-w-full object-contain p-1"
+              fill
+              priority
+              className="object-contain p-1"
             />
           </div>
           <div className="space-y-3">

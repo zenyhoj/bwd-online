@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import JSZip from "jszip";
+// Remove static import
+// import JSZip from "jszip";
 import { format } from "date-fns";
 import { Download, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,7 @@ export function ExportActionButtons({ hasPending }: ExportActionButtonsProps) {
         return;
       }
 
+      const JSZip = (await import("jszip")).default;
       const zip = new JSZip();
       const total = documents.length;
       let completed = 0;

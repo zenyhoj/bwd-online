@@ -21,6 +21,7 @@ import {
   getAccreditedPlumbers,
   getAdminApplicationDetail,
   getAdminApplicationsQueue,
+  getAdminDashboardStats,
   getOrganizationInspectors
 } from "@/lib/queries";
 import type { Document, Payment } from "@/types";
@@ -211,9 +212,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const q = getStringParam(resolvedSearchParams, "q") ?? "";
   const workflow = getStringParam(resolvedSearchParams, "workflow") ?? "all";
 
-  const [applications, priorityApplications, inspectors, plumbers] = await Promise.all([
+  const [applications, stats, inspectors, plumbers] = await Promise.all([
     getAdminApplicationsQueue(pagination, { q, workflow }),
-    getAdminApplicationsQueue({ page: 1, pageSize: 1000 }, { q, workflow: "all" }),
+    getAdminDashboardStats(),
     getOrganizationInspectors(),
     getAccreditedPlumbers()
   ]);
@@ -228,25 +229,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const noQueueResults = applications.data.length === 0;
   const hasMatchesInOtherStages = Boolean(searchMatchesAcrossAllStages && searchMatchesAcrossAllStages.count > 0);
 
-  const priorityRecords = priorityApplications.data as Record<string, unknown>[];
-  const readyForInspection = priorityRecords.filter((item) => {
-    const inspections = ((item.inspections as { id?: string }[] | undefined) ?? []);
-    const inhousePlumbingCompleted = Boolean(item.inhouse_installation_completed);
-    return inhousePlumbingCompleted && inspections.length === 0;
-  }).length;
-  const awaitingInspectionResult = priorityRecords.filter((item) => {
-    const inspections = ((item.inspections as { status?: string }[] | undefined) ?? []);
-    return inspections.some((inspection) => inspection.status !== "approved" && inspection.status !== "rejected");
-  }).length;
-  const readyForPayment = priorityRecords.filter((item) => {
-    const inspections = ((item.inspections as { status?: string }[] | undefined) ?? []);
-    const payments = ((item.payments as { id: string }[] | undefined) ?? []).length;
-    const documents = ((item.documents as Document[] | undefined) ?? []);
-    return inspections.some((inspection) => inspection.status === "approved") && areDocumentsReadyForPayment(item as never) && payments === 0;
-  }).length;
-  const readyForConversionEffective = priorityRecords.filter(
-    (item) => queueStage(item as Record<string, unknown>) === "for-conversion"
-  ).length;
+  const { readyForInspection, awaitingInspectionResult, readyForPayment, readyForConversion: readyForConversionEffective } = stats;
+
   const workflowStages = [
     {
       key: "for-inhouse-plumbing",
@@ -362,81 +346,81 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <Card className="relative overflow-hidden border-l-4 border-l-blue-500">
-          <CardContent className="p-5">
+        <Card className="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Total in queue</p>
-                <p className="mt-1 text-3xl font-bold">{applications.count}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">active applications</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Total in queue</p>
+                <p className="mt-0.5 text-2xl font-bold">{applications.count}</p>
+                <p className="text-[10px] text-muted-foreground/60 font-medium uppercase">active applications</p>
               </div>
-              <div className="rounded-xl bg-blue-500/10 p-3">
-                <ClipboardList className="h-6 w-6 text-blue-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-none bg-primary/5 shadow-none group transition-all hover:bg-primary/10">
-          <CardContent className="p-8">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary mb-2">Need Schedule</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold tracking-tighter">{readyForInspection}</span>
-                  <span className="text-sm font-medium text-muted-foreground">apps</span>
-                </div>
-                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">inspection appointments pending</p>
-              </div>
-              <div className="rounded-full bg-primary text-primary-foreground p-3 shadow-lg shadow-primary/20">
-                <Wrench className="h-5 w-5" />
+              <div className="rounded-lg bg-blue-500/5 p-1.5">
+                <ClipboardList className="h-4 w-4 text-blue-500/40" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-amber-500/5 shadow-none group transition-all hover:bg-amber-500/10">
-          <CardContent className="p-8">
+        <Card className="border-none bg-primary/5 shadow-none transition-all hover:bg-primary/[0.08]">
+          <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-600 mb-2">Awaiting Result</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold tracking-tighter text-amber-600">{awaitingInspectionResult}</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-primary/70 mb-1">Need Schedule</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tighter">{readyForInspection}</span>
+                  <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">apps</span>
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">scheduled inspections</p>
+                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">appointments pending</p>
               </div>
-              <div className="rounded-full bg-amber-500 text-white p-3 shadow-lg shadow-amber-500/20">
-                <CalendarClock className="h-5 w-5" />
+              <div className="rounded-full bg-primary/10 text-primary/40 p-1.5">
+                <Wrench className="h-3.5 w-3.5" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-indigo-600/5 shadow-none group transition-all hover:bg-indigo-600/10">
-          <CardContent className="p-8">
+        <Card className="border-none bg-amber-500/5 shadow-none transition-all hover:bg-amber-500/[0.08]">
+          <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 mb-2">Ready for Payment</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold tracking-tighter text-indigo-600">{readyForPayment}</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600/70 mb-1">Awaiting Result</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tighter text-amber-600/90">{awaitingInspectionResult}</span>
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">awaiting payment schedule</p>
+                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">scheduled inspections</p>
               </div>
-              <div className="rounded-full bg-indigo-600 text-white p-3 shadow-lg shadow-indigo-600/20">
-                <CreditCard className="h-5 w-5" />
+              <div className="rounded-full bg-amber-500/10 text-amber-500/40 p-1.5">
+                <CalendarClock className="h-3.5 w-3.5" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-emerald-600/5 shadow-none group transition-all hover:bg-emerald-600/10">
-          <CardContent className="p-8">
+        <Card className="border-none bg-indigo-600/5 shadow-none transition-all hover:bg-indigo-600/[0.08]">
+          <CardContent className="p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-600 mb-2">Ready for Conversion</p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-5xl font-bold tracking-tighter text-emerald-600">{readyForConversionEffective}</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600/70 mb-1">Ready for Payment</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tighter text-indigo-600/90">{readyForPayment}</span>
                 </div>
-                <p className="mt-4 text-xs text-muted-foreground/80 font-medium">can be converted to account</p>
+                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">awaiting payment</p>
               </div>
-              <div className="rounded-full bg-emerald-600 text-white p-3 shadow-lg shadow-emerald-600/20">
-                <CheckCircle2 className="h-5 w-5" />
+              <div className="rounded-full bg-indigo-600/10 text-indigo-600/40 p-1.5">
+                <CreditCard className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-none bg-emerald-600/5 shadow-none transition-all hover:bg-emerald-600/[0.08]">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70 mb-1">Ready for Conversion</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tighter text-emerald-600/90">{readyForConversionEffective}</span>
+                </div>
+                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">ready for account</p>
+              </div>
+              <div className="rounded-full bg-emerald-600/10 text-emerald-600/40 p-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" />
               </div>
             </div>
           </CardContent>

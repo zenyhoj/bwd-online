@@ -501,3 +501,38 @@ export async function getAdminSeminarItems() {
 
   return (data ?? []) as SeminarItem[];
 }
+export async function getAdminDashboardStats() {
+  const supabase = createSupabaseAdminClient();
+  const profile = await getCurrentProfile();
+
+  // We still need the workflow stage logic, but we can fetch less data
+  const { data, error } = await supabase
+    .from("applications")
+    .select("id, status, document_submission_mode, inhouse_installation_completed, water_meter_installation_scheduled_at, water_meter_installed_at, inspections(id, status), documents(id, status), payments(id, status), concessionaires(id)")
+    .eq("organization_id", profile.organization_id);
+
+  if (error) throw error;
+
+  const records = data as Record<string, unknown>[];
+  
+  let readyForInspection = 0;
+  let awaitingInspectionResult = 0;
+  let readyForPayment = 0;
+  let readyForConversion = 0;
+
+  for (const record of records) {
+    const stage = getAdminQueueStage(record);
+    if (stage === "for-inspection") readyForInspection++;
+    if (stage === "under-review") awaitingInspectionResult++;
+    if (stage === "for-payment") readyForPayment++;
+    if (stage === "for-conversion") readyForConversion++;
+  }
+
+  return {
+    total: records.length,
+    readyForInspection,
+    awaitingInspectionResult,
+    readyForPayment,
+    readyForConversion
+  };
+}
