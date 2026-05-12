@@ -120,7 +120,7 @@ function NavContent({
   onClose?: () => void;
 }) {
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       <div className="mb-6 p-1">
         <div className="space-y-1">
           <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-primary">BWD Online</p>
@@ -224,7 +224,7 @@ function NavContent({
           </button>
         </form>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -264,8 +264,8 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
             onClick={() => setMobileOpen(false)}
           />
           {/* Drawer panel */}
-          <div className="absolute left-0 top-0 h-full w-72 border-r border-border/60 bg-background p-5 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="absolute left-0 top-0 h-full w-72 border-r border-border/60 bg-background p-5 shadow-2xl flex flex-col overflow-y-auto">
+            <div className="mb-4 flex items-center justify-between shrink-0">
               <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">Menu</p>
               <Button
                 variant="ghost"
