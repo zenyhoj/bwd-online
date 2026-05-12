@@ -26,13 +26,20 @@ This section guides you through applying for a new water connection or a reconne
 - Watch the provided orientation videos.
 - You must watch the videos completely. Your attendance and completion will be automatically recorded by the system.
 
-### 4. In-House Plumbing & Inspection
+### 4. Accredited Plumbers Directory
+- You can now find the **Plumbers** tab in your main navigation menu.
+- This directory provides a searchable list of all official BWD-accredited plumbers.
+- **Search & Filter**: Use the search bar to find plumbers by name or specific Area (Barangay).
+- **Mobile Optimized**: If you are on a phone, the list becomes easy-to-read cards.
+- **One-Tap Contact**: Simply tap the plumber's phone number to call them directly from your device.
+
+### 5. In-House Plumbing & Inspection
 - After seminar completion, you will be authorized to begin your **In-House Plumbing**.
-- You must hire a BWD **Accredited Plumber** (or specify if you are doing it yourself, if permitted).
+- You must hire a BWD **Accredited Plumber** (consult the "Plumbers" tab for the official list).
 - Once your plumbing is done, mark the installation as **Completed** on your dashboard.
 - A **BWD Inspector** will be scheduled to visit your property and verify the installation.
 
-### 5. Payment & Completion
+### 6. Payment & Completion
 - Once the Inspector approves your plumbing, your application will move to the **For Payment** stage.
 - Visit the BWD Office to pay the required Installation Fees, Meter Deposit, and other charges.
 - After payment is verified, your status will change to **For Water Meter Scheduling**, and BWD personnel will arrive to tap your connection to the mainline.
@@ -65,13 +72,14 @@ Once an application reaches the appropriate stage (e.g., after an inspection is 
 3. **Note on Security**: These buttons are automatically disabled until the applicant has successfully completed their payment.
 4. Clicking these buttons will open a print-ready, 8.5x13 inch (Long Bond Paper) formatted document with all database values accurately mapped. Use your browser's print function (`Ctrl+P` or `Cmd+P`) to print them out.
 
-### 4. Managing Plumbers and Inspectors
-- Admins have access to directories to manage **Accredited Plumbers** and **BWD Inspectors**.
-- Use the navigation menu to view and update the list of authorized personnel.
+### 4. Managing Plumbers
+- Admins have a dedicated **Plumbers** management page.
+- You can add, edit, or deactivate plumbers in the database.
+- **System Synchronization**: Any changes made here are instantly reflected in the applicant's "Plumbers" tab and within seminar modules.
 
-### 5. Managing Seminars
+### 5. Managing Seminars & Dynamic Content
 - Admins can upload and manage the video content for the Online Seminar.
-- This allows you to update the orientation guidelines without needing technical support.
+- **Dynamic Plumber Injection**: To display the official plumbers list inside a seminar module, simply type the shortcode `{{PLUMBERS_LIST}}` anywhere in the description. The system will automatically replace this text with a professional, searchable table for the applicant.
 
 ---
 

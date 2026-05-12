@@ -44,6 +44,7 @@ const navByRole: Record<AppRole, NavItem[]> = {
     { href: "/applicant/applications/new", label: "Information", icon: FileCheck2 },
     { href: "/applicant", label: "Dashboard", icon: Home },
     { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
+    { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
     { href: "/applicant/payments", label: "Payments", icon: CreditCard }
   ],
   admin: [
@@ -83,6 +84,7 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant", label: "Dashboard", icon: Home },
       { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
+      { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
       { href: "/applicant/payments", label: "Payments", icon: CreditCard }
     ];
   }
@@ -93,6 +95,7 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
       { href: "/applicant/applications/new", label: "Add applicant", icon: FileCheck2 },
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
+      { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
       { href: "/applicant/payments", label: "Payments", icon: CreditCard }
     ];
   }
