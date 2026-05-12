@@ -11,7 +11,7 @@ export default async function AdminConcessionairesPage() {
     .from("applications")
     .select("*, accredited_plumbers(full_name), concessionaires(*)")
     .eq("organization_id", profile.organization_id)
-    .eq("status", "converted")
+    .in("status", ["converted", "approved"])
     .order("updated_at", { ascending: false });
 
   return (
@@ -37,25 +37,44 @@ export default async function AdminConcessionairesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(applications ?? []).map((application) => {
-                const record = application as Record<string, unknown>;
-                const concessionaire = (record.concessionaires as Record<string, unknown>[] | undefined)?.[0];
+              {(applications ?? []).length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    No records found. Applications ready for conversion will appear here.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                (applications ?? []).map((application) => {
+                  const record = application as Record<string, unknown>;
+                  const concessionaire = (record.concessionaires as Record<string, unknown>[] | undefined)?.[0];
+                  const isReady = record.status === "approved" && !concessionaire;
 
-                if (!concessionaire) {
-                  return null;
-                }
-
-                return (
-                  <TableRow key={String(concessionaire.id)}>
-                    <TableCell>{String(record.full_name)}</TableCell>
-                    <TableCell>{String(concessionaire.concessionaire_number)}</TableCell>
-                    <TableCell>{Boolean(record.inhouse_installation_completed) ? "Completed" : "Pending"}</TableCell>
-                    <TableCell>{String((record.accredited_plumbers as { full_name?: string } | null)?.full_name ?? "N/A")}</TableCell>
-                    <TableCell>{formatDate(String(concessionaire.connection_date))}</TableCell>
-                    <TableCell>{String(concessionaire.meter_number ?? "N/A")}</TableCell>
-                  </TableRow>
-                );
-              })}
+                  return (
+                    <TableRow key={String(record.id)}>
+                      <TableCell className="font-medium">{String(record.full_name)}</TableCell>
+                      <TableCell>
+                        {concessionaire ? (
+                          <span className="font-mono">{String(concessionaire.concessionaire_number)}</span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase text-blue-600 ring-1 ring-inset ring-blue-700/10">
+                            Ready for conversion
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>{Boolean(record.inhouse_installation_completed) ? "Completed" : "Pending"}</TableCell>
+                      <TableCell>{String((record.accredited_plumbers as { full_name?: string } | null)?.full_name ?? "N/A")}</TableCell>
+                      <TableCell>
+                        {concessionaire 
+                          ? formatDate(String(concessionaire.connection_date)) 
+                          : record.water_meter_installed_at 
+                            ? formatDate(String(record.water_meter_installed_at))
+                            : "N/A"}
+                      </TableCell>
+                      <TableCell>{String(concessionaire?.meter_number ?? "N/A")}</TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </CardContent>

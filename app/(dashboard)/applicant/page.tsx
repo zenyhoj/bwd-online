@@ -50,6 +50,8 @@ function getLatestPayment(application: {
 function getEffectiveWorkflowStatus(application: {
   status?: string | null;
   inhouse_installation_completed?: boolean | null;
+  water_meter_installation_scheduled_at?: string | null;
+  water_meter_installed_at?: string | null;
   payments?: {
     due_date?: string | null;
     paid_at?: string | null;
@@ -62,12 +64,20 @@ function getEffectiveWorkflowStatus(application: {
     return "converted";
   }
 
-  if (latestPayment?.status === "paid" && application.inhouse_installation_completed) {
-    return "approved";
+  if (application.water_meter_installed_at) {
+    return "ready for conversion";
+  }
+
+  if (application.water_meter_installation_scheduled_at) {
+    return "installation scheduled";
   }
 
   if (latestPayment?.status === "paid") {
-    return "payment received";
+    return "ready for installation";
+  }
+
+  if (application.inhouse_installation_completed) {
+    return "inspection approved";
   }
 
   return application.status ?? "submitted";
@@ -320,15 +330,31 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </p>
             </div>
             <div className={`rounded-lg border p-3 ${
-              selectedApplication?.water_meter_installation_scheduled_at
-                ? "border-primary/50 bg-primary/5 shadow-sm"
-                : "border-border/70"
+              selectedApplication?.water_meter_installed_at
+                ? "border-emerald-500/50 bg-emerald-50/50 shadow-sm"
+                : selectedApplication?.water_meter_installation_scheduled_at
+                  ? "border-primary/50 bg-primary/5 shadow-sm"
+                  : "border-border/70"
             }`}>
-              <p className={`text-xs uppercase tracking-[0.14em] ${selectedApplication?.water_meter_installation_scheduled_at ? "text-primary font-semibold" : "text-muted-foreground"}`}>Water Meter</p>
-              <p className={`mt-1 font-medium ${selectedApplication?.water_meter_installation_scheduled_at ? "text-primary" : ""}`}>
-                {selectedApplication?.water_meter_installation_scheduled_at
-                  ? formatDateTime(selectedApplication.water_meter_installation_scheduled_at)
-                  : "Not scheduled"}
+              <p className={`text-xs uppercase tracking-[0.14em] ${
+                selectedApplication?.water_meter_installed_at 
+                  ? "text-emerald-600 font-bold" 
+                  : selectedApplication?.water_meter_installation_scheduled_at 
+                    ? "text-primary font-semibold" 
+                    : "text-muted-foreground"
+              }`}>Water Meter</p>
+              <p className={`mt-1 font-medium ${
+                selectedApplication?.water_meter_installed_at 
+                  ? "text-emerald-600" 
+                  : selectedApplication?.water_meter_installation_scheduled_at 
+                    ? "text-primary" 
+                    : ""
+              }`}>
+                {selectedApplication?.water_meter_installed_at
+                  ? `Completed ${formatDate(selectedApplication.water_meter_installed_at)}`
+                  : selectedApplication?.water_meter_installation_scheduled_at
+                    ? formatDateTime(selectedApplication.water_meter_installation_scheduled_at)
+                    : "Not scheduled"}
               </p>
             </div>
           </div>

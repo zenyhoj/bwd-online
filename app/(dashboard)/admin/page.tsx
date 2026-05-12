@@ -179,24 +179,30 @@ function workflowStepState({
   payments,
   applicationStatus,
   inhousePlumbingCompleted,
-  documentsReady
+  documentsReady,
+  waterMeterScheduled,
+  waterMeterInstalled
 }: {
   inspections: { status?: string; scheduled_at?: string | null }[];
   payments: Payment[];
   applicationStatus: string;
   inhousePlumbingCompleted: boolean;
   documentsReady: boolean;
+  waterMeterScheduled: boolean;
+  waterMeterInstalled: boolean;
 }) {
   const hasScheduledInspection = inspections.length > 0;
   const hasApprovedInspection = inspections.some((inspection) => inspection.status === "approved");
-  const hasPayment = payments.length > 0;
+  const latestPayment = [...payments].sort((a, b) => new Date(b.paid_at ?? 0).getTime() - new Date(a.paid_at ?? 0).getTime())[0];
+  const isPaid = latestPayment?.status === "paid";
 
   return {
     plumbing: inhousePlumbingCompleted ? "Complete" : "Pending",
     inspection: !inhousePlumbingCompleted ? "Waiting" : hasApprovedInspection ? "Complete" : hasScheduledInspection ? "Scheduled" : "Pending",
-    payment: hasPayment ? "Scheduled" : hasApprovedInspection && documentsReady ? "Ready" : hasApprovedInspection ? "Review docs" : "Waiting",
+    payment: isPaid ? "Complete" : payments.length > 0 ? "Scheduled" : hasApprovedInspection && documentsReady ? "Ready" : hasApprovedInspection ? "Review docs" : "Waiting",
+    waterMeter: waterMeterInstalled ? "Complete" : waterMeterScheduled ? "Scheduled" : isPaid ? "Ready" : "Waiting",
     conversion:
-      applicationStatus === "converted" ? "Complete" : applicationStatus === "approved" ? "Ready" : "Waiting"
+      applicationStatus === "converted" ? "Complete" : waterMeterInstalled ? "Ready" : "Waiting"
   };
 }
 
@@ -312,12 +318,16 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       .filter((value): value is string => Boolean(value))
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
   const selectedQueueStage = selectedApplication ? queueStage(selectedApplication) : "under-review";
+  const waterMeterScheduled = Boolean(selectedApplication?.water_meter_installation_scheduled_at);
+  const waterMeterInstalled = Boolean(selectedApplication?.water_meter_installed_at);
   const stepState = workflowStepState({
     inspections: selectedInspections,
     payments: selectedPayments,
     applicationStatus: selectedApplicationStatus,
     inhousePlumbingCompleted,
-    documentsReady: documentsReadyForPayment
+    documentsReady: documentsReadyForPayment,
+    waterMeterScheduled,
+    waterMeterInstalled
   });
 
   let activeAction: string | null = null;
@@ -622,6 +632,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       { label: "Plumbing", value: stepState.plumbing },
                       { label: "Inspection", value: stepState.inspection },
                       { label: "Payment", value: stepState.payment },
+                      { label: "Water Meter", value: stepState.waterMeter },
                       { label: "Conversion", value: stepState.conversion }
                     ].map((step, idx, arr) => {
                       const isDone = step.value === "Complete";
