@@ -72,28 +72,28 @@ export function PushRegistration() {
   };
 
   if (loading) {
-    return <Button variant="outline" size="sm" disabled className="w-full whitespace-nowrap"><Loader2 className="h-4 w-4 animate-spin mr-2" /> Syncing...</Button>;
+    return <Button variant="outline" size="sm" disabled className="w-full whitespace-nowrap text-xs px-2"><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Syncing...</Button>;
   }
 
   if (permission === "denied") {
     return (
-      <Button variant="outline" size="sm" disabled className="w-full whitespace-nowrap text-muted-foreground opacity-50">
-        <BellOff className="h-4 w-4 mr-2" /> Blocked
+      <Button variant="outline" size="sm" disabled className="w-full whitespace-nowrap text-muted-foreground opacity-50 text-xs px-2">
+        <BellOff className="h-3.5 w-3.5 mr-1.5" /> Blocked
       </Button>
     );
   }
 
   if (subscription) {
     return (
-      <Button variant="outline" size="sm" onClick={unsubscribe} className="w-full whitespace-nowrap text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200">
-        <Bell className="h-4 w-4 mr-2" /> Notifications On
+      <Button variant="outline" size="sm" onClick={unsubscribe} className="w-full whitespace-nowrap text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200 text-xs px-2">
+        <Bell className="h-3.5 w-3.5 mr-1.5" /> Notifications On
       </Button>
     );
   }
 
   return (
-    <Button variant="default" size="sm" onClick={subscribe} className="w-full whitespace-nowrap shadow-sm px-3 font-bold">
-      <Bell className="h-4 w-4 mr-2" /> Enable Notifications
+    <Button variant="default" size="sm" onClick={subscribe} className="w-full whitespace-nowrap shadow-sm px-2 font-bold text-xs">
+      <Bell className="h-3.5 w-3.5 mr-1.5" /> Enable Notifications
     </Button>
   );
 }
