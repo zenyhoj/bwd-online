@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
+import { sendPushNotificationAction } from "./push-server";
 import { applicationStatusSchema } from "@/schemas";
 import type { ConcessionaireClassification } from "@/lib/fee-schedule";
 import type { ActionState } from "@/types";
@@ -125,6 +126,28 @@ export async function updateApplicationStatusAction(_prevState: ActionState, for
 
     if (error) {
       return { success: false, message: error.message };
+    }
+
+    // Send push notification to applicant
+    try {
+      const { data: appData } = await supabase
+        .from("applications")
+        .select("status, applicants(profile_id)")
+        .eq("id", parsed.data.applicationId)
+        .single();
+      
+      const applicantProfileId = (appData?.applicants as any)?.profile_id;
+      if (applicantProfileId) {
+        await sendPushNotificationAction(
+          applicantProfileId,
+          "Application Update",
+          `Your application status has been updated to: ${parsed.data.status.replace("_", " ")}`,
+          "/applicant"
+        );
+      }
+    } catch (pushError) {
+      console.error("Failed to send push notification:", pushError);
+      // Don't fail the whole action if push fails
     }
 
     revalidatePath("/admin");

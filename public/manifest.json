@@ -1,0 +1,16 @@
+{
+  "name": "BWD Online",
+  "short_name": "BWD",
+  "description": "Buenavista Water District Online Application System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo-main.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import "./globals.css";
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { NavigationProgress } from "@/components/navigation-progress";
 
@@ -12,7 +12,24 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "BWD Online Water Application System",
-  description: "Production-ready online water application system for applications, inspections, and payments."
+  description: "Production-ready online water application system for applications, inspections, and payments.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BWD Online",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

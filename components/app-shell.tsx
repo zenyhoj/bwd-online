@@ -26,6 +26,7 @@ import { signOutAction } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DocumentPurgeButton } from "@/components/admin/document-purge-button";
+import { PushRegistration } from "@/components/push-registration";
 import type { AppRole, Profile } from "@/types";
 
 type AppShellProps = {
@@ -206,7 +207,11 @@ function NavContent({
           <DocumentPurgeButton className="group flex w-full items-center gap-2.5 rounded-full px-4 py-2.5 text-sm font-medium transition-all text-muted-foreground hover:bg-secondary hover:text-foreground" />
         </div>
       )}
-      <div className="mt-auto px-1 pt-8">
+      <div className="mt-auto px-1 space-y-4 pt-8">
+        <div className="px-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 mb-2 px-1">Settings</p>
+          <PushRegistration />
+        </div>
         <form action={signOutAction}>
           <button
             type="submit"
