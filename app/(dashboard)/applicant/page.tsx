@@ -312,38 +312,77 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           ) : null}
 
-          <div className="grid gap-3 md:grid-cols-4">
-            <div className="rounded-lg border border-border/70 p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Inspection</p>
-              <p className="mt-1 font-medium">{formatDateTime(latestInspectionSchedule)}</p>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Inspection</p>
+                {selectedApplication?.inspections?.[0] && (
+                  <div className="scale-75 origin-right">
+                    <StatusBadge status={selectedApplication.inspections[0].status ?? "pending"} />
+                  </div>
+                )}
+              </div>
+              <p className="mt-1 text-[13px] font-medium leading-tight md:text-sm">
+                {latestInspectionSchedule ? formatDateTime(latestInspectionSchedule) : "Not scheduled"}
+              </p>
             </div>
-            <div className="rounded-lg border border-border/70 p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Payment</p>
-              <div className="mt-1">{latestPayment ? <StatusBadge status={latestPayment.status ?? "scheduled"} /> : "Not scheduled"}</div>
+            
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Payment</p>
+                {latestPayment && (
+                  <div className="scale-75 origin-right">
+                    <StatusBadge status={latestPayment.status ?? "scheduled"} />
+                  </div>
+                )}
+              </div>
+              <p className="mt-1 text-[13px] font-medium leading-tight text-foreground/80 md:text-sm">
+                {latestPayment ? (
+                  latestPayment.status === "paid" 
+                    ? formatDate(latestPayment.paid_at ?? latestPayment.office_payment_at ?? null) 
+                    : formatDate(latestPayment.due_date ?? null)
+                ) : "Not scheduled"}
+              </p>
             </div>
-            <div className="rounded-lg border border-border/70 p-3">
-              <p className="text-xs uppercase tracking-[0.14em] text-muted-foreground">Plumbing</p>
-              <p className="mt-1 font-medium">
+
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Plumbing</p>
+                {selectedApplication?.inhouse_installation_completed && (
+                  <div className="scale-75 origin-right">
+                    <StatusBadge status="completed" />
+                  </div>
+                )}
+              </div>
+              <p className="mt-1 text-[13px] font-medium leading-tight text-foreground/80 md:text-sm">
                 {selectedApplication?.inhouse_installation_completed_at
-                  ? `Completed ${formatDate(selectedApplication.inhouse_installation_completed_at)}`
+                  ? formatDate(selectedApplication.inhouse_installation_completed_at)
                   : "Pending"}
               </p>
             </div>
-            <div className={`rounded-lg border p-3 ${
+
+            <div className={`rounded-xl border p-3 transition-colors ${
               selectedApplication?.water_meter_installed_at
-                ? "border-emerald-500/50 bg-emerald-50/50 shadow-sm"
+                ? "border-emerald-500/30 bg-emerald-50/30"
                 : selectedApplication?.water_meter_installation_scheduled_at
-                  ? "border-primary/50 bg-primary/5 shadow-sm"
-                  : "border-border/70"
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <p className={`text-xs uppercase tracking-[0.14em] ${
-                selectedApplication?.water_meter_installed_at 
-                  ? "text-emerald-600 font-bold" 
-                  : selectedApplication?.water_meter_installation_scheduled_at 
-                    ? "text-primary font-semibold" 
-                    : "text-muted-foreground"
-              }`}>Water Meter</p>
-              <p className={`mt-1 font-medium ${
+              <div className="flex items-center justify-between gap-2">
+                <p className={`text-[10px] uppercase tracking-[0.14em] font-bold whitespace-nowrap ${
+                  selectedApplication?.water_meter_installed_at 
+                    ? "text-emerald-600" 
+                    : selectedApplication?.water_meter_installation_scheduled_at 
+                      ? "text-primary" 
+                      : "text-muted-foreground"
+                }`}>Water Meter</p>
+                {selectedApplication?.water_meter_installed_at && (
+                  <div className="scale-75 origin-right">
+                    <StatusBadge status="completed" />
+                  </div>
+                )}
+              </div>
+              <p className={`mt-1 text-[13px] font-medium leading-tight md:text-sm ${
                 selectedApplication?.water_meter_installed_at 
                   ? "text-emerald-600" 
                   : selectedApplication?.water_meter_installation_scheduled_at 
@@ -377,12 +416,13 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               applicationId={selectedApplication.id}
               plumbers={plumbers}
               currentPlumberId={selectedApplication.accredited_plumber_id}
-            currentCompletedAt={selectedApplication.inhouse_installation_completed_at}
-            currentProofImageUrl={selectedApplication.inhouse_installation_proof_image_url}
-            currentSignedAt={selectedApplication.inhouse_installation_signed_at}
-            minimumCompletedAt={onlineSeminarCompletedAt}
-            isCompleted={selectedApplication.inhouse_installation_completed}
-          />
+              currentCompletedAt={selectedApplication.inhouse_installation_completed_at}
+              currentProofImageUrl={selectedApplication.inhouse_installation_proof_image_url}
+              currentSignedAt={selectedApplication.inhouse_installation_signed_at}
+              minimumCompletedAt={onlineSeminarCompletedAt}
+              isCompleted={selectedApplication.inhouse_installation_completed}
+              isLocked={Boolean(selectedApplication.water_meter_installed_at || selectedApplication.status === "converted")}
+            />
         </CardContent>
       </Card>
       ) : null}

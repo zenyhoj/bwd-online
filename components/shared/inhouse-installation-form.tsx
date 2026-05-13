@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil, Lock } from "lucide-react";
 
 import { updateInhouseInstallationAction } from "@/actions/accredited-plumbers";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { formatDate } from "@/lib/format";
 import type { AccreditedPlumber } from "@/types";
 
 type InhouseInstallationFormProps = {
@@ -20,6 +22,7 @@ type InhouseInstallationFormProps = {
   currentSignedAt?: string | null;
   minimumCompletedAt?: string | null;
   isCompleted?: boolean;
+  isLocked?: boolean;
   variant?: "applicant" | "admin";
 };
 
@@ -32,31 +35,103 @@ export function InhouseInstallationForm({
   currentSignedAt,
   minimumCompletedAt,
   isCompleted = false,
+  isLocked = false,
   variant = "applicant"
 }: InhouseInstallationFormProps) {
   const router = useRouter();
+  const [isEditing, setIsEditing] = useState(!isCompleted && !isLocked);
   const [state, formAction, pending] = useActionState(updateInhouseInstallationAction, initialActionState);
+  
   const completionDateValue = currentCompletedAt ? currentCompletedAt.slice(0, 10) : "";
   const signedDateValue = currentSignedAt ? currentSignedAt.slice(0, 10) : "";
   const minimumCompletedDateValue = minimumCompletedAt ? minimumCompletedAt.slice(0, 10) : undefined;
   const formResetKey = `${applicationId}:${currentPlumberId ?? ""}:${completionDateValue}:${signedDateValue}:${currentProofImageUrl ?? ""}:${isCompleted ? "done" : "pending"}`;
-  const isReadOnly = variant === "admin" && isCompleted;
+  const isReadOnly = (variant === "admin" && isCompleted) || isLocked || !isEditing;
   const isApplicant = variant === "applicant";
+
+  const selectedPlumber = plumbers.find(p => p.id === currentPlumberId);
 
   useEffect(() => {
     if (variant === "applicant" && state.success && state.redirectTo) {
       router.push(state.redirectTo);
       router.refresh();
+      setIsEditing(false);
     }
   }, [router, state.redirectTo, state.success, variant]);
 
   return (
     <div id={variant === "applicant" ? "inhouse-installation" : undefined} className="space-y-4 scroll-mt-24">
-      <h3 className="font-semibold">{variant === "admin" ? "Inhouse installation" : "Mark inhouse installation complete"}</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold">
+          {variant === "admin" ? "Inhouse installation" : "Mark inhouse installation complete"}
+        </h3>
+        {isCompleted && !isLocked && !isEditing && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 gap-2 rounded-full font-bold text-primary"
+            onClick={() => setIsEditing(true)}
+          >
+            <Pencil className="h-3 w-3" />
+            Edit info
+          </Button>
+        )}
+        {isLocked && (
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Lock className="h-3 w-3" />
+            Locked
+          </div>
+        )}
+      </div>
+
       {plumbers.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No accredited plumbers are available yet. Ask the administrator to add one first.
         </p>
+      ) : isCompleted && !isEditing ? (
+        <div className="grid gap-6 rounded-xl border border-border/60 bg-muted/5 p-5 md:grid-cols-2">
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4 border-b border-border/40 pb-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Plumber</p>
+                <p className="mt-1 text-sm font-semibold">{selectedPlumber?.full_name ?? "Unknown"}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Completed</p>
+                <p className="mt-1 text-sm font-semibold">{currentCompletedAt ? formatDate(currentCompletedAt) : "N/A"}</p>
+              </div>
+            </div>
+            {currentProofImageUrl && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Installation Proof</p>
+                <div className="relative h-32 w-32 overflow-hidden rounded-xl border border-border/50 shadow-sm transition-transform hover:scale-105">
+                  <img
+                    src={currentProofImageUrl}
+                    alt="Proof"
+                    className="h-full w-full object-cover"
+                  />
+                  <Link 
+                    href={currentProofImageUrl} 
+                    target="_blank" 
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity hover:opacity-100"
+                  >
+                    <span className="text-[10px] font-bold text-white underline">Full View</span>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col justify-end space-y-3">
+            <div className="rounded-lg bg-emerald-500/10 p-3 text-center">
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Status: Fully Verified</p>
+            </div>
+            {isLocked && (
+              <p className="text-[11px] text-center text-muted-foreground leading-relaxed italic">
+                This workflow is finalized and can no longer be modified.
+              </p>
+            )}
+          </div>
+        </div>
       ) : (
         <form key={formResetKey} action={formAction} className="grid gap-4">
           <input type="hidden" name="applicationId" value={applicationId} />
