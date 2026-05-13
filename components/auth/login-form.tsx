@@ -64,7 +64,7 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="mx-auto w-full border-none shadow-none bg-transparent">
+    <Card className="mx-auto w-full border-none shadow-none hover:shadow-none bg-transparent">
       <CardContent className="p-0">
         {!mounted ? (
           <div className="space-y-4">
@@ -79,8 +79,8 @@ export function LoginForm() {
             <div className="h-10 rounded-md bg-muted/70" />
           </div>
         ) : (
-        <form action={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+        <form action={handleSubmit} className="space-y-3">
+          <div className="space-y-0.5">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -88,10 +88,11 @@ export function LoginForm() {
               type="email"
               autoComplete="email"
               data-lpignore="true"
+              className="h-11"
               required
             />
           </div>
-          <div className="space-y-2">
+          <div className="space-y-0.5">
             <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
@@ -101,7 +102,7 @@ export function LoginForm() {
                 autoComplete="current-password"
                 data-lpignore="true"
                 required
-                className="pr-10"
+                className="h-11 pr-12"
               />
               <button
                 type="button"
@@ -115,11 +116,11 @@ export function LoginForm() {
             </div>
           </div>
           <FormMessage state={state} />
-          <Button type="submit" className="w-full" loading={pending}>
+          <Button type="submit" className="w-full shadow-none" loading={pending}>
             Sign in
           </Button>
 
-          <p className="text-center text-sm text-muted-foreground font-medium pt-2">
+          <p className="text-center text-sm text-muted-foreground font-medium pt-1">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="font-bold text-primary hover:underline underline-offset-4">
               Register now

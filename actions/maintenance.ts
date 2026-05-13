@@ -7,13 +7,35 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 export async function purgeCompletedApplicationDocumentsAction() {
   try {
     const profile = await requireRole("admin");
-    const superAdmin = await isSuperAdmin();
-
-    if (!superAdmin) {
-      return { error: "Only super administrators can perform this action." };
+    const supabase = createSupabaseAdminClient();
+    
+    // 1. Specific Email Restriction
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.email !== "joe.balingit@gmail.com") {
+      return { error: "Only Joe Balingit (joe.balingit@gmail.com) can perform this administrative action." };
     }
 
-    const supabase = createSupabaseAdminClient();
+    // 2. Export Safeguard
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("last_document_export_at")
+      .eq("id", profile.organization_id)
+      .single();
+
+    if (!orgData?.last_document_export_at) {
+      return { error: "Storage cannot be purged because documents have never been exported. Please perform a full export first." };
+    }
+
+    // Check for documents updated after the last export
+    const { count: unexportedCount } = await supabase
+      .from("documents")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", profile.organization_id)
+      .gt("updated_at", orgData.last_document_export_at);
+
+    if ((unexportedCount ?? 0) > 0) {
+      return { error: `There are ${unexportedCount} new or updated documents since the last export. Please run a "New Documents" export before purging storage to ensure everything is backed up.` };
+    }
 
     // Find all applications that have been 'converted' (fully completed)
     const { data: applications, error: appsError } = await supabase

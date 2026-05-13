@@ -1,8 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { getSessionUser, getCurrentProfile } from "@/lib/auth";
+import { roleHome } from "@/lib/routes";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await getSessionUser();
+  if (user) {
+    const profile = await getCurrentProfile();
+    redirect(roleHome[profile.role]);
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="mx-auto max-w-[800px] space-y-10 text-center">

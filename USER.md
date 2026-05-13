@@ -1,97 +1,53 @@
 # BWD Online Water Application System - User Manual
 
-Welcome to the **Buenavista Water District (BWD) Online Water Application System**. This document outlines the workflows, roles, and instructions for using the platform.
+Welcome to the **Buenavista Water District (BWD) Online Water Application System**. This document outlines the sequential workflow, prerequisites, and instructions for a successful water connection.
 
 ---
 
 ## 🧑‍💻 Section 1: For Applicants (End Users)
 
-This section guides you through applying for a new water connection or a reconnection.
+The application process is sequential. You must complete each stage before the next one becomes available.
 
-### 1. Registration & Account Creation
-1. Navigate to the **BWD Online Portal**.
-2. Click **Sign Up** to create an account using your email address and a secure password.
-3. Verify your account if required, and **Log In**.
+### Stage 1: Account & Orientation
+1. **Registration**: Create an account with your email and log in.
+2. **Online Seminar**: 
+   - **Prerequisite**: None.
+   - **Action**: Navigate to the **Seminar** tab and watch all orientation videos.
+   - **Next Step**: Once attendance is recorded, you can proceed to submit an application.
 
-### 2. Submitting an Application
-1. On your Applicant Dashboard, click **New Application**.
-2. Select the **Service Type**: "New Connection" or "Reconnection".
-3. Fill out the required **Personal Information**, **Contact Details**, and **Address** (including exact Longitude and Latitude for your location).
-4. Upload all required **Supporting Documents** (e.g., Valid ID, Proof of Ownership, Barangay Clearance).
-5. Review your details and click **Submit Application**.
+### Stage 2: Submission & In-House Plumbing
+1. **New Application**:
+   - **Prerequisite**: Complete the Online Seminar.
+   - **Action**: Fill out the service type, personal details, and exact location.
+2. **In-House Plumbing**:
+   - **Prerequisite**: Submission of a new application.
+   - **Action**: Hire a BWD **Accredited Plumber** (see the "Plumbers" tab).
+   - **Marking Complete**: Once the plumber finishes, you must log in and mark the installation as **Completed** on your dashboard.
 
-### 3. Online Seminar
-- Once your application is submitted, you are required to attend the **Orientation Seminar**.
-- Navigate to the **Seminar** tab on your dashboard.
-- Watch the provided orientation videos.
-- You must watch the videos completely. Your attendance and completion will be automatically recorded by the system.
+### Stage 3: Official Inspection
+- **Prerequisite**: You must mark your in-house plumbing as "Completed".
+- **Action**: A BWD Inspector will visit your site.
+- **Approval**: The inspector must mark the inspection as **Approved** in the system. If rejected, follow the inspector's remarks and reschedule.
 
-### 4. Accredited Plumbers Directory
-- You can now find the **Plumbers** tab in your main navigation menu.
-- This directory provides a searchable list of all official BWD-accredited plumbers.
-- **Search & Filter**: Use the search bar to find plumbers by name or specific Area (Barangay).
-- **Mobile Optimized**: If you are on a phone, the list becomes easy-to-read cards.
-- **One-Tap Contact**: Simply tap the plumber's phone number to call them directly from your device.
+### Stage 4: Supporting Documents
+- **Prerequisite**: **Your In-House Inspection must be Approved.**
+- **Action**: The **Documents** tab will now open for uploads.
+- **Submission**: Upload digital copies (PDF/JPG) or select "Office Submission" to bring them during your payment visit.
+- **Verification**: BWD staff will review your uploads. If a document is rejected, you will receive a notification to replace it.
 
-### 5. In-House Plumbing & Inspection
-- After seminar completion, you will be authorized to begin your **In-House Plumbing**.
-- You must hire a BWD **Accredited Plumber** (consult the "Plumbers" tab for the official list).
-- Once your plumbing is done, mark the installation as **Completed** on your dashboard.
-- A **BWD Inspector** will be scheduled to visit your property and verify the installation.
+### Stage 5: Payment Scheduling
+- **Prerequisite**: **All required documents must be Verified** by BWD staff.
+- **Action**: Navigate to the **Payments** tab. Once verified, the Admin will set an **Office Payment Date**.
+- **Next Step**: Visit the BWD Office on your scheduled date to settle the fees.
 
-### 6. Payment & Completion
-- Once the Inspector approves your plumbing, your application will move to the **For Payment** stage.
-- Visit the BWD Office to pay the required Installation Fees, Meter Deposit, and other charges.
-- After payment is verified, your status will change to **For Water Meter Scheduling**, and BWD personnel will arrive to tap your connection to the mainline.
-
-### 7. Mobile App & Notifications
-- **Install the App**: You can "download" this portal directly to your phone for faster access. 
-  - **Android (Chrome)**: Tap the menu (three dots) and select **"Install app"**.
-  - **iPhone (Safari)**: Tap the **Share** icon and select **"Add to Home Screen"**.
-- **Stay Updated**: To receive real-time updates on your application status (e.g., when an inspector is scheduled), go to the **Settings** section in your menu and click **"Enable Notifications"**.
-
----
-
-## 🛡️ Section 2: For Administrators & Office Staff
-
-This section is for BWD administrative personnel who manage and process applications.
-
-### 1. The Admin Dashboard (Application Queue)
-- Upon logging in as an Admin, you will be directed to the **Admin Dashboard**.
-- The Dashboard acts as a central **Queue**, categorizing applications into different stages:
-  - **For In-house Plumbing**: Waiting for the applicant to finish their plumbing.
-  - **For Inspection**: Plumbing is done; waiting for an inspector to be assigned/scheduled.
-  - **Under Review**: Inspection is done but pending final approval.
-  - **For Payment**: Approved by the inspector; waiting for the applicant to pay at the office.
-  - **For Conversion**: Payment received; waiting to be officially converted into an active concessionaire.
-
-### 2. Processing an Application
-1. Click **Open** on an application from the queue to view its details.
-2. You can review the applicant's submitted **Documents** (IDs, Clearances) by clicking the "View Requirements" tab.
-3. Track the applicant's **Seminar Status** to ensure they have completed the mandatory orientation.
-4. **Status Badges** (e.g., Pending, In Progress, Completed) will guide you on what action is required next.
-
-### 3. Printing Official Reports
-Once an application reaches the appropriate stage (e.g., after an inspection is approved and payment is verified), you can print official documents.
-1. Scroll to the top right of the Application Detail view.
-2. You will see buttons for **Print WACO** (Water Application and Construction Order) and **Print Inspection**.
-3. **Note on Security**: These buttons are automatically disabled until the applicant has successfully completed their payment.
-4. Clicking these buttons will open a print-ready, 8.5x13 inch (Long Bond Paper) formatted document with all database values accurately mapped. Use your browser's print function (`Ctrl+P` or `Cmd+P`) to print them out.
-
-### 4. Managing Plumbers
-- Admins have a dedicated **Plumbers** management page.
-- You can add, edit, or deactivate plumbers in the database.
-- **System Synchronization**: Any changes made here are instantly reflected in the applicant's "Plumbers" tab and within seminar modules.
-
-### 5. Managing Seminars & Dynamic Content
-- Admins can upload and manage the video content for the Online Seminar.
-- **Dynamic Plumber Injection**: To display the official plumbers list inside a seminar module, simply type the shortcode `{{PLUMBERS_LIST}}` anywhere in the description. The system will automatically replace this text with a professional, searchable table for the applicant.
-- **Push Notifications**: The system automatically notifies applicants via push notification whenever you update their application status, keeping them informed without manual emails or calls.
+### Stage 6: Installation & Conversion
+- **Prerequisite**: Payment must be settled and verified at the BWD Office.
+- **Action**: BWD will schedule your **Water Meter Installation**.
+- **Completion**: Once the meter is installed, your account is converted to an active **Concessionaire**.
 
 ---
 
 ## 🔎 Support & Troubleshooting
-If you encounter any bugs, display issues, or system errors:
-1. Try refreshing the page or clearing your browser cache.
-2. Ensure you are using a modern, updated browser (Chrome, Edge, Safari, Firefox).
-3. Contact the IT Department or System Administrator with a screenshot of the issue.
+1. **Notifications**: Enable push notifications in **Settings** to receive real-time alerts when your status changes (e.g., "Inspection Approved").
+2. **Help**: If a section is "locked" or "not open yet," check the **Prerequisites** listed above to see which step is still pending.
+3. **Contact**: For technical issues, contact the IT Department with a screenshot of the error.

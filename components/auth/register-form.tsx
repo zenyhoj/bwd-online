@@ -80,7 +80,7 @@ export function RegisterForm() {
   }
 
   return (
-    <Card className="mx-auto w-full border-none shadow-none bg-transparent">
+    <Card className="mx-auto w-full border-none shadow-none hover:shadow-none bg-transparent">
       <CardContent className="p-0">
         {!mounted ? (
           <div className="space-y-4">
@@ -136,8 +136,8 @@ export function RegisterForm() {
             </Button>
           </div>
         ) : (
-          <form action={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+          <form action={handleSubmit} className="space-y-2">
+            <div className="space-y-0.5">
               <Label htmlFor="fullName">Full name</Label>
               <Input
                 id="fullName"
@@ -146,12 +146,12 @@ export function RegisterForm() {
                 autoComplete="name"
                 placeholder="e.g. Juan Dela Cruz"
                 aria-invalid={hasError("fullName")}
-                className={hasError("fullName") ? "border-destructive focus-visible:ring-destructive" : undefined}
+                className={`h-11 ${hasError("fullName") ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
               {hasError("fullName") ? <p className="text-xs text-destructive">{errorText("fullName")}</p> : null}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-0.5">
               <Label htmlFor="email">Email address</Label>
               <Input
                 id="email"
@@ -161,12 +161,12 @@ export function RegisterForm() {
                 autoComplete="email"
                 placeholder="you@example.com"
                 aria-invalid={hasError("email")}
-                className={hasError("email") ? "border-destructive focus-visible:ring-destructive" : undefined}
+                className={`h-11 ${hasError("email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
               {hasError("email") ? <p className="text-xs text-destructive">{errorText("email")}</p> : null}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-0.5">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
@@ -179,7 +179,7 @@ export function RegisterForm() {
                   value={passwordValue}
                   onChange={(e) => setPasswordValue(e.target.value)}
                   aria-invalid={hasError("password")}
-                  className={`pr-10 ${hasError("password") ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                  className={`h-11 pr-12 ${hasError("password") ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
                 <button
                   type="button"
@@ -198,7 +198,7 @@ export function RegisterForm() {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-0.5">
               <Label htmlFor="confirmPassword">Confirm password</Label>
               <div className="relative">
                 <Input
@@ -212,7 +212,7 @@ export function RegisterForm() {
                   onChange={(e) => setConfirmValue(e.target.value)}
                   onBlur={() => setConfirmTouched(true)}
                   aria-invalid={passwordMismatch}
-                  className={`pr-10 ${passwordMismatch ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                  className={`h-11 pr-12 ${passwordMismatch ? "border-destructive focus-visible:ring-destructive" : ""}`}
                 />
                 <button
                   type="button"
@@ -231,7 +231,7 @@ export function RegisterForm() {
 
             <div>
               <label
-                className={`flex items-start gap-3 rounded-md border p-3 text-sm ${
+                className={`flex items-start gap-3 rounded-md border p-2 text-sm ${
                   hasError("acceptPrivacyNotice") ? "border-destructive" : "border-border/80"
                 }`}
               >
@@ -249,9 +249,9 @@ export function RegisterForm() {
                 </span>
               </label>
               {hasError("acceptPrivacyNotice") ? (
-                <p className="mt-2 text-xs text-destructive">{errorText("acceptPrivacyNotice")}</p>
+                <p className="mt-1 text-xs text-destructive">{errorText("acceptPrivacyNotice")}</p>
               ) : null}
-              <p className="mt-2 text-xs text-muted-foreground/80">
+              <p className="mt-1 text-[11px] text-muted-foreground/80">
                 See our{" "}
                 <Link href="/privacy-notice" className="underline underline-offset-4">
                   identity and data privacy notice
@@ -262,11 +262,11 @@ export function RegisterForm() {
 
             <FormMessage state={state} />
 
-            <Button type="submit" className="w-full" disabled={passwordMismatch || !confirmValue} loading={pending}>
+            <Button type="submit" className="w-full shadow-none" disabled={passwordMismatch || !confirmValue} loading={pending}>
               Create account
             </Button>
 
-            <p className="text-center text-sm text-muted-foreground font-medium pt-2">
+            <p className="text-center text-sm text-muted-foreground font-medium pt-1">
               Already have an account?{" "}
               <Link href="/login" className="font-bold text-primary hover:underline underline-offset-4">
                 Sign in

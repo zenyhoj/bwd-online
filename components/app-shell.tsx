@@ -16,7 +16,8 @@ import {
   UserRoundCheck,
   Users,
   X,
-  Download
+  Download,
+  HelpCircle
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -46,7 +47,8 @@ const navByRole: Record<AppRole, NavItem[]> = {
     { href: "/applicant", label: "Dashboard", icon: Home },
     { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
     { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
-    { href: "/applicant/payments", label: "Payments", icon: CreditCard }
+    { href: "/applicant/payments", label: "Payments", icon: CreditCard },
+    { href: "/manual", label: "User Manual", icon: HelpCircle }
   ],
   admin: [
     { href: "/admin", label: "Dashboard", icon: Home },
@@ -57,10 +59,12 @@ const navByRole: Record<AppRole, NavItem[]> = {
     { href: "/admin/inspections", label: "Inspections", icon: SearchCheck },
     { href: "/admin/payments", label: "Payments", icon: CreditCard },
     { href: "/admin/concessionaires", label: "Concessionaires", icon: UserRoundCheck },
-    { href: "/admin/export", label: "Export Docs (ZIP)", icon: Download }
+    { href: "/admin/export", label: "Export Docs (ZIP)", icon: Download },
+    { href: "/manual", label: "Admin Manual", icon: HelpCircle }
   ],
   inspector: [
-    { href: "/inspector", label: "Assignments", icon: Users }
+    { href: "/inspector", label: "Assignments", icon: Users },
+    { href: "/manual", label: "User Manual", icon: HelpCircle }
   ]
 };
 
@@ -86,7 +90,8 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
       { href: "/applicant", label: "Dashboard", icon: Home },
       { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
-      { href: "/applicant/payments", label: "Payments", icon: CreditCard }
+      { href: "/applicant/payments", label: "Payments", icon: CreditCard },
+      { href: "/manual", label: "User Manual", icon: HelpCircle }
     ];
   }
 
@@ -97,7 +102,8 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
-      { href: "/applicant/payments", label: "Payments", icon: CreditCard }
+      { href: "/applicant/payments", label: "Payments", icon: CreditCard },
+      { href: "/manual", label: "User Manual", icon: HelpCircle }
     ];
   }
 

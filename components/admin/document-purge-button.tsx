@@ -12,7 +12,7 @@ export function DocumentPurgeButton({ className }: { className?: string }) {
   const handlePurge = async () => {
     if (
       !confirm(
-        "Are you sure you want to purge all physical document files for COMPLETED applications? This action cannot be undone and will permanently delete the files from the storage bucket to free up space. Have you downloaded a backup first?"
+        "Are you sure you want to purge all physical document files for COMPLETED applications? This action will permanently delete files from storage. IMPORTANT: You must have successfully exported all documents to a ZIP backup first, otherwise this action will be blocked."
       )
     ) {
       return;

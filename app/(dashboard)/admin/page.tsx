@@ -7,6 +7,7 @@ import { DocumentVerificationPanel } from "@/components/admin/document-verificat
 import { InspectionSchedulerForm } from "@/components/admin/inspection-scheduler-form";
 import { InstallationSchedulerForm } from "@/components/admin/installation-scheduler-form";
 import { PaymentSchedulerForm } from "@/components/admin/payment-scheduler-form";
+import { QueueFilters } from "@/components/admin/queue-filters";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -115,6 +116,9 @@ function nextAction(record: Record<string, unknown>) {
 }
 
 function queueStage(record: Record<string, unknown>) {
+  if (typeof record.workflow_stage === "string") {
+    return record.workflow_stage;
+  }
   const status = getEffectiveApplicationStatus(record);
   const inspections =
     ((record.inspections as {
@@ -442,30 +446,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
           <CardTitle>Application queue</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <form className="grid gap-4 md:grid-cols-[1fr_240px_auto]">
-            <div className="relative">
-              <input
-                type="text"
-                name="q"
-                defaultValue={q}
-                placeholder="Search applicant name..."
-                className="flex h-11 w-full rounded-full border border-border bg-background px-6 py-2 text-sm font-medium transition-all focus:ring-2 focus:ring-primary/20 outline-none"
-              />
-            </div>
-            <select
-              name="workflow"
-              defaultValue={workflow}
-              className="flex h-11 w-full rounded-full border border-border bg-background px-6 py-2 text-sm font-bold transition-all focus:ring-2 focus:ring-primary/20 outline-none"
-            >
-              <option value="all">All workflow stages</option>
-              {workflowStages.map((stage) => (
-                <option key={stage.key} value={stage.key}>
-                  {stage.title}
-                </option>
-              ))}
-            </select>
-            <Button type="submit">Apply filters</Button>
-          </form>
+          <QueueFilters 
+            initialQ={q}
+            initialWorkflow={workflow}
+            workflowStages={workflowStages}
+          />
 
 
 
