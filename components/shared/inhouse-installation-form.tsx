@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Lock } from "lucide-react";
+import { Pencil, Lock, Camera, Upload, CheckCircle2, Loader2, Image as ImageIcon } from "lucide-react";
+import { compressImage } from "@/lib/image-utils";
 
 import { updateInhouseInstallationAction } from "@/actions/accredited-plumbers";
 import { initialActionState } from "@/actions/state";
@@ -41,6 +42,11 @@ export function InhouseInstallationForm({
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(!isCompleted && !isLocked);
   const [state, formAction, pending] = useActionState(updateInhouseInstallationAction, initialActionState);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   
   const completionDateValue = currentCompletedAt ? currentCompletedAt.slice(0, 10) : "";
   const signedDateValue = currentSignedAt ? currentSignedAt.slice(0, 10) : "";
@@ -58,6 +64,48 @@ export function InhouseInstallationForm({
       setIsEditing(false);
     }
   }, [router, state.redirectTo, state.success, variant]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFileName(file.name);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    // Check both inputs for the proof image
+    const fileInput = fileInputRef.current?.files?.[0];
+    const cameraInput = cameraInputRef.current?.files?.[0];
+    const file = fileInput || cameraInput;
+
+    const finalFormData = new FormData();
+    // Copy all other fields
+    formData.forEach((value, key) => {
+      if (key !== "proofImage") {
+        finalFormData.append(key, value);
+      }
+    });
+
+    if (file && file.type.startsWith("image/")) {
+      setIsCompressing(true);
+      try {
+        const compressed = await compressImage(file);
+        finalFormData.append("proofImage", compressed);
+      } catch (err) {
+        console.error("Compression failed", err);
+        finalFormData.append("proofImage", file);
+      } finally {
+        setIsCompressing(false);
+      }
+    } else if (file) {
+      finalFormData.append("proofImage", file);
+    }
+
+    formAction(finalFormData);
+  };
 
   return (
     <div id={variant === "applicant" ? "inhouse-installation" : undefined} className="space-y-4 scroll-mt-24">
@@ -133,7 +181,7 @@ export function InhouseInstallationForm({
           </div>
         </div>
       ) : (
-        <form key={formResetKey} action={formAction} className="grid gap-4">
+        <form key={formResetKey} onSubmit={handleSubmit} className="grid gap-4">
           <input type="hidden" name="applicationId" value={applicationId} />
           <input type="hidden" name="completed" value="true" />
 
@@ -175,18 +223,63 @@ export function InhouseInstallationForm({
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor={`proofImage-${applicationId}`}>Photo proof of the plumber</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Photo proof of the plumber</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-xl border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center gap-2"
+                    onClick={() => {
+                      cameraInputRef.current?.click();
+                      if (fileInputRef.current) fileInputRef.current.value = "";
+                    }}
+                  >
+                    <Camera className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-tight">Camera</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 rounded-xl border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 flex items-center justify-center gap-2"
+                    onClick={() => {
+                      fileInputRef.current?.click();
+                      if (cameraInputRef.current) cameraInputRef.current.value = "";
+                    }}
+                  >
+                    <Upload className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-tight">File</span>
+                  </Button>
+                </div>
+
+                {/* Hidden Inputs */}
                 <input
-                  id={`proofImage-${applicationId}`}
-                  name="proofImage"
                   type="file"
+                  name="proofImage"
+                  ref={cameraInputRef}
                   accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileChange}
                   required={!currentProofImageUrl}
-                  className="block w-full text-sm file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Upload a selfie or work photo.
-                </p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+
+                {selectedFileName ? (
+                  <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700 animate-in fade-in slide-in-from-top-1">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" />
+                    <span className="text-xs font-medium truncate">{selectedFileName}</span>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Required: Upload a selfie or work photo.
+                  </p>
+                )}
               </div>
             </div>
           ) : (
@@ -255,8 +348,19 @@ export function InhouseInstallationForm({
               <p className="text-sm text-muted-foreground">This application is already marked complete.</p>
             ) : null}
             <FormMessage state={state} />
-            <Button type="submit" disabled={isReadOnly || pending} className="w-full sm:w-auto lg:min-w-[180px]">
-              {isReadOnly ? "Completed" : isCompleted ? "Save changes" : "Mark complete"}
+            <Button type="submit" disabled={isReadOnly || pending || isCompressing} className="w-full sm:w-auto lg:min-w-[180px] font-bold">
+              {isCompressing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Optimizing...
+                </>
+              ) : isReadOnly ? (
+                "Completed"
+              ) : isCompleted ? (
+                "Save changes"
+              ) : (
+                "Mark complete"
+              )}
             </Button>
           </div>
         </form>
