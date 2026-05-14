@@ -165,22 +165,18 @@ export function ApplicantForm() {
           <FormMessage state={state} />
         </CardContent>
 
-        <CardFooter className="border-t border-border/60 bg-muted/[0.02] p-5 sm:p-6">
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+        <CardFooter className="flex flex-col border-t border-border/60 bg-muted/[0.02] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <p className="text-sm leading-relaxed text-muted-foreground sm:max-w-[60%]">
             Save this record first so the applicant can continue directly into the seminar modules, then finish the application after completing the seminar.
           </p>
-          <div className="mt-4 flex items-center justify-end gap-3">
-            <Button type="button" variant="outline" size="lg" onClick={() => router.back()} className="shrink-0 whitespace-nowrap px-5">
-              <span className="inline-flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4 shrink-0" />
-                <span>Cancel</span>
-              </span>
+          <div className="mt-6 flex flex-col gap-3 sm:mt-0 sm:flex-row sm:items-center sm:justify-end">
+            <Button type="button" variant="outline" size="lg" onClick={() => router.back()} className="w-full text-xs font-bold sm:w-auto sm:text-sm">
+              <ArrowLeft className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Cancel
             </Button>
-            <Button type="submit" size="lg" loading={pending} className="shrink-0 whitespace-nowrap px-6">
-              <span className="inline-flex items-center gap-2">
-                <Save className="h-4 w-4 shrink-0" />
-                <span>Continue Application</span>
-              </span>
+            <Button type="submit" size="lg" loading={pending} className="w-full text-xs font-bold sm:w-auto sm:text-sm">
+              <Save className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              Save and Continue
             </Button>
           </div>
         </CardFooter>

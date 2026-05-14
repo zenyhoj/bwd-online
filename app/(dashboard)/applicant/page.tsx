@@ -314,10 +314,10 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Inspection</p>
                 {selectedApplication?.inspections?.[0] && (
-                  <div className="scale-75 origin-right">
+                  <div className="scale-75 origin-left sm:origin-right">
                     <StatusBadge status={selectedApplication.inspections[0].status ?? "pending"} />
                   </div>
                 )}
@@ -328,10 +328,10 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
             
             <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Payment</p>
                 {latestPayment && (
-                  <div className="scale-75 origin-right">
+                  <div className="scale-75 origin-left sm:origin-right">
                     <StatusBadge status={latestPayment.status ?? "scheduled"} />
                   </div>
                 )}
@@ -346,10 +346,10 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Plumbing</p>
                 {selectedApplication?.inhouse_installation_completed && (
-                  <div className="scale-75 origin-right">
+                  <div className="scale-75 origin-left sm:origin-right">
                     <StatusBadge status="completed" />
                   </div>
                 )}
@@ -368,8 +368,8 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                   ? "border-primary/30 bg-primary/5"
                   : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <div className="flex items-center justify-between gap-2">
-                <p className={`text-[10px] uppercase tracking-[0.14em] font-bold whitespace-nowrap ${
+              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+                <p className={`text-[10px] uppercase tracking-[0.14em] font-bold ${
                   selectedApplication?.water_meter_installed_at 
                     ? "text-emerald-600" 
                     : selectedApplication?.water_meter_installation_scheduled_at 
@@ -377,7 +377,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                       : "text-muted-foreground"
                 }`}>Water Meter</p>
                 {selectedApplication?.water_meter_installed_at && (
-                  <div className="scale-75 origin-right">
+                  <div className="scale-75 origin-left sm:origin-right">
                     <StatusBadge status="completed" />
                   </div>
                 )}
@@ -399,10 +399,10 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           </div>
 
           {showPrimaryActionButton ? (
-            <Button asChild className="h-10 w-full md:w-auto">
+            <Button asChild className="h-10 w-full text-xs font-bold md:w-auto md:text-sm">
               <Link href={primaryAction.href}>
                 {primaryAction.label}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-3.5 w-3.5 md:h-4 md:w-4" />
               </Link>
             </Button>
           ) : null}
