@@ -57,10 +57,64 @@ export async function markWaterMeterInstalledAction(_prevState: ActionState, for
       return { success: false, message: "Invalid application ID." };
     }
 
+    const { data: application, error: applicationError } = await supabase
+      .from("applications")
+      .select(
+        "id, applicant_id, organization_id, water_meter_installed_at, inspections(id, account_number, inspected_at, scheduled_at), concessionaires(id)"
+      )
+      .eq("id", applicationId)
+      .eq("organization_id", profile.organization_id)
+      .maybeSingle();
+
+    if (applicationError || !application) {
+      return { success: false, message: applicationError?.message ?? "Application not found." };
+    }
+
+    const latestInspectionWithAccount =
+      [...(((application.inspections as { account_number?: string | null; inspected_at?: string | null; scheduled_at?: string | null }[] | undefined) ?? []))]
+        .filter((inspection) => Boolean(inspection.account_number?.trim()))
+        .sort((a, b) => {
+          const aTime = new Date(a.inspected_at ?? a.scheduled_at ?? 0).getTime();
+          const bTime = new Date(b.inspected_at ?? b.scheduled_at ?? 0).getTime();
+          return bTime - aTime;
+        })[0] ?? null;
+    const accountNumber = latestInspectionWithAccount?.account_number?.trim() ?? "";
+
+    if (!accountNumber) {
+      return {
+        success: false,
+        message: "Enter the account number in the inspection report before marking the water meter installation complete."
+      };
+    }
+
+    const installedAt = application.water_meter_installed_at ?? new Date().toISOString();
+
+    const existingConcessionaire =
+      ((application.concessionaires as { id?: string }[] | undefined) ?? [])[0] ?? null;
+
+    if (!existingConcessionaire) {
+      const { error: concessionaireError } = await supabase
+        .from("concessionaires")
+        .insert({
+          organization_id: profile.organization_id,
+          application_id: applicationId,
+          applicant_id: application.applicant_id,
+          concessionaire_number: accountNumber,
+          connection_date: installedAt.slice(0, 10),
+          meter_number: null,
+          created_by: profile.id
+        });
+
+      if (concessionaireError) {
+        return { success: false, message: concessionaireError.message };
+      }
+    }
+
     const { error } = await supabase
       .from("applications")
       .update({
-        water_meter_installed_at: new Date().toISOString()
+        water_meter_installed_at: installedAt,
+        status: "converted"
       })
       .eq("id", applicationId);
 
@@ -69,8 +123,10 @@ export async function markWaterMeterInstalledAction(_prevState: ActionState, for
     }
 
     revalidatePath("/admin");
+    revalidatePath("/admin/concessionaires");
+    revalidatePath("/applicant");
     revalidatePath(`/admin/reports/${applicationId}`);
 
-    return { success: true, message: "Water meter installation marked as complete." };
+    return { success: true, message: "Water meter installation completed and account converted." };
   });
 }

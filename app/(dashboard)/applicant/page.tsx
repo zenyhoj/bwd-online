@@ -48,13 +48,33 @@ function getLatestPayment(application: {
 }
 
 function getAssignedAccount(application: {
+  inspections?: {
+    account_number?: string | null;
+    inspected_at?: string | null;
+    scheduled_at?: string | null;
+  }[];
   concessionaires?: {
     concessionaire_number?: string | null;
     meter_number?: string | null;
     connection_date?: string | null;
   }[];
 }) {
-  return application.concessionaires?.[0] ?? null;
+  const concessionaire = application.concessionaires?.[0] ?? null;
+  const latestInspectionWithAccount =
+    [...(application.inspections ?? [])]
+      .filter((inspection) => Boolean(inspection.account_number))
+      .sort((a, b) => {
+        const aTime = new Date(a.inspected_at ?? a.scheduled_at ?? 0).getTime();
+        const bTime = new Date(b.inspected_at ?? b.scheduled_at ?? 0).getTime();
+        return bTime - aTime;
+      })[0] ?? null;
+
+  return {
+    accountNumber: concessionaire?.concessionaire_number ?? latestInspectionWithAccount?.account_number ?? null,
+    connectionDate: concessionaire?.connection_date ?? null,
+    meterNumber: concessionaire?.meter_number ?? null,
+    isConverted: Boolean(concessionaire)
+  };
 }
 
 function getEffectiveWorkflowStatus(application: {
@@ -215,7 +235,9 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const selectedApplication = applications.find((application) => application.id === selectedApplicationId) ?? applications[0];
   
   const latestPayment = selectedApplication ? getLatestPayment(selectedApplication) : null;
-  const assignedAccount = selectedApplication ? getAssignedAccount(selectedApplication) : null;
+  const assignedAccount = selectedApplication
+    ? getAssignedAccount(selectedApplication)
+    : { accountNumber: null, connectionDate: null, meterNumber: null, isConverted: false };
   const effectiveWorkflowStatus = selectedApplication ? getEffectiveWorkflowStatus(selectedApplication) : null;
   const latestInspectionSchedule = selectedApplication ? getScheduledInspectionDate(selectedApplication) : null;
   const inspectionApproved = selectedApplication ? hasApprovedInspection(selectedApplication) : false;
@@ -334,7 +356,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           {selectedApplication ? (
             <div
               className={`rounded-xl border p-4 ${
-                assignedAccount
+                assignedAccount.accountNumber
                   ? "border-emerald-300 bg-emerald-50/70"
                   : "border-border/70 bg-muted/10"
               }`}
@@ -344,19 +366,21 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                     Assigned account number
                   </p>
-                  <p className={`mt-1 font-mono text-2xl font-bold ${assignedAccount ? "text-emerald-700" : "text-muted-foreground"}`}>
-                    {assignedAccount?.concessionaire_number ?? "Not assigned yet"}
+                  <p className={`mt-1 font-mono text-2xl font-bold ${assignedAccount.accountNumber ? "text-emerald-700" : "text-muted-foreground"}`}>
+                    {assignedAccount.accountNumber ?? "Not assigned yet"}
                   </p>
                 </div>
-                {assignedAccount ? (
+                {assignedAccount.accountNumber ? (
                   <div className="grid gap-2 text-sm sm:grid-cols-2 md:text-right">
                     <p>
                       <span className="block text-xs text-muted-foreground">Connection date</span>
-                      <span className="font-medium">{formatDate(assignedAccount.connection_date ?? null)}</span>
+                      <span className="font-medium">
+                        {assignedAccount.connectionDate ? formatDate(assignedAccount.connectionDate) : "Pending conversion"}
+                      </span>
                     </p>
                     <p>
                       <span className="block text-xs text-muted-foreground">Meter number</span>
-                      <span className="font-medium">{assignedAccount.meter_number ?? "Not recorded"}</span>
+                      <span className="font-medium">{assignedAccount.meterNumber ?? "Not recorded"}</span>
                     </p>
                   </div>
                 ) : (
@@ -536,9 +560,9 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                     <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-5">
                       <p>
                         <span className="text-muted-foreground">Account no.:</span>{" "}
-                        {applicationAccount?.concessionaire_number ? (
+                        {applicationAccount.accountNumber ? (
                           <span className="font-mono font-semibold text-emerald-700">
-                            {applicationAccount.concessionaire_number}
+                            {applicationAccount.accountNumber}
                           </span>
                         ) : (
                           "Not assigned"
