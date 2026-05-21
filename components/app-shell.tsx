@@ -42,9 +42,9 @@ type NavItem = { href: string; label: string; icon: React.ComponentType<{ classN
 
 const navByRole: Record<AppRole, NavItem[]> = {
   applicant: [
+    { href: "/applicant", label: "Dashboard", icon: Home },
     { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
     { href: "/applicant/applications/new", label: "Information", icon: FileCheck2 },
-    { href: "/applicant", label: "Dashboard", icon: Home },
     { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
     { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
     { href: "/applicant/payments", label: "Payments", icon: CreditCard },
@@ -86,8 +86,8 @@ const roleCopy: Record<AppRole, { label: string; blurb: string }> = {
 function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplication"): NavItem[] {
   if (mode === "preseminar") {
     return [
-      { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant", label: "Dashboard", icon: Home },
+      { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
       { href: "/applicant/payments", label: "Payments", icon: CreditCard },
@@ -97,7 +97,7 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
 
   if (mode === "hasApplication") {
     return [
-      { href: "/applicant", label: "Applicants", icon: FileCheck2 },
+      { href: "/applicant", label: "Dashboard", icon: Home },
       { href: "/applicant/applications/new", label: "Add applicant", icon: FileCheck2 },
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
