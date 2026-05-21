@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { AlertCircle, CalendarDays, CheckCircle2, ClipboardList, Filter, Search, SlidersHorizontal } from "lucide-react";
 
 import { InspectionScheduleInlineEditor } from "@/components/admin/inspection-schedule-inline-editor";
@@ -434,7 +434,7 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                   {(selectedInspection.applications as InspectionApplicationRelation)?.full_name ?? "Unknown applicant"}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {selectedInspection.inspector_name ?? "Unassigned inspector"} � Scheduled{" "}
+                  {selectedInspection.inspector_name ?? "Unassigned inspector"} • Scheduled{" "}
                   {formatDateTime(selectedInspection.scheduled_at)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -463,4 +463,5 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
     </div>
   );
 }
+
 
