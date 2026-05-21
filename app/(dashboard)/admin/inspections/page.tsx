@@ -54,6 +54,7 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
   const statusFilter = getStringParam(resolvedSearchParams, "status") ?? "all";
   const inspectorFilter = getStringParam(resolvedSearchParams, "inspector") ?? "all";
   const scheduledDateFilter = getStringParam(resolvedSearchParams, "scheduledDate") ?? "";
+  const editorQ = getStringParam(resolvedSearchParams, "editorQ")?.trim() ?? "";
   const supabase = createSupabaseAdminClient();
   const profile = await getCurrentProfile();
   const { data: inspections } = await supabase
@@ -86,6 +87,19 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
   });
   const selectedId = getStringParam(resolvedSearchParams, "selected") ?? inspectionRows[0]?.id ?? "";
   const selectedInspection = inspectionRows.find((inspection) => inspection.id === selectedId) ?? inspectionRows[0] ?? null;
+  const editorSearchRows = allInspectionRows
+    .filter((inspection) => {
+      if (!editorQ) {
+        return true;
+      }
+
+      const applicantName = ((inspection.applications as InspectionApplicationRelation)?.full_name ?? "").toLowerCase();
+      const inspectorName = (inspection.inspector_name ?? "").toLowerCase();
+      const query = editorQ.toLowerCase();
+
+      return applicantName.includes(query) || inspectorName.includes(query);
+    })
+    .slice(0, 6);
   const pendingCount = inspectionRows.filter((inspection) => inspection.status === "scheduled").length;
   const approvedCount = inspectionRows.filter((inspection) => inspection.status === "approved").length;
   const rescheduledCount = inspectionRows.filter((inspection) => inspection.status === "rescheduled").length;
@@ -445,6 +459,79 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                 <StatusBadge status={selectedInspection.status} />
                 <StatusBadge status={getPlumbingResult(selectedInspection.plumbing_approved)} />
               </div>
+            </div>
+            <div className="rounded-lg border border-border/80 bg-background p-3">
+              <form className="grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto]" action="/admin/inspections">
+                {q ? <input type="hidden" name="q" value={q} /> : null}
+                {statusFilter !== "all" ? <input type="hidden" name="status" value={statusFilter} /> : null}
+                {inspectorFilter !== "all" ? <input type="hidden" name="inspector" value={inspectorFilter} /> : null}
+                {scheduledDateFilter ? <input type="hidden" name="scheduledDate" value={scheduledDateFilter} /> : null}
+                <input type="hidden" name="selected" value={selectedInspection.id} />
+                <div className="relative">
+                  <label htmlFor="editorQ" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Find applicant for approval
+                  </label>
+                  <Search className="pointer-events-none absolute left-3 top-[34px] h-4 w-4 text-muted-foreground" />
+                  <input
+                    id="editorQ"
+                    name="editorQ"
+                    defaultValue={editorQ}
+                    placeholder="Search completed in-house plumbing applicants"
+                    className="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button type="submit" className="w-full md:w-auto">
+                    Search
+                  </Button>
+                </div>
+                <div className="flex items-end">
+                  <Button asChild variant="outline" className="w-full md:w-auto">
+                    <Link href={`/admin/inspections?${new URLSearchParams({
+                      ...(q ? { q } : {}),
+                      ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+                      ...(inspectorFilter !== "all" ? { inspector: inspectorFilter } : {}),
+                      ...(scheduledDateFilter ? { scheduledDate: scheduledDateFilter } : {}),
+                      selected: selectedInspection.id
+                    }).toString()}#inspection-editor`}>
+                      Clear
+                    </Link>
+                  </Button>
+                </div>
+              </form>
+              {editorQ ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {editorSearchRows.length > 0 ? (
+                    editorSearchRows.map((inspection) => {
+                      const applicantName =
+                        (inspection.applications as InspectionApplicationRelation)?.full_name ?? "Unknown applicant";
+                      const query = new URLSearchParams({
+                        ...(q ? { q } : {}),
+                        ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+                        ...(inspectorFilter !== "all" ? { inspector: inspectorFilter } : {}),
+                        ...(scheduledDateFilter ? { scheduledDate: scheduledDateFilter } : {}),
+                        editorQ,
+                        selected: inspection.id
+                      });
+
+                      return (
+                        <Button
+                          key={inspection.id}
+                          asChild
+                          variant={inspection.id === selectedInspection.id ? "secondary" : "outline"}
+                          size="sm"
+                        >
+                          <Link href={`/admin/inspections?${query.toString()}#inspection-editor`}>
+                            {applicantName}
+                          </Link>
+                        </Button>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No inspection-ready applicants matched "{editorQ}".</p>
+                  )}
+                </div>
+              ) : null}
             </div>
             <div className="rounded-lg border border-border/80 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
               You are editing this inspection now. Update the schedule, result, and material list below.
