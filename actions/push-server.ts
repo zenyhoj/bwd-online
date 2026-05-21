@@ -4,17 +4,26 @@ import webpush from "web-push";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const vapidKeys = {
-  publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  privateKey: process.env.VAPID_PRIVATE_KEY!,
+  publicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+  privateKey: process.env.VAPID_PRIVATE_KEY,
 };
 
-webpush.setVapidDetails(
-  process.env.VAPID_MAILTO || "mailto:admin@bwd-online.com",
-  vapidKeys.publicKey,
-  vapidKeys.privateKey
-);
+const isPushConfigured = Boolean(vapidKeys.publicKey && vapidKeys.privateKey);
+
+if (isPushConfigured) {
+  webpush.setVapidDetails(
+    process.env.VAPID_MAILTO || "mailto:admin@bwd-online.com",
+    vapidKeys.publicKey!,
+    vapidKeys.privateKey!
+  );
+}
 
 export async function sendPushNotificationAction(userId: string, title: string, body: string, url: string = "/") {
+  if (!isPushConfigured) {
+    console.warn("Push notification skipped: VAPID keys are not configured.");
+    return { success: false, error: "Push notifications are not configured." };
+  }
+
   const supabase = createSupabaseAdminClient();
   
   // Get all subscriptions for this user
@@ -46,6 +55,11 @@ export async function sendPushNotificationAction(userId: string, title: string, 
 }
 
 export async function broadcastNotificationAction(title: string, body: string, url: string = "/") {
+  if (!isPushConfigured) {
+    console.warn("Broadcast notification skipped: VAPID keys are not configured.");
+    return { success: false, error: "Push notifications are not configured." };
+  }
+
   const supabase = createSupabaseAdminClient();
   
   const { data: subscriptions, error } = await supabase

@@ -95,6 +95,14 @@ function formatPaymentType(value: string | null | undefined) {
   return value.replaceAll("_", " ");
 }
 
+function formatServiceType(value: string | null | undefined) {
+  if (!value) {
+    return "Service type not set";
+  }
+
+  return value.replaceAll("_", " ");
+}
+
 function getPrimaryAction({
   allCompleted,
   hasApplication,
@@ -471,7 +479,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                       <div>
                         <p className="font-semibold">{application.full_name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {application.service_type.replaceAll("_", " ")} - Submitted {formatDateTime(application.submitted_at)}
+                          {formatServiceType(application.service_type)} - Submitted {formatDateTime(application.submitted_at)}
                         </p>
                       </div>
                       <StatusBadge status={effectiveApplicationWorkflowStatus} />
