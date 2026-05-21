@@ -6,6 +6,59 @@ import { Loader2, Search, Phone, MapPin, User, CheckCircle2 } from "lucide-react
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
+function getPlumberContactNumbers(plumber: { phone?: unknown; contact_number?: unknown }) {
+  const rawValue = plumber.phone ?? plumber.contact_number;
+  if (rawValue === null || rawValue === undefined) {
+    return [];
+  }
+
+  const normalized = String(rawValue).trim();
+  if (!normalized) {
+    return [];
+  }
+
+  return normalized
+    .split(/[\/,\n;|]+/)
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function normalizePhoneForDisplay(value: string) {
+  const cleaned = value.replace(/[^\d+]/g, "");
+
+  if (cleaned.startsWith("+63")) {
+    const local = `0${cleaned.slice(3)}`;
+    if (local.length === 11) {
+      return `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}`;
+    }
+  }
+
+  if (cleaned.startsWith("63") && cleaned.length === 12) {
+    const local = `0${cleaned.slice(2)}`;
+    return `${local.slice(0, 4)} ${local.slice(4, 7)} ${local.slice(7)}`;
+  }
+
+  if (cleaned.startsWith("09") && cleaned.length === 11) {
+    return `${cleaned.slice(0, 4)} ${cleaned.slice(4, 7)} ${cleaned.slice(7)}`;
+  }
+
+  return value;
+}
+
+function normalizePhoneForTel(value: string) {
+  const cleaned = value.replace(/[^\d+]/g, "");
+
+  if (cleaned.startsWith("09") && cleaned.length === 11) {
+    return `+63${cleaned.slice(1)}`;
+  }
+
+  if (cleaned.startsWith("63") && cleaned.length === 12) {
+    return `+${cleaned}`;
+  }
+
+  return cleaned || value;
+}
+
 export function AccreditedPlumbersTable() {
   const [plumbers, setPlumbers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,21 +153,25 @@ export function AccreditedPlumbersTable() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex flex-wrap justify-end gap-2">
-                      {(plumber.phone || plumber.contact_number)?.split("/").map((num: string, i: number) => {
-                        const cleanNum = num.trim();
-                        if (!cleanNum) return null;
+                      {getPlumberContactNumbers(plumber).map((contactNumber, i) => {
+                        const displayNumber = normalizePhoneForDisplay(contactNumber);
+                        const dialNumber = normalizePhoneForTel(contactNumber);
+
                         return (
                           <a
                             key={i}
-                            href={`tel:${cleanNum}`}
+                            href={`tel:${dialNumber}`}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 text-primary hover:bg-primary hover:text-primary-foreground transition-all border border-primary/10 font-medium"
                           >
                             <Phone className="h-3.5 w-3.5" />
-                            {cleanNum}
+                            {displayNumber}
                           </a>
                         );
                       })}
                     </div>
+                    {getPlumberContactNumbers(plumber).length === 0 ? (
+                      <p className="text-xs text-muted-foreground">No contact number on file</p>
+                    ) : null}
                   </td>
                 </tr>
               ))
@@ -132,7 +189,10 @@ export function AccreditedPlumbersTable() {
       {/* Mobile Card View */}
       <div className="md:hidden space-y-3">
         {filteredPlumbers.length > 0 ? (
-          filteredPlumbers.map((plumber, idx) => (
+          filteredPlumbers.map((plumber, idx) => {
+            const contactNumbers = getPlumberContactNumbers(plumber);
+
+            return (
             <div key={idx} className="p-4 rounded-xl border border-border/80 bg-card shadow-sm space-y-3">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
@@ -157,24 +217,30 @@ export function AccreditedPlumbersTable() {
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                  {(plumber.phone || plumber.contact_number)?.split("/").map((num: string, i: number) => {
-                    const cleanNum = num.trim();
-                    if (!cleanNum) return null;
+                  {contactNumbers.map((contactNumber, i) => {
+                    const displayNumber = normalizePhoneForDisplay(contactNumber);
+                    const dialNumber = normalizePhoneForTel(contactNumber);
+
                     return (
                       <a
                         key={i}
-                        href={`tel:${cleanNum}`}
+                        href={`tel:${dialNumber}`}
                         className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold active:scale-[0.98] transition-transform shadow-md shadow-primary/20"
                       >
                         <Phone className="h-4 w-4" />
-                        Call {cleanNum}
+                        Call {displayNumber}
                       </a>
                     );
                   })}
+                  {contactNumbers.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-border/70 px-3 py-2 text-center text-xs text-muted-foreground">
+                      No contact number on file
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
-          ))
+          )})
         ) : (
           <div className="p-8 text-center text-muted-foreground italic bg-muted/5 rounded-xl border border-dashed">
             No matching plumbers found for "{searchQuery}"

@@ -18,7 +18,11 @@ type InspectionFormProps = {
 };
 
 function toDateTimeLocalValue(value?: string | null) {
-  const date = value ? new Date(value) : new Date();
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -37,7 +41,12 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
   const [inspectedAtValue, setInspectedAtValue] = useState(() => toDateTimeLocalValue(inspection.inspected_at));
 
   useEffect(() => {
-    setInspectedAtValue(toDateTimeLocalValue(inspection.inspected_at));
+    if (inspection.inspected_at) {
+      setInspectedAtValue(toDateTimeLocalValue(inspection.inspected_at));
+      return;
+    }
+
+    setInspectedAtValue(toDateTimeLocalValue(new Date().toISOString()));
   }, [inspection.inspected_at]);
 
   return (
