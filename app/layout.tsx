@@ -3,6 +3,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { NavigationProgress } from "@/components/navigation-progress";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body suppressHydrationWarning className={`${inter.variable} font-sans`}>
         <NavigationProgress />
         {children}
+        <Toaster />
       </body>
     </html>
   );
