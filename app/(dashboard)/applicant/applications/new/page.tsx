@@ -65,9 +65,10 @@ export default async function NewApplicationPage({
             </Button>
           </CardContent>
         </Card>
-      ) : null}
+      ) : (
+        <ApplicationForm applicantId={applicantId} applicant={selectedApplicant ?? null} />
+      )}
 
-      <ApplicationForm applicantId={applicantId} applicant={selectedApplicant ?? null} />
     </div>
   );
 }

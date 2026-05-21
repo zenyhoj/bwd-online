@@ -35,6 +35,26 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: "Applicant not found or you do not have permission." };
     }
 
+    const { data: existingApplication, error: existingApplicationError } = await supabase
+      .from("applications")
+      .select("id")
+      .eq("applicant_id", applicantId)
+      .not("status", "in", "(rejected,converted)")
+      .limit(1)
+      .maybeSingle();
+
+    if (existingApplicationError) {
+      return { success: false, message: existingApplicationError.message };
+    }
+
+    if (existingApplication) {
+      return {
+        success: false,
+        message: "This applicant already has an active application. Open the dashboard to continue the existing record.",
+        redirectTo: `/applicant?applicant=${applicantId}&application=${existingApplication.id}`
+      };
+    }
+
     const { data: seminarItems, error: seminarItemsError } = await supabase
       .from("seminar_items")
       .select("id")
