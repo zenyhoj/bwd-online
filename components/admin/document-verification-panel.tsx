@@ -173,7 +173,12 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, re
                     <DocumentPreview key={selectedRow.document.id} document={selectedRow.document} compact />
                   </div>
                   <div className="xl:sticky xl:top-6">
-                    <DocumentReviewForm key={selectedRow.document.id} document={selectedRow.document} showPreview={false} />
+                    <DocumentReviewForm
+                      key={selectedRow.document.id}
+                      document={selectedRow.document}
+                      showPreview={false}
+                      onReviewed={closeDialog}
+                    />
                   </div>
                 </div>
               ) : (

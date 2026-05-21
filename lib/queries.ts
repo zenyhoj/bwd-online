@@ -560,11 +560,20 @@ export async function getAdminDashboardStats() {
     if (stage === "for-conversion") readyForConversion++;
   }
 
+  const { count: pendingDocumentReviews, error: pendingDocumentsError } = await supabase
+    .from("documents")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", profile.organization_id)
+    .eq("status", "pending");
+
+  if (pendingDocumentsError) throw pendingDocumentsError;
+
   return {
     total: records.length,
     readyForInspection,
     awaitingInspectionResult,
     readyForPayment,
-    readyForConversion
+    readyForConversion,
+    pendingDocumentReviews: pendingDocumentReviews ?? 0
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { reviewDocumentAction } from "@/actions/documents";
 import { initialActionState } from "@/actions/state";
@@ -15,12 +16,21 @@ import type { Document } from "@/types";
 type DocumentReviewFormProps = {
   document: Document;
   showPreview?: boolean;
+  onReviewed?: () => void;
 };
 
-export function DocumentReviewForm({ document, showPreview = true }: DocumentReviewFormProps) {
+export function DocumentReviewForm({ document, showPreview = true, onReviewed }: DocumentReviewFormProps) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState(reviewDocumentAction, initialActionState);
   const [status, setStatus] = useState(document.status === "pending" ? "verified" : document.status);
   const isRejected = status === "rejected";
+
+  useEffect(() => {
+    if (state.success) {
+      router.refresh();
+      onReviewed?.();
+    }
+  }, [onReviewed, router, state.success]);
 
   return (
     <form action={formAction} className="grid gap-3 rounded-lg border p-4">

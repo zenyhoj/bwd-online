@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, CheckCircle2, ClipboardList, CreditCard, Wrench, Download } from "lucide-react";
+import { CalendarClock, CheckCircle2, ClipboardList, CreditCard, FileCheck2, Wrench, Download } from "lucide-react";
 
 import { WaterMeterSchedulerForm } from "@/components/admin/water-meter-scheduler-form";
 import { WaterMeterCompletionForm } from "@/components/admin/water-meter-completion-form";
@@ -239,7 +239,13 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const noQueueResults = applications.data.length === 0;
   const hasMatchesInOtherStages = Boolean(searchMatchesAcrossAllStages && searchMatchesAcrossAllStages.count > 0);
 
-  const { readyForInspection, awaitingInspectionResult, readyForPayment, readyForConversion: readyForConversionEffective } = stats;
+  const {
+    readyForInspection,
+    awaitingInspectionResult,
+    readyForPayment,
+    readyForConversion: readyForConversionEffective,
+    pendingDocumentReviews
+  } = stats;
 
   const workflowStages = [
     {
@@ -359,7 +365,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
         </Link>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
         <Card className="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -419,6 +425,22 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
               </div>
               <div className="rounded-full bg-indigo-600/10 text-indigo-600/40 p-1.5">
                 <CreditCard className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-none bg-sky-600/5 shadow-none transition-all hover:bg-sky-600/[0.08]">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600/70 mb-1">Docs to Review</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tighter text-sky-600/90">{pendingDocumentReviews}</span>
+                </div>
+                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">uploaded by applicants</p>
+              </div>
+              <div className="rounded-full bg-sky-600/10 text-sky-600/40 p-1.5">
+                <FileCheck2 className="h-3.5 w-3.5" />
               </div>
             </div>
           </CardContent>
@@ -662,7 +684,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       </div>
                       <div>
                         <dt className="text-muted-foreground">Uploaded documents</dt>
-                        <dd className="mt-1 font-medium">{selectedDocuments.length}</dd>
+                        <dd className="mt-1 flex items-center gap-2 font-medium">
+                          {selectedDocuments.length}
+                          {selectedDocuments.some((document) => document.status === "pending") ? (
+                            <Badge className="bg-sky-600/10 text-sky-700 hover:bg-sky-600/10">
+                              Needs review
+                            </Badge>
+                          ) : null}
+                        </dd>
                       </div>
                       <div>
                         <dt className="text-muted-foreground">Payment records</dt>
@@ -762,6 +791,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                 <div className="border-t border-border/50 p-6">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-4">Document verification</p>
                   <div className="space-y-4">
+                    {selectedDocuments.some((document) => document.status === "pending") ? (
+                      <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+                        Applicant uploaded document(s) that need admin review.
+                      </div>
+                    ) : null}
                     {selectedDocuments.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
                         No uploaded documents yet. Use the note form above to list lacking documents for the applicant.

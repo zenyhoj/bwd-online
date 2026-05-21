@@ -70,6 +70,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
       }
       if (actionNeeded > 0) navBadges["/admin"] = actionNeeded;
 
+      const { count: pendingDocumentReviews } = await supabase
+        .from("documents")
+        .select("id", { count: "exact", head: true })
+        .eq("organization_id", profile.organization_id)
+        .eq("status", "pending");
+      if ((pendingDocumentReviews ?? 0) > 0) {
+        navBadges["/admin"] = (navBadges["/admin"] ?? 0) + (pendingDocumentReviews ?? 0);
+      }
+
       // Badge on Inspections: inspections that need a result entered
       const { count: pendingInspections } = await supabase
         .from("inspections")
