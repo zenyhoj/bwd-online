@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertCircle, CalendarDays, CheckCircle2, ClipboardList, Filter, Search } from "lucide-react";
+import { AlertCircle, CalendarDays, CheckCircle2, ClipboardList, Filter, Search, SlidersHorizontal } from "lucide-react";
 
 import { InspectionScheduleInlineEditor } from "@/components/admin/inspection-schedule-inline-editor";
 import { InspectionForm } from "@/components/inspector/inspection-form";
@@ -114,6 +114,13 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
       count: allInspectionRows.filter((inspection) => inspection.status === "rescheduled").length
     }
   ];
+  const hasActiveFilters =
+    q.length > 0 || statusFilter !== "all" || inspectorFilter !== "all" || scheduledDateFilter.length > 0;
+  const activeFilterCount =
+    (q.length > 0 ? 1 : 0) +
+    (statusFilter !== "all" ? 1 : 0) +
+    (inspectorFilter !== "all" ? 1 : 0) +
+    (scheduledDateFilter.length > 0 ? 1 : 0);
 
   return (
     <div className="space-y-6">
@@ -200,16 +207,27 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                   </p>
                 </div>
               </div>
-              <Badge variant="outline" className="rounded-full px-3 py-1">
-                {statusFilter === "all" ? "All statuses" : statusFilter.replaceAll("_", " ")}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="rounded-full px-3 py-1 capitalize">
+                  {statusFilter === "all" ? "All statuses" : statusFilter.replaceAll("_", " ")}
+                </Badge>
+                {hasActiveFilters ? (
+                  <Badge className="rounded-full bg-primary/10 text-primary hover:bg-primary/10">
+                    {activeFilterCount} active
+                  </Badge>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-5 px-4 py-4">
               <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px_180px_auto]">
                 <div className="relative">
+                  <label htmlFor="inspection-q" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Search
+                  </label>
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    id="inspection-q"
                     type="text"
                     name="q"
                     defaultValue={q}
@@ -217,42 +235,61 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                     className="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm"
                   />
                 </div>
-                <select
-                  name="status"
-                  defaultValue={statusFilter}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="all">All statuses</option>
-                  <option value="needs_update">Needs update</option>
-                  <option value="scheduled">Scheduled</option>
-                  <option value="in_progress">In progress</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Disapproved</option>
-                  <option value="rescheduled">Rescheduled</option>
-                </select>
-                <select
-                  name="inspector"
-                  defaultValue={inspectorFilter}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value="all">All inspectors</option>
-                  {inspectorOptions.map((inspectorName) => (
-                    <option key={inspectorName} value={inspectorName}>
-                      {inspectorName}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <label htmlFor="inspection-status" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Status
+                  </label>
+                  <select
+                    id="inspection-status"
+                    name="status"
+                    defaultValue={statusFilter}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="all">All statuses</option>
+                    <option value="needs_update">Needs update</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="in_progress">In progress</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Disapproved</option>
+                    <option value="rescheduled">Rescheduled</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="inspection-inspector" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Inspector
+                  </label>
+                  <select
+                    id="inspection-inspector"
+                    name="inspector"
+                    defaultValue={inspectorFilter}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  >
+                    <option value="all">All inspectors</option>
+                    {inspectorOptions.map((inspectorName) => (
+                      <option key={inspectorName} value={inspectorName}>
+                        {inspectorName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="relative">
+                  <label htmlFor="inspection-date" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Scheduled date
+                  </label>
                   <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
+                    id="inspection-date"
                     type="date"
                     name="scheduledDate"
                     defaultValue={scheduledDateFilter}
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button type="submit">Apply filters</Button>
+                <div className="flex items-end gap-2">
+                  <Button type="submit" className="gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Apply filters
+                  </Button>
                   <Button asChild variant="outline">
                     <Link href="/admin/inspections">Clear</Link>
                   </Button>
@@ -314,7 +351,22 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                 {inspectionRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
-                      No inspections have been scheduled yet.
+                      <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-4">
+                        <div className="rounded-full bg-muted p-3">
+                          <ClipboardList className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                        <p className="font-medium text-foreground">No inspections found</p>
+                        <p className="text-xs text-muted-foreground">
+                          {hasActiveFilters
+                            ? "No records match your current filters. Try clearing filters or selecting a different status."
+                            : "No inspections have been scheduled yet."}
+                        </p>
+                        {hasActiveFilters ? (
+                          <Button asChild size="sm" variant="outline">
+                            <Link href="/admin/inspections">Clear filters</Link>
+                          </Button>
+                        ) : null}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -382,7 +434,7 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                   {(selectedInspection.applications as InspectionApplicationRelation)?.full_name ?? "Unknown applicant"}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {selectedInspection.inspector_name ?? "Unassigned inspector"} â€¢ Scheduled{" "}
+                  {selectedInspection.inspector_name ?? "Unassigned inspector"} • Scheduled{" "}
                   {formatDateTime(selectedInspection.scheduled_at)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -411,3 +463,4 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
     </div>
   );
 }
+
