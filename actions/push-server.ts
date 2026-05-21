@@ -1,6 +1,5 @@
 "use server";
 
-import webpush from "web-push";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const vapidKeys = {
@@ -10,16 +9,24 @@ const vapidKeys = {
 
 const isPushConfigured = Boolean(vapidKeys.publicKey && vapidKeys.privateKey);
 
-if (isPushConfigured) {
+async function getConfiguredWebPush() {
+  if (!isPushConfigured) {
+    return null;
+  }
+
+  const webpush = (await import("web-push")).default;
   webpush.setVapidDetails(
     process.env.VAPID_MAILTO || "mailto:admin@bwd-online.com",
     vapidKeys.publicKey!,
     vapidKeys.privateKey!
   );
+
+  return webpush;
 }
 
 export async function sendPushNotificationAction(userId: string, title: string, body: string, url: string = "/") {
-  if (!isPushConfigured) {
+  const webpush = await getConfiguredWebPush();
+  if (!webpush) {
     console.warn("Push notification skipped: VAPID keys are not configured.");
     return { success: false, error: "Push notifications are not configured." };
   }
@@ -55,7 +62,8 @@ export async function sendPushNotificationAction(userId: string, title: string, 
 }
 
 export async function broadcastNotificationAction(title: string, body: string, url: string = "/") {
-  if (!isPushConfigured) {
+  const webpush = await getConfiguredWebPush();
+  if (!webpush) {
     console.warn("Broadcast notification skipped: VAPID keys are not configured.");
     return { success: false, error: "Push notifications are not configured." };
   }
