@@ -137,6 +137,7 @@ function getPrimaryAction({
   allCompleted,
   hasApplication,
   hasPayment,
+  isCompleted,
   inhouseCompleted,
   inspectionApproved,
   documentsReady,
@@ -146,6 +147,7 @@ function getPrimaryAction({
   allCompleted: boolean;
   hasApplication: boolean;
   hasPayment: boolean;
+  isCompleted: boolean;
   inhouseCompleted: boolean;
   inspectionApproved: boolean;
   documentsReady: boolean;
@@ -171,6 +173,10 @@ function getPrimaryAction({
       href: `/applicant/applications/new?applicant=${selectedApplicantId}`,
       label: "Start application"
     };
+  }
+
+  if (isCompleted) {
+    return null;
   }
 
   if (hasPayment) {
@@ -262,13 +268,14 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
     allCompleted: seminarState.allCompleted,
     hasApplication: Boolean(selectedApplication),
     hasPayment: Boolean(latestPayment),
+    isCompleted: selectedApplication?.status === "converted",
     inhouseCompleted,
     inspectionApproved,
     documentsReady,
     selectedApplicantId: selectedApplicant?.id,
     selectedApplicationId: selectedApplication?.id
   });
-  const showPrimaryActionButton = !(selectedApplication && !latestPayment && !inhouseCompleted);
+  const showPrimaryActionButton = Boolean(primaryAction) && !(selectedApplication && !latestPayment && !inhouseCompleted);
 
   const selectedHistoryHref = (() => {
     const query = new URLSearchParams();
@@ -480,8 +487,8 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
 
           {showPrimaryActionButton ? (
             <Button asChild className="h-10 w-full text-xs font-bold md:w-auto md:text-sm">
-              <Link href={primaryAction.href}>
-                {primaryAction.label}
+              <Link href={primaryAction?.href ?? "/applicant"}>
+                {primaryAction?.label}
                 <ArrowRight className="ml-2 h-3.5 w-3.5 md:h-4 md:w-4" />
               </Link>
             </Button>
