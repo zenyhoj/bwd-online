@@ -25,6 +25,7 @@ export type ApplicationWithRelations = Application & {
   inspections?: Inspection[];
   documents?: Document[];
   payments?: Payment[];
+  concessionaires?: Concessionaire[];
   water_meter_installation_scheduled_at?: string | null;
   water_meter_installed_at?: string | null;
 };

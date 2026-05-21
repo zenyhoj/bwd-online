@@ -47,6 +47,16 @@ function getLatestPayment(application: {
   return payments[0] ?? null;
 }
 
+function getAssignedAccount(application: {
+  concessionaires?: {
+    concessionaire_number?: string | null;
+    meter_number?: string | null;
+    connection_date?: string | null;
+  }[];
+}) {
+  return application.concessionaires?.[0] ?? null;
+}
+
 function getEffectiveWorkflowStatus(application: {
   status?: string | null;
   inhouse_installation_completed?: boolean | null;
@@ -205,6 +215,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const selectedApplication = applications.find((application) => application.id === selectedApplicationId) ?? applications[0];
   
   const latestPayment = selectedApplication ? getLatestPayment(selectedApplication) : null;
+  const assignedAccount = selectedApplication ? getAssignedAccount(selectedApplication) : null;
   const effectiveWorkflowStatus = selectedApplication ? getEffectiveWorkflowStatus(selectedApplication) : null;
   const latestInspectionSchedule = selectedApplication ? getScheduledInspectionDate(selectedApplication) : null;
   const inspectionApproved = selectedApplication ? hasApprovedInspection(selectedApplication) : false;
@@ -317,6 +328,43 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               <p className="mt-1 text-sm text-muted-foreground">
                 Your inspection is approved. Upload the required documents next, or inform BWD that you will bring them to the office before payment can be scheduled.
               </p>
+            </div>
+          ) : null}
+
+          {selectedApplication ? (
+            <div
+              className={`rounded-xl border p-4 ${
+                assignedAccount
+                  ? "border-emerald-300 bg-emerald-50/70"
+                  : "border-border/70 bg-muted/10"
+              }`}
+            >
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    Assigned account number
+                  </p>
+                  <p className={`mt-1 font-mono text-2xl font-bold ${assignedAccount ? "text-emerald-700" : "text-muted-foreground"}`}>
+                    {assignedAccount?.concessionaire_number ?? "Not assigned yet"}
+                  </p>
+                </div>
+                {assignedAccount ? (
+                  <div className="grid gap-2 text-sm sm:grid-cols-2 md:text-right">
+                    <p>
+                      <span className="block text-xs text-muted-foreground">Connection date</span>
+                      <span className="font-medium">{formatDate(assignedAccount.connection_date ?? null)}</span>
+                    </p>
+                    <p>
+                      <span className="block text-xs text-muted-foreground">Meter number</span>
+                      <span className="font-medium">{assignedAccount.meter_number ?? "Not recorded"}</span>
+                    </p>
+                  </div>
+                ) : (
+                  <p className="max-w-md text-sm text-muted-foreground">
+                    Your account number will appear here after BWD converts the approved application into an active concessionaire record.
+                  </p>
+                )}
+              </div>
             </div>
           ) : null}
 
@@ -471,6 +519,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             <div className="space-y-3">
               {historyApplications.map((application) => {
                 const latestApplicationPayment = getLatestPayment(application);
+                const applicationAccount = getAssignedAccount(application);
                 const effectiveApplicationWorkflowStatus = getEffectiveWorkflowStatus(application);
 
                 return (
@@ -484,7 +533,17 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                       </div>
                       <StatusBadge status={effectiveApplicationWorkflowStatus} />
                     </div>
-                    <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-4">
+                    <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-5">
+                      <p>
+                        <span className="text-muted-foreground">Account no.:</span>{" "}
+                        {applicationAccount?.concessionaire_number ? (
+                          <span className="font-mono font-semibold text-emerald-700">
+                            {applicationAccount.concessionaire_number}
+                          </span>
+                        ) : (
+                          "Not assigned"
+                        )}
+                      </p>
                       <p><span className="text-muted-foreground">Inspection:</span> {formatDateTime(getScheduledInspectionDate(application))}</p>
                       <p><span className="text-muted-foreground">Payment:</span> {latestApplicationPayment ? formatPaymentType(latestApplicationPayment.payment_type) : "Not scheduled"}</p>
                       <p><span className="text-muted-foreground">Plumbing:</span> {application.inhouse_installation_completed_at ? formatDate(application.inhouse_installation_completed_at) : "Pending"}</p>
