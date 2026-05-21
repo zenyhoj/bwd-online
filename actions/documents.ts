@@ -281,6 +281,62 @@ export async function updateDocumentWorkflowNoteAction(
   });
 }
 
+export async function reenableDocumentValidationAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Only administrators can re-enable document validation." };
+    }
+
+    const parsed = await parseFormData(documentWorkflowNoteSchema, {
+      applicationId: formData.get("applicationId"),
+      reviewNote: formData.get("reviewNote")
+    });
+
+    if (parsed.error) {
+      return parsed.error;
+    }
+
+    const { data: application, error: applicationError } = await supabase
+      .from("applications")
+      .select("id, status")
+      .eq("id", parsed.data.applicationId)
+      .eq("organization_id", profile.organization_id)
+      .maybeSingle();
+
+    if (applicationError || !application) {
+      return { success: false, message: applicationError?.message ?? "Application not found." };
+    }
+
+    if (application.status === "converted") {
+      return { success: false, message: "Converted applications cannot be sent back to document review." };
+    }
+
+    const { error } = await supabase
+      .from("applications")
+      .update({
+        status: "inspection_completed",
+        document_review_note: parsed.data.reviewNote
+      })
+      .eq("id", parsed.data.applicationId)
+      .eq("organization_id", profile.organization_id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/payments");
+    revalidatePath("/applicant");
+    revalidatePath("/applicant/documents");
+    return { success: true, message: "Document validation re-enabled for this applicant." };
+  });
+}
+
 export async function reviewDocumentAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   return withErrorHandling(async () => {
     const { supabase, profile } = await getActionContext();
@@ -446,4 +502,3 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
     return { success: true, message: "Document verification completed." };
   });
 }
-

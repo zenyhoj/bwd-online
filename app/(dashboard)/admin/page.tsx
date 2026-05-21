@@ -3,6 +3,7 @@ import { CalendarClock, CheckCircle2, ClipboardList, CreditCard, FileCheck2, Wre
 
 import { WaterMeterSchedulerForm } from "@/components/admin/water-meter-scheduler-form";
 import { WaterMeterCompletionForm } from "@/components/admin/water-meter-completion-form";
+import { AdditionalDocumentsForm } from "@/components/admin/additional-documents-form";
 import { DocumentVerificationPanel } from "@/components/admin/document-verification-panel";
 import { InspectionSchedulerForm } from "@/components/admin/inspection-scheduler-form";
 import { InstallationSchedulerForm } from "@/components/admin/installation-scheduler-form";
@@ -319,6 +320,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
     (inspection) => inspection.status === "approved"
   );
   const documentsReadyForPayment = areDocumentsReadyForPayment(selectedApplication as never);
+  const canRequestAdditionalDocuments =
+    Boolean(selectedApplication) &&
+    documentsReadyForPayment &&
+    selectedApplicationStatus !== "converted" &&
+    latestSelectedPayment?.status !== "paid";
   const canMarkInstallationComplete =
     Boolean(selectedApplication) && selectedApplicationStatus !== "converted";
   const inspectionWorkflowComplete = canSchedulePayment;
@@ -798,8 +804,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     ) : null}
                     {selectedDocuments.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
-                        No uploaded documents yet. Use the note form above to list lacking documents for the applicant.
+                        No uploaded documents yet. Use document validation notes to list lacking documents for the applicant.
                       </p>
+                    ) : null}
+                    {canRequestAdditionalDocuments ? (
+                      <AdditionalDocumentsForm
+                        applicationId={String(selectedApplication.id)}
+                        reviewNote={(selectedApplication.document_review_note as string | null | undefined) ?? null}
+                      />
                     ) : null}
                     <DocumentVerificationPanel 
                       applicationId={String(selectedApplication.id)}

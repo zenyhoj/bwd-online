@@ -132,7 +132,7 @@ export default async function ApplicantDocumentsPage({ searchParams }: Applicant
                 </span>
               </div>
 
-              {application.document_review_note && requirementRows.some(row => row.status === "rejected") ? (
+              {application.document_review_note ? (
                 <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
                   <p className="font-medium">Admin note</p>
                   <p className="mt-1 whitespace-pre-wrap">{application.document_review_note}</p>
