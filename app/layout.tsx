@@ -40,7 +40,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans`}>
+      <body suppressHydrationWarning className={`${inter.variable} font-sans`}>
         <NavigationProgress />
         {children}
       </body>
