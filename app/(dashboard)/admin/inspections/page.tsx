@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { AlertCircle, CalendarDays, CheckCircle2, ClipboardList, Filter, Search, SlidersHorizontal } from "lucide-react";
 
 import { InspectionScheduleInlineEditor } from "@/components/admin/inspection-schedule-inline-editor";
@@ -390,7 +390,7 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                         key={inspection.id}
                         className={inspection.id === selectedInspection?.id ? "border-l-4 border-l-primary bg-primary/5" : "hover:bg-muted/20"}
                       >
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <Link
                             href={(
                               `/admin/inspections?${new URLSearchParams({

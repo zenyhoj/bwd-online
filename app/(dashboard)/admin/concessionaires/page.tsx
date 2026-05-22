@@ -51,7 +51,7 @@ export default async function AdminConcessionairesPage() {
 
                   return (
                     <TableRow key={String(record.id)}>
-                      <TableCell className="font-medium">{String(record.full_name)}</TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">{String(record.full_name)}</TableCell>
                       <TableCell>
                         {concessionaire ? (
                           <span className="font-mono">{String(concessionaire.concessionaire_number)}</span>

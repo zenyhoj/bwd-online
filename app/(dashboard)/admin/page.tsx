@@ -524,7 +524,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       >
                         <TableCell>
                           <div>
-                            <p className="font-medium">{String(record.full_name)}</p>
+                            <p className="font-medium whitespace-nowrap">{String(record.full_name)}</p>
                             <p className="text-xs text-muted-foreground">
                               {String(record.service_type).replaceAll("_", " ")}
                             </p>
