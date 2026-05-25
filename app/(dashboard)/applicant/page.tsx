@@ -333,32 +333,98 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </span>
           </div>
 
-          {selectedApplication && !latestPayment && !inhouseCompleted ? (
-            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
-              <p className="font-medium text-primary">Next step: complete inhouse plumbing</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Mark the inhouse plumbing as completed first, including the plumber and proof photo, before moving to document review and payment scheduling.
-              </p>
-            </div>
-          ) : null}
-
-          {selectedApplication && !latestPayment && inhouseCompleted && !inspectionApproved ? (
-            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
-              <p className="font-medium text-primary">Next step: wait for inspection approval</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Document upload opens after the in-house inspection is approved.
-              </p>
-            </div>
-          ) : null}
-
-          {selectedApplication && !latestPayment && inhouseCompleted && inspectionApproved && !documentsReady ? (
-            <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
-              <p className="font-medium text-primary">Next step: upload documents</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your inspection is approved. Upload the required documents next, or inform BWD that you will bring them to the office before payment can be scheduled.
-              </p>
-            </div>
-          ) : null}
+          {(() => {
+            if (!selectedApplication) return null;
+            
+            if (selectedApplication.status === "converted" || selectedApplication.water_meter_installed_at) {
+              return (
+                <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 p-4">
+                  <p className="font-medium text-emerald-700">Workflow completed: Active connection</p>
+                  <p className="mt-1 text-sm text-emerald-700/80">
+                    Your application is now an active water connection. Your account number is assigned.
+                  </p>
+                </div>
+              );
+            }
+            if (selectedApplication.water_meter_installation_scheduled_at) {
+              return (
+                <div className="rounded-xl border border-muted-foreground/20 bg-muted/10 p-4">
+                  <p className="font-medium text-foreground">Waiting for Installation: Water meter scheduled</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Your water meter installation is scheduled. Please prepare for the installation date.
+                  </p>
+                </div>
+              );
+            }
+            if (latestPayment?.status === "paid") {
+              return (
+                <div className="rounded-xl border border-muted-foreground/20 bg-muted/10 p-4">
+                  <p className="font-medium text-foreground">Waiting for BWD: Schedule water meter</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Your payment is confirmed. BWD will now schedule the installation of your water meter.
+                  </p>
+                </div>
+              );
+            }
+            if (latestPayment) {
+              return (
+                <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+                  <p className="font-medium text-primary">Action required: Pay application fee</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Please visit the BWD office on your scheduled date to pay the fees.
+                  </p>
+                </div>
+              );
+            }
+            if (documentsReady) {
+              return (
+                <div className="rounded-xl border border-muted-foreground/20 bg-muted/10 p-4">
+                  <p className="font-medium text-foreground">Waiting for BWD: Schedule payment</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Your documents are verified. BWD will now schedule your office payment date.
+                  </p>
+                </div>
+              );
+            }
+            if (inspectionApproved) {
+              return (
+                <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+                  <p className="font-medium text-primary">Action required: Upload documents</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Your inspection is approved. Please upload the required documents next, or bring them to the office.
+                  </p>
+                </div>
+              );
+            }
+            if (latestInspectionSchedule) {
+              return (
+                <div className="rounded-xl border border-muted-foreground/20 bg-muted/10 p-4">
+                  <p className="font-medium text-foreground">Waiting for Inspector: Inspection scheduled</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Your inspection is scheduled. Please prepare for the site visit and await the inspector's approval.
+                  </p>
+                </div>
+              );
+            }
+            if (inhouseCompleted) {
+              return (
+                <div className="rounded-xl border border-muted-foreground/20 bg-muted/10 p-4">
+                  <p className="font-medium text-foreground">Waiting for BWD: Schedule inspection</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Your in-house plumbing is marked complete. BWD will now schedule an inspection.
+                  </p>
+                </div>
+              );
+            }
+            return (
+              <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
+                <p className="font-medium text-primary">Action required: Complete in-house plumbing</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Mark the in-house plumbing as completed first, including the plumber and proof photo, before moving to document review and payment.
+                </p>
+              </div>
+            );
+          })()}
 
           {selectedApplication ? (
             <div

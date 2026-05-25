@@ -106,14 +106,15 @@ function nextAction(record: Record<string, unknown>) {
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
 
   if (converted || status === "converted") return "Completed";
-  if (!inhousePlumbingComplete) return "Complete in-house plumbing";
+  if (!inhousePlumbingComplete) return "Wait for applicant plumbing";
   if (!hasScheduledInspection) return "Schedule inspection";
-  if (!hasApprovedInspection) return "Await inspection result";
-  if (!documentsReady) return "Review documents";
-  if (paymentsList.length === 0 || latestPayment?.status !== "paid") return "Confirm payment";
+  if (!hasApprovedInspection) return "Wait for inspector result";
+  if (!documentsReady) return documents.length > 0 ? "Verify uploaded documents" : "Wait for applicant documents";
+  if (paymentsList.length === 0) return "Schedule payment date";
+  if (latestPayment?.status !== "paid") return "Confirm applicant payment";
   if (!waterMeterScheduled) return "Schedule water meter";
-  if (!waterMeterInstalled) return "Complete water meter";
-  return "Convert account";
+  if (!waterMeterInstalled) return "Wait for water meter completion";
+  return "Completed";
 }
 
 function queueStage(record: Record<string, unknown>) {
@@ -352,7 +353,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
     else if (!inspectionWorkflowComplete) activeAction = "inspection";
     else if (!documentsReadyForPayment) activeAction = "documents";
     else if (!latestSelectedPayment || latestSelectedPayment.status !== "paid") activeAction = "payment";
-    else if (!selectedApplication.inhouse_installation_completed) activeAction = "mark-installation";
     else if (!selectedApplication.water_meter_installation_scheduled_at) activeAction = "water-meter-schedule";
     else if (!selectedApplication.water_meter_installed_at) activeAction = "water-meter-complete";
   }
@@ -710,14 +710,16 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Next action</p>
                     <p className="mt-3 text-lg font-semibold">{nextAction(selectedApplication)}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {activeAction === "inhouse-plumbing" && "In-house plumbing must be completed by the applicant before scheduling an inspection."}
-                      {activeAction === "inspection" && "Finish the remaining inspection steps before moving to payment scheduling."}
-                      {activeAction === "documents" && "Inspection is complete. Verify the uploaded documents or note the missing requirements before payment scheduling."}
-                      {activeAction === "payment" && "Inspection and documents are complete. Continue with payment confirmation."}
-                      {activeAction === "mark-installation" && "Payment confirmed. Mark the installation as complete."}
-                      {activeAction === "water-meter-schedule" && "Application fee paid. Schedule the water meter installation."}
-                      {activeAction === "water-meter-complete" && "Water meter installation is scheduled. Wait for completion and mark it here."}
-                      {!activeAction && "All workflow steps have been completed."}
+                      {activeAction === "inhouse-plumbing" && "Waiting for applicant: In-house plumbing must be completed by the applicant before you can schedule an inspection."}
+                      {activeAction === "inspection" && !hasScheduledInspection && "Action required: In-house plumbing is complete. Schedule an inspection date for the applicant."}
+                      {activeAction === "inspection" && hasScheduledInspection && "Waiting for inspector: Inspection is scheduled. Wait for the inspector to submit the result."}
+                      {activeAction === "documents" && selectedDocuments.some(d => d.status === 'pending') && "Action required: Inspection is complete. The applicant has uploaded documents. Verify them or note missing requirements."}
+                      {activeAction === "documents" && !selectedDocuments.some(d => d.status === 'pending') && "Waiting for applicant: Inspection is complete. Waiting for the applicant to upload all required documents."}
+                      {activeAction === "payment" && !latestSelectedPayment && "Action required: Documents are verified. Schedule the office payment date for the applicant."}
+                      {activeAction === "payment" && latestSelectedPayment && "Waiting for applicant: Payment is scheduled. Await applicant payment at the office and confirm it here."}
+                      {activeAction === "water-meter-schedule" && "Action required: Application fee paid. Schedule the water meter installation."}
+                      {activeAction === "water-meter-complete" && "Waiting for installation: Water meter installation is scheduled. Wait for completion and mark it here."}
+                      {!activeAction && "Workflow completed: All workflow steps have been finished and the account is converted."}
                     </p>
                     {activeAction ? (
                       <div className="mt-8 rounded-xl border-2 border-primary/20 bg-background p-6 shadow-sm">
@@ -763,18 +765,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                           />
                         )}
                         {activeAction === "documents" && null}
-                        {activeAction === "mark-installation" && (
-                          <InhouseInstallationForm
-                            applicationId={String(selectedApplication.id)}
-                            plumbers={plumbers}
-                            currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
-                            currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
-                            currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
-                            currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
-                            isCompleted={Boolean(selectedApplication.inhouse_installation_completed)}
-                            variant="admin"
-                          />
-                        )}
                         {activeAction === "water-meter-schedule" && (
                           <WaterMeterSchedulerForm
                             applicationId={String(selectedApplication.id)}
