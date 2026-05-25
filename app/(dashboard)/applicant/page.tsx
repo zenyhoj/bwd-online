@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
-import { formatDate, formatDateTime } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { getAccreditedPlumbers, getApplicants, getApplicantApplications, getApplicantSeminarState } from "@/lib/queries";
 
 function getScheduledInspectionDate(application: {
@@ -399,31 +399,31 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
-              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Inspection</p>
+          <div className="grid grid-cols-4" style={{ gap: "clamp(8px, 1.5vw, 12px)" }}>
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-2 transition-colors hover:bg-muted/10 sm:p-3">
+              <div className="flex items-center justify-between gap-1">
+                <p className="whitespace-nowrap font-bold uppercase tracking-[0.14em] text-muted-foreground" style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Inspection</p>
                 {selectedApplication?.inspections?.[0] && (
-                  <div className="scale-75 origin-left sm:origin-right">
+                  <div className="scale-[0.65] origin-right sm:scale-75">
                     <StatusBadge status={selectedApplication.inspections[0].status ?? "pending"} />
                   </div>
                 )}
               </div>
-              <p className="mt-1 text-[13px] font-medium leading-tight md:text-sm">
-                {latestInspectionSchedule ? formatDateTime(latestInspectionSchedule) : "Not scheduled"}
+              <p className="mt-1 font-medium tabular-nums leading-tight text-foreground/80" style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
+                {latestInspectionSchedule ? formatDate(latestInspectionSchedule) : "Not scheduled"}
               </p>
             </div>
             
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
-              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Payment</p>
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-2 transition-colors hover:bg-muted/10 sm:p-3">
+              <div className="flex items-center justify-between gap-1">
+                <p className="whitespace-nowrap font-bold uppercase tracking-[0.14em] text-muted-foreground" style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Payment</p>
                 {latestPayment && (
-                  <div className="scale-75 origin-left sm:origin-right">
+                  <div className="scale-[0.65] origin-right sm:scale-75">
                     <StatusBadge status={latestPayment.status ?? "scheduled"} />
                   </div>
                 )}
               </div>
-              <p className="mt-1 text-[13px] font-medium leading-tight text-foreground/80 md:text-sm">
+              <p className="mt-1 font-medium tabular-nums leading-tight text-foreground/80" style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
                 {latestPayment ? (
                   latestPayment.status === "paid" 
                     ? formatDate(latestPayment.paid_at ?? latestPayment.office_payment_at ?? null) 
@@ -432,58 +432,60 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </p>
             </div>
 
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
-              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">Plumbing</p>
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-2 transition-colors hover:bg-muted/10 sm:p-3">
+              <div className="flex items-center justify-between gap-1">
+                <p className="whitespace-nowrap font-bold uppercase tracking-[0.14em] text-muted-foreground" style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Plumbing</p>
                 {selectedApplication?.inhouse_installation_completed && (
-                  <div className="scale-75 origin-left sm:origin-right">
+                  <div className="scale-[0.65] origin-right sm:scale-75">
                     <StatusBadge status="completed" />
                   </div>
                 )}
               </div>
-              <p className="mt-1 text-[13px] font-medium leading-tight text-foreground/80 md:text-sm">
+              <p className="mt-1 font-medium tabular-nums leading-tight text-foreground/80" style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
                 {selectedApplication?.inhouse_installation_completed_at
                   ? formatDate(selectedApplication.inhouse_installation_completed_at)
                   : "Pending"}
               </p>
             </div>
 
-            <div className={`rounded-xl border p-3 transition-colors ${
+            <div className={`rounded-xl border p-2 transition-colors sm:p-3 ${
               selectedApplication?.water_meter_installed_at
                 ? "border-emerald-500/30 bg-emerald-50/30"
                 : selectedApplication?.water_meter_installation_scheduled_at
                   ? "border-primary/30 bg-primary/5"
                   : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-                <p className={`text-[10px] uppercase tracking-[0.14em] font-bold ${
+              <div className="flex items-center justify-between gap-1">
+                <p className={`whitespace-nowrap uppercase tracking-[0.14em] font-bold ${
                   selectedApplication?.water_meter_installed_at 
                     ? "text-emerald-600" 
                     : selectedApplication?.water_meter_installation_scheduled_at 
                       ? "text-primary" 
                       : "text-muted-foreground"
-                }`}>Water Meter</p>
+                }`} style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Water Meter</p>
                 {selectedApplication?.water_meter_installed_at && (
-                  <div className="scale-75 origin-left sm:origin-right">
+                  <div className="scale-[0.65] origin-right sm:scale-75">
                     <StatusBadge status="completed" />
                   </div>
                 )}
               </div>
-              <p className={`mt-1 text-[13px] font-medium leading-tight md:text-sm ${
+              <p className={`mt-1 font-medium tabular-nums leading-tight ${
                 selectedApplication?.water_meter_installed_at 
                   ? "text-emerald-600" 
                   : selectedApplication?.water_meter_installation_scheduled_at 
                     ? "text-primary" 
-                    : ""
-              }`}>
+                    : "text-foreground/80"
+              }`} style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
                 {selectedApplication?.water_meter_installed_at
-                  ? `Completed ${formatDate(selectedApplication.water_meter_installed_at)}`
+                  ? formatDate(selectedApplication.water_meter_installed_at)
                   : selectedApplication?.water_meter_installation_scheduled_at
-                    ? formatDateTime(selectedApplication.water_meter_installation_scheduled_at)
+                    ? formatDate(selectedApplication.water_meter_installation_scheduled_at)
                     : "Not scheduled"}
               </p>
             </div>
           </div>
+
+
 
           {showPrimaryActionButton ? (
             <Button asChild className="h-10 w-full text-xs font-bold md:w-auto md:text-sm">
@@ -559,13 +561,13 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                       <div>
                         <p className="font-semibold">{application.full_name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {formatServiceType(application.service_type)} - Submitted {formatDateTime(application.submitted_at)}
+                          {formatServiceType(application.service_type)} - Submitted {formatDate(application.submitted_at)}
                         </p>
                       </div>
                       <StatusBadge status={effectiveApplicationWorkflowStatus} />
                     </div>
-                    <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2 md:grid-cols-5">
-                      <p>
+                    <div className="mt-3 flex flex-wrap items-baseline gap-y-1" style={{ fontSize: "clamp(10px, 1.2vw, 12px)", columnGap: "clamp(8px, 1.5vw, 16px)" }}>
+                      <p className="whitespace-nowrap">
                         <span className="text-muted-foreground">Account no.:</span>{" "}
                         {applicationAccount.accountNumber ? (
                           <span className="font-mono font-semibold text-emerald-700">
@@ -575,10 +577,10 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                           "Not assigned"
                         )}
                       </p>
-                      <p><span className="text-muted-foreground">Inspection:</span> {formatDateTime(getScheduledInspectionDate(application))}</p>
-                      <p><span className="text-muted-foreground">Payment:</span> {latestApplicationPayment ? formatPaymentType(latestApplicationPayment.payment_type) : "Not scheduled"}</p>
-                      <p><span className="text-muted-foreground">Plumbing:</span> {application.inhouse_installation_completed_at ? formatDate(application.inhouse_installation_completed_at) : "Pending"}</p>
-                      <p><span className="text-muted-foreground">Water Meter:</span> {application.water_meter_installation_scheduled_at ? <span className="font-semibold text-primary">{formatDateTime(application.water_meter_installation_scheduled_at)}</span> : "Not scheduled"}</p>
+                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Inspection:</span>{" "}<span className="font-medium tabular-nums">{formatDate(getScheduledInspectionDate(application))}</span></p>
+                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Payment:</span>{" "}<span className="font-medium tabular-nums">{latestApplicationPayment ? formatPaymentType(latestApplicationPayment.payment_type) : "Not scheduled"}</span></p>
+                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Plumbing:</span>{" "}<span className="font-medium tabular-nums">{application.inhouse_installation_completed_at ? formatDate(application.inhouse_installation_completed_at) : "Pending"}</span></p>
+                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Water Meter:</span>{" "}<span className="font-medium tabular-nums">{application.water_meter_installation_scheduled_at ? formatDate(application.water_meter_installation_scheduled_at) : "Not scheduled"}</span></p>
                     </div>
                   </div>
                 );
