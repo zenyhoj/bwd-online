@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Lock, Camera, Upload, CheckCircle2, Loader2, Image as ImageIcon } from "lucide-react";
 import { compressImage } from "@/lib/image-utils";
@@ -104,7 +104,9 @@ export function InhouseInstallationForm({
       finalFormData.append("proofImage", file);
     }
 
-    formAction(finalFormData);
+    startTransition(() => {
+      formAction(finalFormData);
+    });
   };
 
   return (
@@ -283,7 +285,7 @@ export function InhouseInstallationForm({
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(220px,0.8fr)] lg:items-start">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 items-start">
               <div className="space-y-2">
                 <Label htmlFor={`accreditedPlumberId-${applicationId}`}>Accredited plumber</Label>
                 <select

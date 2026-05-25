@@ -55,7 +55,7 @@ export function PaymentSchedulerForm({
             This record is locked because it is already marked as paid.
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
           <div className="rounded-xl border border-border/70 bg-background/80 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Status</p>
             <div className="mt-3">
@@ -133,7 +133,7 @@ export function PaymentSchedulerForm({
             </div>
 
             {mode === "paid" ? (
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-1">
                 {/* Official receipt amount */}
                 <div className="space-y-2">
                   <Label htmlFor={`amount-${payment.id}`}>Receipt amount</Label>
@@ -163,7 +163,7 @@ export function PaymentSchedulerForm({
                 </div>
 
                 {/* Date of payment */}
-                <div className="space-y-2 sm:col-span-2">
+                <div className="space-y-2 sm:col-span-2 xl:col-span-1">
                   <Label htmlFor={`paidAt-${payment.id}`}>Date of payment</Label>
                   <Input
                     id={`paidAt-${payment.id}`}

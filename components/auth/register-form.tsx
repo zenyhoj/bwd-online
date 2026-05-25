@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, startTransition } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -76,7 +76,9 @@ export function RegisterForm() {
       email: String(formData.get("email") ?? ""),
       fullName: String(formData.get("fullName") ?? "")
     };
-    formAction(formData);
+    startTransition(() => {
+      formAction(formData);
+    });
   }
 
   return (

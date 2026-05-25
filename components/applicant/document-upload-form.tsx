@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useRef, useState, startTransition } from "react";
 import { Camera, Upload, FileText, CheckCircle2, Image as ImageIcon, Loader2 } from "lucide-react";
 
 import { uploadDocumentAction } from "@/actions/documents";
@@ -70,7 +70,9 @@ export function DocumentUploadForm({ applicationId, allowedDocumentTypes }: Docu
       finalFormData.append("file", file);
     }
 
-    formAction(finalFormData);
+    startTransition(() => {
+      formAction(finalFormData);
+    });
   };
 
   return (
