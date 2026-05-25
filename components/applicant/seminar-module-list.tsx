@@ -135,16 +135,41 @@ export function SeminarModuleList({ items, progress, applicantId, completionCta 
   const isLocked = !isCompleted && items.slice(0, activeIndex).some(item => !completedIds.has(item.id));
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <div className="space-y-8">
       {/* Chevron Stepper */}
-      <div className="flex flex-wrap items-center justify-center gap-y-3 mb-10 px-2">
+      <div className="flex flex-nowrap items-end justify-start gap-y-6 mb-4 px-2 pb-14 pt-4 overflow-x-auto max-w-full snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {items.map((item, idx) => {
           const itemCompleted = completedIds.has(item.id);
           const current = idx === activeIndex;
           const locked = !itemCompleted && items.slice(0, idx).some(prev => !completedIds.has(prev.id));
 
+          const GRADIENTS = [
+            "from-rose-400 to-rose-500",
+            "from-amber-300 to-amber-500",
+            "from-emerald-400 to-emerald-500",
+            "from-blue-400 to-blue-600",
+            "from-purple-400 to-purple-500",
+            "from-orange-400 to-orange-500",
+            "from-cyan-400 to-cyan-500",
+            "from-pink-400 to-pink-500",
+            "from-lime-400 to-lime-500",
+          ];
+          const gradient = GRADIENTS[idx % GRADIENTS.length];
+
           return (
-            <div key={idx} className="group relative">
+            <div key={idx} className="group relative flex flex-col items-center shrink-0 snap-center">
+              {/* Checkmark above */}
+              <div className={cn(
+                "h-8 flex items-end justify-center transition-all duration-300",
+                itemCompleted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
+              )}>
+                {itemCompleted && (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600 drop-shadow-sm scale-90 mb-1">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                )}
+              </div>
+
               {/* Grey Enhanced Tooltip (Below) */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:translate-y-1 transition-all duration-300 pointer-events-none z-30 scale-95 group-hover:scale-100 mt-2">
                 <div className="relative bg-[#f1f3f5] text-[#495057] text-[10px] px-3 py-1.5 rounded-lg whitespace-nowrap shadow-[0_4px_12px_rgba(0,0,0,0.08)] font-light border border-[#dee2e6]">
@@ -159,26 +184,28 @@ export function SeminarModuleList({ items, progress, applicantId, completionCta 
                 disabled={locked && !itemCompleted}
                 className={cn(
                   "relative h-12 flex items-center justify-center transition-all duration-300 px-6 min-w-[80px]",
-                  // Chevron shape using clip-path
-                  "clip-chevron",
                   current
-                    ? "bg-primary text-primary-foreground z-20 scale-105 shadow-lg shadow-primary/20"
+                    ? `bg-gradient-to-b ${gradient} from-50% to-50% text-white z-20 scale-105 shadow-xl shadow-primary/20`
                     : itemCompleted
-                      ? "bg-emerald-500 text-white z-10 hover:bg-emerald-600"
-                      : "bg-muted text-muted-foreground hover:bg-muted-foreground/10"
+                      ? `bg-gradient-to-b ${gradient} from-50% to-50% text-white/90 z-10 hover:brightness-110`
+                      : "bg-gradient-to-b from-muted from-50% to-muted-foreground/15 to-50% text-muted-foreground hover:brightness-95"
                 )}
                 style={{
-                  clipPath: "polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%, 15px 50%)",
-                  marginLeft: idx === 0 ? "0" : "-15px"
+                  clipPath: idx === 0 
+                    ? "polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%)"
+                    : "polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%, 15px 50%)",
+                  marginLeft: idx === 0 ? "0" : "-7px",
+                  borderRadius: idx === 0 ? "8px 0 0 8px" : "0" // Slight rounding for the flat left edge
                 }}
               >
-                <div className="flex items-center gap-2 font-bold italic transition-transform duration-300 group-hover:scale-110">
-                  {itemCompleted ? (
-                    <CheckCircle2 className="h-4 w-4" />
-                  ) : locked ? (
-                    <Lock className="h-3.5 w-3.5" />
+                <div className="flex items-center justify-center font-bold italic transition-transform duration-300 group-hover:scale-110">
+                  {locked && !itemCompleted ? (
+                    <Lock className="h-3.5 w-3.5 opacity-60" />
+                  ) : current ? (
+                    <span className="text-sm drop-shadow-sm">{idx + 1}</span>
                   ) : (
-                    <span className="text-sm">{idx + 1}</span>
+                    // Empty space to maintain width if completed and active is wider
+                    <span className="text-sm opacity-0">{idx + 1}</span>
                   )}
                 </div>
               </button>

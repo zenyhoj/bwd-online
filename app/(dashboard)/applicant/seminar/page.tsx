@@ -96,7 +96,7 @@ export default async function ApplicantSeminarPage({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       {seminarState.allCompleted ? (
         <Card className="border-0 bg-[linear-gradient(135deg,rgba(47,160,183,0.14),rgba(255,179,26,0.18))]">
           <CardContent className="flex flex-col gap-2 p-6">
@@ -109,13 +109,15 @@ export default async function ApplicantSeminarPage({
         </Card>
       ) : null}
 
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold">Seminar room</h1>
-          <p className="text-sm text-muted-foreground">
-            Complete each seminar item in sequence before filling out your application information.
-          </p>
-        </div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:justify-between">
+        <Card className="flex-1">
+          <CardHeader>
+            <CardTitle className="text-3xl">Seminar room</CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Complete each seminar item in sequence before filling out your application information.
+            </p>
+          </CardHeader>
+        </Card>
         <Card className="min-w-[240px]">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Progress</CardTitle>
