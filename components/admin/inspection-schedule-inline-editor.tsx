@@ -64,11 +64,11 @@ export function InspectionScheduleInlineEditor({
           min={minSchedule || undefined}
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          className="min-w-[220px]"
+          className="min-w-[180px] h-8 text-[11px] px-2"
           required
         />
         {hasChanged ? (
-          <Button type="submit" size="sm" aria-label="Update schedule" title="Update schedule" loading={pending}>
+          <Button type="submit" size="icon" className="h-8 w-8 shrink-0" aria-label="Update schedule" title="Update schedule" loading={pending}>
             <Check className="h-4 w-4" />
           </Button>
         ) : null}

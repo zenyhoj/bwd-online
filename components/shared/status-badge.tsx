@@ -2,9 +2,10 @@ import { Badge } from "@/components/ui/badge";
 
 type StatusBadgeProps = {
   status: string;
+  className?: string;
 };
 
-export function StatusBadge({ status }: StatusBadgeProps) {
+export function StatusBadge({ status, className }: StatusBadgeProps) {
   const normalized = status.toLowerCase();
   const variant =
     normalized.includes("disapproved") || normalized.includes("rejected") || normalized.includes("overdue")
@@ -15,5 +16,5 @@ export function StatusBadge({ status }: StatusBadgeProps) {
         ? "secondary"
         : "warning";
 
-  return <Badge variant={variant}>{status.replaceAll("_", " ")}</Badge>;
+  return <Badge variant={variant} className={className}>{status.replaceAll("_", " ")}</Badge>;
 }

@@ -1,3 +1,4 @@
+import Form from "next/form";
 import Link from "next/link";
 import { AlertCircle, CalendarDays, CheckCircle2, ClipboardList, Filter, Search, SlidersHorizontal } from "lucide-react";
 
@@ -217,7 +218,7 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                 <div>
                   <p className="font-semibold">Queue filters</p>
                   <p className="text-sm text-muted-foreground">
-                    Narrow the list by person, status, inspector assignment, or scheduled date.
+                    Search for a specific applicant to quickly find their inspection record.
                   </p>
                 </div>
               </div>
@@ -234,81 +235,30 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
             </div>
 
             <div className="space-y-5 px-4 py-4">
-              <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px_180px_auto]">
-                <div className="relative">
-                  <label htmlFor="inspection-q" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Form action="/admin/inspections" className="flex w-full max-w-xl flex-wrap items-center gap-3">
+                <div className="relative flex-1">
+                  <label htmlFor="inspection-q" className="sr-only">
                     Search
                   </label>
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     id="inspection-q"
-                    type="text"
+                    type="search"
                     name="q"
                     defaultValue={q}
-                    placeholder="Search applicant or inspector"
+                    placeholder="Search applicant name..."
                     className="flex h-10 w-full rounded-md border border-input bg-background py-2 pl-9 pr-3 text-sm"
                   />
                 </div>
-                <div>
-                  <label htmlFor="inspection-status" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Status
-                  </label>
-                  <select
-                    id="inspection-status"
-                    name="status"
-                    defaultValue={statusFilter}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="all">All statuses</option>
-                    <option value="needs_update">Needs update</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="in_progress">In progress</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Disapproved</option>
-                    <option value="rescheduled">Rescheduled</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="inspection-inspector" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Inspector
-                  </label>
-                  <select
-                    id="inspection-inspector"
-                    name="inspector"
-                    defaultValue={inspectorFilter}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  >
-                    <option value="all">All inspectors</option>
-                    {inspectorOptions.map((inspectorName) => (
-                      <option key={inspectorName} value={inspectorName}>
-                        {inspectorName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="relative">
-                  <label htmlFor="inspection-date" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Scheduled date
-                  </label>
-                  <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    id="inspection-date"
-                    type="date"
-                    name="scheduledDate"
-                    defaultValue={scheduledDateFilter}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm"
-                  />
-                </div>
-                <div className="flex items-end gap-2">
-                  <Button type="submit" className="gap-2">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    Apply filters
-                  </Button>
+                <Button type="submit" className="whitespace-nowrap">
+                  Search
+                </Button>
+                {q ? (
                   <Button asChild variant="outline">
                     <Link href="/admin/inspections">Clear</Link>
                   </Button>
-                </div>
-              </form>
+                ) : null}
+              </Form>
 
               <div className="flex flex-wrap gap-2">
                 {quickFilters.map((filter) => (
@@ -350,15 +300,15 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                 {inspectionRows.length === 1 ? "1 record" : `${inspectionRows.length} records`}
               </div>
             </div>
-            <Table>
+            <Table className="text-[11px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Applicant</TableHead>
-                  <TableHead>Inspector</TableHead>
-                  <TableHead>Schedule</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Plumbing result</TableHead>
-                  <TableHead>Report</TableHead>
+                  <TableHead className="px-3">Applicant</TableHead>
+                  <TableHead className="px-3">Inspector</TableHead>
+                  <TableHead className="px-3">Schedule</TableHead>
+                  <TableHead className="px-3">Status</TableHead>
+                  <TableHead className="px-3">Plumbing result</TableHead>
+                  <TableHead className="px-3">Report</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -390,7 +340,7 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                         key={inspection.id}
                         className={inspection.id === selectedInspection?.id ? "border-l-4 border-l-primary bg-primary/5" : "hover:bg-muted/20"}
                       >
-                        <TableCell className="whitespace-nowrap">
+                        <TableCell className="px-3 py-3 font-medium whitespace-nowrap">
                           <Link
                             href={(
                               `/admin/inspections?${new URLSearchParams({
@@ -401,28 +351,34 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                                 selected: inspection.id
                               }).toString()}#inspection-editor`
                             ) as never}
-                            className="font-medium text-foreground hover:text-primary hover:underline"
+                            className="text-foreground hover:text-primary hover:underline"
                           >
                             {(inspection.applications as InspectionApplicationRelation)?.full_name ?? "Unknown"}
                           </Link>
                         </TableCell>
-                        <TableCell>{inspection.inspector_name ?? "Unassigned"}</TableCell>
-                        <TableCell>
+                        <TableCell className="px-3 py-3 whitespace-nowrap">{inspection.inspector_name ?? "Unassigned"}</TableCell>
+                        <TableCell className="px-3 py-3">
                           <InspectionScheduleInlineEditor
                             inspectionId={inspection.id}
                             scheduledAt={inspection.scheduled_at}
                           />
                         </TableCell>
-                        <TableCell>
-                          <StatusBadge status={inspection.status} />
+                        <TableCell className="px-3 py-3">
+                          <StatusBadge status={inspection.status} className="text-[11px]" />
                         </TableCell>
-                        <TableCell>
-                          <StatusBadge status={getPlumbingResult(inspection.plumbing_approved)} />
+                        <TableCell className="px-3 py-3">
+                          <StatusBadge status={getPlumbingResult(inspection.plumbing_approved)} className="text-[11px]" />
                         </TableCell>
-                        <TableCell>
-                          <Link href={`/admin/reports/${inspection.id}`} className="text-primary hover:underline">
-                            Open report
-                          </Link>
+                        <TableCell className="px-3 py-3 whitespace-nowrap">
+                          {inspection.status === "approved" || inspection.status === "rejected" ? (
+                            <Link href={`/admin/reports/${inspection.id}`} className="text-primary hover:underline font-bold text-[11px] uppercase tracking-wider">
+                              Open report
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground/40 font-bold text-[11px] uppercase tracking-wider cursor-not-allowed" title="Inspection must be approved or disapproved first">
+                              Pending
+                            </span>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
