@@ -622,7 +622,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       )}
 
                       {latestSelectedInspection?.id ? (
-                        latestSelectedPayment?.status === "paid" ? (
+                        latestSelectedInspection?.status === "approved" ? (
                           <Button variant="default" asChild className="font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
                             <Link href={`/admin/reports/${latestSelectedInspection.id}`} target="_blank">
                               Print Inspection

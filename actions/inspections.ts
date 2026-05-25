@@ -313,3 +313,38 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
     return { success: true, message: "Inspection report saved." };
   });
 }
+
+export async function searchReferenceAccountsAction(query: string) {
+  const { supabase, profile } = await getActionContext();
+
+  if (!query || query.trim().length < 2) {
+    return { success: true, data: [] };
+  }
+
+  const { data, error } = await supabase
+    .from("inspections")
+    .select(`
+      latitude,
+      longitude,
+      account_number,
+      applications!inner(full_name)
+    `)
+    .eq("organization_id", profile.organization_id)
+    .not("latitude", "is", null)
+    .not("longitude", "is", null)
+    .ilike("applications.full_name", `%${query.trim()}%`)
+    .limit(5);
+
+  if (error) {
+    return { success: false, message: error.message, data: [] };
+  }
+
+  const formattedData = data.map((item: any) => ({
+    name: item.applications?.full_name ?? "",
+    accountNumber: item.account_number ?? "",
+    latitude: item.latitude,
+    longitude: item.longitude
+  }));
+
+  return { success: true, data: formattedData };
+}
