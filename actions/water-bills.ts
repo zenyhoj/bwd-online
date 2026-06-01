@@ -37,6 +37,17 @@ export async function uploadWaterBillsAction(
       return { success: false, message: "Not authorized" };
     }
 
+    // Delete all existing water bills for this organization before uploading new ones
+    const { error: deleteError } = await supabase
+      .from("water_bills")
+      .delete()
+      .eq("organization_id", profile.organization_id);
+
+    if (deleteError) {
+      console.error("Failed to delete existing water bills:", deleteError);
+      return { success: false, message: "Failed to clear old water bills before upload." };
+    }
+
     let insertedCount = 0;
 
     for (const bill of bills) {
