@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { SeminarModuleList } from "@/components/applicant/seminar-module-list";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { getApplicantApplications, getApplicants, getApplicantSeminarState } from "@/lib/queries";
 
@@ -101,10 +103,21 @@ export default async function ApplicantSeminarPage({
         <Card className="border-0 bg-[linear-gradient(135deg,rgba(47,160,183,0.14),rgba(255,179,26,0.18))]">
           <CardContent className="flex flex-col gap-2 p-6">
             <p className="text-xs uppercase tracking-[0.24em] text-foreground/55">Next step unlocked</p>
-            <CardTitle className="text-2xl">Seminar completed</CardTitle>
-            <p className="max-w-2xl text-sm text-foreground/80">
-              {completionCta.description}
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="text-2xl">Seminar completed</CardTitle>
+                <p className="max-w-2xl text-sm text-foreground/80 mt-2">
+                  {completionCta.description}
+                </p>
+              </div>
+              <Link
+                href={`/certificate/${applicantId}`}
+                target="_blank"
+                className={buttonVariants({ variant: "outline" })}
+              >
+                View Certificate
+              </Link>
+            </div>
           </CardContent>
         </Card>
       ) : null}

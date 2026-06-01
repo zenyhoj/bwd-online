@@ -46,6 +46,7 @@
     "react-hook-form": "^7.56.4",
     "react-leaflet": "^5.0.0",
     "react-markdown": "^10.1.0",
+    "react-qr-code": "^2.0.21",
     "serwist": "^9.5.11",
     "tailwind-merge": "^3.2.0",
     "web-push": "^3.6.7",

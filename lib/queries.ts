@@ -74,6 +74,45 @@ export async function getApplicantSeminarState(applicantId: string) {
   };
 }
 
+export async function getPublicApplicantCertificate(applicantId: string) {
+  const supabase = createSupabaseAdminClient();
+  const { data: applicant, error: applicantError } = await supabase
+    .from("applicants")
+    .select("*, organizations(*)")
+    .eq("id", applicantId)
+    .maybeSingle();
+    
+  if (applicantError) throw applicantError;
+  if (!applicant) return null;
+  
+  const orgId = applicant.organization_id;
+  
+  const [{ data: seminarItems }, { data: progress }] = await Promise.all([
+    supabase
+      .from("seminar_items")
+      .select("*")
+      .eq("organization_id", orgId)
+      .eq("is_active", true)
+      .order("display_order", { ascending: true }),
+    supabase
+      .from("applicant_seminar_progress")
+      .select("*")
+      .eq("applicant_id", applicantId)
+  ]);
+  
+  const completedIds = new Set((progress || []).filter((item) => item.completed).map((item) => item.seminar_item_id));
+  const completedCount = (seminarItems || []).filter((item) => completedIds.has(item.id)).length;
+  const allCompleted = (seminarItems || []).length > 0 && completedCount === (seminarItems || []).length;
+    
+  return {
+    applicant,
+    organization: Array.isArray(applicant.organizations) ? applicant.organizations[0] : applicant.organizations,
+    seminarItems: seminarItems || [],
+    progress: progress || [],
+    allCompleted
+  };
+}
+
 export async function getApplicantApplications(applicantId: string) {
   const supabase = createSupabaseAdminClient();
 
