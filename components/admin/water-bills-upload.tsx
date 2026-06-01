@@ -40,19 +40,22 @@ export function WaterBillsUpload() {
       const hasHeader = rows[0] && (String(rows[0][0]).toLowerCase().includes("account") || isNaN(Number(rows[0][2])));
       const dataRows = hasHeader ? rows.slice(1) : rows;
 
-      // The user specified:
-      // (1) account number (index 0)
-      // (2) account name (index 1)
-      // (3) current water bill amount (index 2)
-      // (4) due date (index 3)
-      // Ignore the last column.
+      // The user specified exact columns: 
+      // 0: concessionaire_id
+      // 1: account_number
+      // 2: account_name
+      // 3: address
+      // 4: current_bill_amount
+      // 5: due_date
+      // 6: amount_after_duedate
       
       const data: WaterBillUploadData[] = dataRows.map((row) => {
         const getVal = (idx: number) => String(row[idx] || "").trim();
         
-        const rawAmount = parseFloat(getVal(2).replace(/[^0-9.-]+/g, ""));
+        const rawAmount = parseFloat(getVal(4).replace(/[^0-9.-]+/g, ""));
+        const rawAmountAfter = parseFloat(getVal(6).replace(/[^0-9.-]+/g, ""));
         
-        let parsedDate = getVal(3);
+        let parsedDate = getVal(5);
         if (!isNaN(Number(parsedDate)) && parsedDate !== "") {
           const dateObj = xlsx.SSF.parse_date_code(Number(parsedDate));
           if (dateObj) {
@@ -61,10 +64,12 @@ export function WaterBillsUpload() {
         }
 
         return {
-          account_number: getVal(0),
-          account_name: getVal(1),
+          account_number: getVal(1),
+          account_name: getVal(2),
+          address: getVal(3),
           amount: isNaN(rawAmount) ? 0 : rawAmount,
           due_date: parsedDate,
+          amount_after_duedate: isNaN(rawAmountAfter) ? undefined : rawAmountAfter,
         };
       }).filter(r => r.account_number !== "");
 
