@@ -63,7 +63,7 @@ export function LinkAccountCard() {
               id="accountNumber"
               value={accountNumber}
               onChange={(e) => setAccountNumber(e.target.value)}
-              placeholder="e.g. 12345-678"
+              placeholder="e.g. 0441-12-022"
             />
           </div>
           <div className="space-y-2">
