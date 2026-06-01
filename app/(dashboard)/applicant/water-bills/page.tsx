@@ -98,23 +98,12 @@ export default async function ApplicantWaterBillsPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {bills.map((bill) => (
             <Card key={bill.id} className="relative overflow-hidden border-border/80 shadow-sm transition-shadow hover:shadow-md">
-              <div
-                className={`absolute right-0 top-0 h-full w-1.5 ${bill.status === "paid" ? "bg-emerald-500" : "bg-primary"}`}
-              />
+              <div className="absolute right-0 top-0 h-full w-1.5 bg-primary" />
               <CardHeader className="space-y-3 pb-2">
                 <div className="flex items-center justify-between gap-3">
                   <CardDescription className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Account # {bill.account_number}
                   </CardDescription>
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                      bill.status === "paid"
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
-                    }`}
-                  >
-                    {bill.status === "paid" ? "Paid" : "Unpaid"}
-                  </span>
                 </div>
                 <CardDescription className="text-xs font-medium uppercase tracking-wider">Bill amount</CardDescription>
                 <CardTitle className="text-3xl font-bold leading-none">{formatCurrency(bill.amount)}</CardTitle>
