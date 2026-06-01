@@ -313,11 +313,17 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
       <AppShellBottomNav
         items={[
           ...(profile.role === "applicant"
-            ? [
-                { href: "/applicant", label: "Home", icon: Home },
-                { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
-                { href: "/applicant/documents", label: "Docs", icon: ShieldCheck },
-              ]
+            ? applicantNavMode === "preseminar"
+              ? [
+                  { href: "/applicant", label: "Home", icon: Home },
+                  { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
+                  { href: "/applicant/documents", label: "Docs", icon: ShieldCheck },
+                ]
+              : [
+                  { href: "/applicant", label: "Home", icon: Home },
+                  { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
+                  { href: "/applicant/applications/new", label: "Add App", icon: FileCheck2 },
+                ]
             : profile.role === "admin"
             ? [
                 { href: "/admin", label: "Home", icon: Home },
