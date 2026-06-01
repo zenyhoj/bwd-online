@@ -12,7 +12,7 @@ export const metadata = {
 
 export default async function ApplicantWaterBillsPage() {
   const profile = await getCurrentProfile();
-  
+
   if (profile.role !== "applicant") {
     redirect("/login");
   }
@@ -60,6 +60,13 @@ export default async function ApplicantWaterBillsPage() {
     .in("concessionaire_id", concessionaireIds)
     .order("due_date", { ascending: false });
 
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+      minimumFractionDigits: 2,
+    }).format(value);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
@@ -69,19 +76,20 @@ export default async function ApplicantWaterBillsPage() {
         </p>
       </div>
 
-      <Alert className="bg-blue-50/50 border-blue-500/20 text-blue-800 dark:bg-blue-950/20 dark:text-blue-300">
+      <Alert className="rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
         <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
         <AlertDescription>
-          <strong>Information Only:</strong> The water bill presented is only for information purposes. If the water bill is already paid/settled, it is already reflected on your permanent ledger at the BWD office.
+          <strong>For your reference:</strong> This page shows your latest water bill details. If you have already paid,
+          your payment is recorded in your official BWD ledger.
         </AlertDescription>
       </Alert>
 
-      {(!bills || bills.length === 0) ? (
+      {!bills || bills.length === 0 ? (
         <Card className="border-dashed bg-muted/10">
           <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <Droplets className="h-10 w-10 text-muted-foreground/30 mb-4" />
+            <Droplets className="mb-4 h-10 w-10 text-muted-foreground/30" />
             <h3 className="text-lg font-medium">No bills found</h3>
-            <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               We couldn't find any water bills attached to your account yet. New bills will appear here when they are generated.
             </p>
           </CardContent>
@@ -89,29 +97,41 @@ export default async function ApplicantWaterBillsPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {bills.map((bill) => (
-            <Card key={bill.id} className="relative overflow-hidden">
-              <div className={`absolute top-0 right-0 w-2 h-full ${
-                bill.status === "paid" ? "bg-emerald-500" : "bg-primary"
-              }`} />
-              <CardHeader className="pb-2">
-                <CardDescription className="text-xs font-medium uppercase tracking-wider">
-                  Account # {bill.account_number}
-                </CardDescription>
-                <CardTitle className="text-3xl font-bold font-mono">
-                  ₱{bill.amount.toFixed(2)}
-                </CardTitle>
+            <Card key={bill.id} className="relative overflow-hidden border-border/80 shadow-sm transition-shadow hover:shadow-md">
+              <div
+                className={`absolute right-0 top-0 h-full w-1.5 ${bill.status === "paid" ? "bg-emerald-500" : "bg-primary"}`}
+              />
+              <CardHeader className="space-y-3 pb-2">
+                <div className="flex items-center justify-between gap-3">
+                  <CardDescription className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                    Account # {bill.account_number}
+                  </CardDescription>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                      bill.status === "paid"
+                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                    }`}
+                  >
+                    {bill.status === "paid" ? "Paid" : "Unpaid"}
+                  </span>
+                </div>
+                <CardDescription className="text-xs font-medium uppercase tracking-wider">Bill amount</CardDescription>
+                <CardTitle className="text-3xl font-bold leading-none">{formatCurrency(bill.amount)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Due:</span>
-                  <span className="text-sm font-bold text-destructive">{formatDate(bill.due_date)}</span>
+                <div className="rounded-lg bg-muted/40 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Due date</span>
+                    <span className="text-sm font-semibold text-foreground">{formatDate(bill.due_date)}</span>
+                  </div>
                 </div>
 
                 {bill.amount_after_duedate !== null && (
-                  <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-muted-foreground">Amount after due date</span>
-                      <span className="text-sm font-bold text-destructive font-mono">₱{bill.amount_after_duedate.toFixed(2)}</span>
+                  <div className="rounded-lg border border-destructive/15 bg-destructive/5 p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-muted-foreground">Amount after due date</span>
+                      <span className="text-sm font-bold text-destructive">{formatCurrency(bill.amount_after_duedate)}</span>
                     </div>
                   </div>
                 )}
