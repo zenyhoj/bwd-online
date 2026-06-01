@@ -94,11 +94,8 @@ export default async function ApplicantWaterBillsPage() {
                 bill.status === "paid" ? "bg-emerald-500" : "bg-primary"
               }`} />
               <CardHeader className="pb-2">
-                <CardDescription className="flex justify-between items-center text-xs font-medium uppercase tracking-wider">
+                <CardDescription className="text-xs font-medium uppercase tracking-wider">
                   <span>Bill Date</span>
-                  <span className={bill.status === "paid" ? "text-emerald-600" : "text-primary"}>
-                    {bill.status}
-                  </span>
                 </CardDescription>
                 <CardTitle className="text-xl">
                   {formatDate(bill.created_at)}
