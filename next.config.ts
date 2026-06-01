@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
     ]
   },
   devIndicators: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb'
+    }
+  }
 };
 
 export default withSerwist(nextConfig);
