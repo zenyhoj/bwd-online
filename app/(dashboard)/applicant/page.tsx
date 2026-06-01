@@ -303,8 +303,13 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           description="Switch records."
         />
       ) : (
-        <div className="flex justify-end">
-          <Button asChild size="sm">
+        <div className="flex justify-end gap-2">
+          {!isConverted && (
+            <Button asChild variant="secondary" size="sm">
+              <a href="#link-account">Link account for water bill</a>
+            </Button>
+          )}
+          <Button asChild variant="secondary" size="sm">
             <Link href="/applicant/new">Add Applicant</Link>
           </Button>
         </div>
@@ -324,9 +329,11 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           </CardContent>
         </Card>
-      ) : !selectedApplication && seminarState.allCompleted ? (
-        <LinkAccountCard />
-      ) : null}
+      ) : (
+        <div id="link-account">
+          <LinkAccountCard />
+        </div>
+      )}
 
       <Card className="border-border/70 shadow-sm">
         <CardContent className="space-y-4 p-6">

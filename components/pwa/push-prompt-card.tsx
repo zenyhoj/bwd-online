@@ -50,7 +50,7 @@ export function PushPromptCard() {
   }
 
   return (
-    <Card className="bg-primary/5 border-primary/20 shadow-sm relative overflow-hidden">
+    <Card className="bg-primary/5 border-primary/20 shadow-sm relative overflow-hidden lg:hidden">
       <div className="absolute right-0 top-0 text-primary/10 translate-x-1/4 -translate-y-1/4 pointer-events-none">
         <Bell className="w-32 h-32" />
       </div>
