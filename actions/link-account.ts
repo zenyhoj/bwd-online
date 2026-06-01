@@ -35,12 +35,17 @@ export async function linkLegacyAccountAction(
     
     // Wait, account_name is in water_bills, not concessionaires.
     // Let's find the concessionaire by concessionaire_number
+    const cleanAccountNumber = accountNumber.trim();
+    const cleanAccountName = accountName.trim();
+
     const { data: concessionaire, error: findError } = await supabase
       .from("concessionaires")
       .select("id, applicant_id")
       .eq("organization_id", profile.organization_id)
-      .eq("concessionaire_number", accountNumber)
-      .single();
+      .eq("concessionaire_number", cleanAccountNumber)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (findError || !concessionaire) {
       return { success: false, message: "Account number not found. Please check your latest bill." };
@@ -61,7 +66,7 @@ export async function linkLegacyAccountAction(
 
     if (bills && bills.length > 0) {
       const billName = bills[0].account_name.trim().toLowerCase();
-      if (billName !== accountName.trim().toLowerCase()) {
+      if (billName !== cleanAccountName.toLowerCase()) {
         return { success: false, message: "Account name does not match our records." };
       }
     } else {
