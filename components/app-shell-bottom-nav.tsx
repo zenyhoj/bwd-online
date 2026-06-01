@@ -9,11 +9,13 @@ type NavItem = { href: string; label: string; icon: React.ComponentType<{ classN
 export function AppShellBottomNav({
   items,
   onMoreClick,
-  navBadges = {}
+  navBadges = {},
+  applicantNavMode
 }: {
   items: NavItem[];
   onMoreClick: () => void;
   navBadges?: Record<string, number>;
+  applicantNavMode?: "preseminar" | "hasApplication" | "newApplication" | "converted";
 }) {
   const pathname = usePathname() ?? "";
 

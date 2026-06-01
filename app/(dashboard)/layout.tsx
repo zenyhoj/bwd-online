@@ -8,19 +8,25 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const superAdmin = await isSuperAdmin();
   const supabase = createSupabaseAdminClient();
 
-  let applicantNavMode: "preseminar" | "hasApplication" | "newApplication" | undefined;
+  let applicantNavMode: "preseminar" | "hasApplication" | "newApplication" | "converted" | undefined;
   const navBadges: Record<string, number> = {};
 
   if (profile.role === "applicant") {
     const applicants = await getApplicants();
     const firstApplicantId = applicants[0]?.id ?? null;
 
-    const [seminarState, latestApplication] = await Promise.all([
+    const [seminarState, latestApplication, { data: concessionaires }] = await Promise.all([
       firstApplicantId ? getApplicantSeminarState(firstApplicantId) : Promise.resolve({ allCompleted: false, items: [], completedCount: 0 }),
-      getLatestApplicantApplication()
+      getLatestApplicantApplication(),
+      supabase
+        .from("concessionaires")
+        .select("id")
+        .in("applicant_id", applicants.map(a => a.id))
     ]);
 
-    if (!seminarState.allCompleted) {
+    if (concessionaires && concessionaires.length > 0) {
+      applicantNavMode = "converted";
+    } else if (!seminarState.allCompleted) {
       applicantNavMode = "preseminar";
       // Badge: how many seminar items remain
       const remaining = ("items" in seminarState ? seminarState.items.length : 0) - ("completedCount" in seminarState ? seminarState.completedCount : 0);

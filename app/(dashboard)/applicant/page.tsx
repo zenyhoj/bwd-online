@@ -4,13 +4,15 @@ import { ArrowRight } from "lucide-react";
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
-import { StatusBadge } from "@/components/shared/status-badge";
+import { LinkAccountCard } from "@/components/applicant/link-account-card";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { StatusBadge } from "@/components/shared/status-badge";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { formatDate } from "@/lib/format";
 import { getAccreditedPlumbers, getApplicants, getApplicantApplications, getApplicantSeminarState } from "@/lib/queries";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 function getScheduledInspectionDate(application: {
   inspections?: { scheduled_at?: string | null; inspected_at?: string | null; status?: string | null }[];
@@ -239,6 +241,13 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const seminarState = selectedApplicantId ? await getApplicantSeminarState(selectedApplicantId) : { items: [], progress: [], completedCount: 0, allCompleted: false };
   const plumbers = await getAccreditedPlumbers();
 
+  const supabase = createSupabaseAdminClient();
+  const { data: concessionaires } = await supabase
+    .from("concessionaires")
+    .select("id")
+    .in("applicant_id", applicants.map(a => a.id));
+  const isConverted = concessionaires && concessionaires.length > 0;
+
   const selectedApplicationId = getStringParam(resolvedSearchParams, "application") ?? applications[0]?.id ?? null;
   const selectedApplication = applications.find((application) => application.id === selectedApplicationId) ?? applications[0];
   
@@ -300,6 +309,24 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           </Button>
         </div>
       )}
+
+      {isConverted ? (
+        <Card className="border-emerald-500/30 bg-emerald-50/50 shadow-sm">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-bold text-emerald-800">You have an active water connection!</h2>
+            <p className="mt-2 text-sm text-emerald-700/80">
+              Your account is successfully linked. You can now view your water bills from the navigation menu.
+            </p>
+            <div className="mt-4">
+              <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50">
+                <Link href="/applicant/water-bills">View Water Bills</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : !selectedApplication && seminarState.allCompleted ? (
+        <LinkAccountCard />
+      ) : null}
 
       <Card className="border-border/70 shadow-sm">
         <CardContent className="space-y-4 p-6">

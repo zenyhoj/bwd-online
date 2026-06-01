@@ -17,7 +17,8 @@ import {
   Users,
   X,
   Download,
-  HelpCircle
+  HelpCircle,
+  Droplets
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -34,7 +35,7 @@ import type { AppRole, Profile } from "@/types";
 
 type AppShellProps = {
   profile: Profile;
-  applicantNavMode?: "preseminar" | "hasApplication" | "newApplication";
+  applicantNavMode?: "preseminar" | "hasApplication" | "newApplication" | "converted";
   navBadges?: Record<string, number>;
   isSuperAdmin?: boolean;
   children: React.ReactNode;
@@ -60,6 +61,7 @@ const navByRole: Record<AppRole, NavItem[]> = {
     { href: "/admin/access", label: "Access", icon: UserCog },
     { href: "/admin/inspections", label: "Inspections", icon: SearchCheck },
     { href: "/admin/payments", label: "Payments", icon: CreditCard },
+    { href: "/admin/water-bills", label: "Water Bills", icon: Droplets },
     { href: "/admin/concessionaires", label: "Concessionaires", icon: UserRoundCheck },
     { href: "/admin/export", label: "Export Docs (ZIP)", icon: Download },
     { href: "/manual", label: "Admin Manual", icon: HelpCircle }
@@ -85,7 +87,16 @@ const roleCopy: Record<AppRole, { label: string; blurb: string }> = {
   }
 };
 
-function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplication"): NavItem[] {
+function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplication" | "converted"): NavItem[] {
+  if (mode === "converted") {
+    return [
+      { href: "/applicant", label: "Dashboard", icon: Home },
+      { href: "/applicant/water-bills", label: "Water Bills", icon: Droplets },
+      { href: "/applicant/payments", label: "Payments", icon: CreditCard },
+      { href: "/manual", label: "User Manual", icon: HelpCircle }
+    ];
+  }
+
   if (mode === "preseminar") {
     return [
       { href: "/applicant", label: "Dashboard", icon: Home },
@@ -313,7 +324,13 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
       <AppShellBottomNav
         items={[
           ...(profile.role === "applicant"
-            ? applicantNavMode === "preseminar"
+            ? applicantNavMode === "converted"
+              ? [
+                  { href: "/applicant", label: "Home", icon: Home },
+                  { href: "/applicant/water-bills", label: "Bills", icon: Droplets },
+                  { href: "/applicant/payments", label: "Pay", icon: CreditCard },
+                ]
+              : applicantNavMode === "preseminar"
               ? [
                   { href: "/applicant", label: "Home", icon: Home },
                   { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
