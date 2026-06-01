@@ -39,7 +39,7 @@ export function LinkAccountCard() {
   };
 
   return (
-    <Card className="border-primary/20 shadow-sm overflow-hidden relative">
+    <Card className="border-primary/20 shadow-sm overflow-hidden relative max-w-2xl">
       <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
         <LinkIcon className="h-24 w-24" />
       </div>
