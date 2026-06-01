@@ -29,26 +29,30 @@ export function WaterBillsUpload() {
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
       
-      // Convert to JSON
-      const json: any[] = xlsx.utils.sheet_to_json(worksheet, { defval: "" });
+      // Convert to JSON array of arrays to rely strictly on column indices
+      const rows: any[][] = xlsx.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
 
-      if (!json || json.length === 0) {
+      if (!rows || rows.length === 0) {
         throw new Error("The Excel file is empty.");
       }
 
-      // Map dynamic column names to our expected types based on order or fuzzy matching.
-      // Assuming exact order requested: concessionaire_id, account_number, account_name, address, current_bill_amount, due_date, amount_after_duedate
-      const data: WaterBillUploadData[] = json.map((row, index) => {
-        const keys = Object.keys(row);
+      // Check if the first row is a header
+      const hasHeader = rows[0] && (String(rows[0][0]).toLowerCase().includes("account") || isNaN(Number(rows[0][2])));
+      const dataRows = hasHeader ? rows.slice(1) : rows;
+
+      // The user specified:
+      // (1) account number (index 0)
+      // (2) account name (index 1)
+      // (3) current water bill amount (index 2)
+      // (4) due date (index 3)
+      // Ignore the last column.
+      
+      const data: WaterBillUploadData[] = dataRows.map((row) => {
+        const getVal = (idx: number) => String(row[idx] || "").trim();
         
-        // Basic fallback to column index if names don't match, or exact field mapping if user provides headers.
-        const getVal = (idx: number) => String(row[keys[idx]] || "").trim();
+        const rawAmount = parseFloat(getVal(2).replace(/[^0-9.-]+/g, ""));
         
-        const rawAmount = parseFloat(getVal(4).replace(/[^0-9.-]+/g, ""));
-        const rawAmountAfter = parseFloat(getVal(6).replace(/[^0-9.-]+/g, ""));
-        
-        let parsedDate = getVal(5);
-        // Quick fix for excel serial dates if it comes as number
+        let parsedDate = getVal(3);
         if (!isNaN(Number(parsedDate)) && parsedDate !== "") {
           const dateObj = xlsx.SSF.parse_date_code(Number(parsedDate));
           if (dateObj) {
@@ -57,13 +61,10 @@ export function WaterBillsUpload() {
         }
 
         return {
-          concessionaire_id: getVal(0),
-          account_number: getVal(1),
-          account_name: getVal(2),
-          address: getVal(3),
+          account_number: getVal(0),
+          account_name: getVal(1),
           amount: isNaN(rawAmount) ? 0 : rawAmount,
           due_date: parsedDate,
-          amount_after_duedate: isNaN(rawAmountAfter) ? undefined : rawAmountAfter,
         };
       }).filter(r => r.account_number !== "");
 
