@@ -5,6 +5,7 @@ import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
@@ -277,6 +278,8 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
 
   return (
     <div className="space-y-6">
+      <PushPromptCard />
+
       <div className="space-y-2">
         <h2 className="text-2xl font-semibold">Applicant records</h2>
         <p className="text-sm text-muted-foreground">Choose the applicant record you want to view.</p>

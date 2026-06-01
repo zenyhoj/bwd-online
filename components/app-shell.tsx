@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DocumentPurgeButton } from "@/components/admin/document-purge-button";
 import { PushRegistration } from "@/components/push-registration";
+import { InstallPWAButton } from "@/components/pwa/install-button";
+import { AppShellBottomNav } from "@/components/app-shell-bottom-nav";
 import type { AppRole, Profile } from "@/types";
 
 type AppShellProps = {
@@ -135,6 +137,9 @@ function NavContent({
             <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary">
               {roleCopy[profile.role].label}
             </span>
+          </div>
+          <div className="pt-2">
+            <InstallPWAButton variant="secondary" className="w-full text-xs font-bold" />
           </div>
         </div>
         <p className="mt-4 text-xs leading-5 text-muted-foreground font-medium">
@@ -251,14 +256,9 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">BWD Online</p>
           <p className="text-sm font-bold leading-none">{profile.full_name}</p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label="Open navigation menu"
-          onClick={() => setMobileOpen(true)}
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <InstallPWAButton variant="secondary" />
+        </div>
       </div>
 
       {/* Mobile slide-in drawer */}
@@ -307,8 +307,32 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
           />
         </Card>
 
-        <main className="min-w-0">{children}</main>
+        <main className="min-w-0 pb-20 lg:pb-0">{children}</main>
       </div>
+
+      <AppShellBottomNav
+        items={[
+          ...(profile.role === "applicant"
+            ? [
+                { href: "/applicant", label: "Home", icon: Home },
+                { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
+                { href: "/applicant/documents", label: "Docs", icon: ShieldCheck },
+              ]
+            : profile.role === "admin"
+            ? [
+                { href: "/admin", label: "Home", icon: Home },
+                { href: "/admin/inspections", label: "Inspect", icon: SearchCheck },
+                { href: "/admin/payments", label: "Pay", icon: CreditCard },
+              ]
+            : [
+                { href: "/inspector", label: "Home", icon: Users },
+                { href: "/manual", label: "Help", icon: HelpCircle },
+              ]),
+          { href: "#menu", label: "Menu", icon: Menu, isMore: true }
+        ]}
+        onMoreClick={() => setMobileOpen(true)}
+        navBadges={navBadges}
+      />
     </div>
   );
 }

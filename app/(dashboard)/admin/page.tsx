@@ -12,6 +12,7 @@ import { QueueFilters } from "@/components/admin/queue-filters";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -361,6 +362,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
   return (
     <div className="space-y-6">
+      <PushPromptCard />
+
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-3xl font-semibold">Admin queue</h1>
