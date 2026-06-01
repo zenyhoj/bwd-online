@@ -10,17 +10,22 @@ export function AppShellBottomNav({
   items,
   onMoreClick,
   navBadges = {},
-  applicantNavMode
+  applicantNavMode,
+  hidden = false
 }: {
   items: NavItem[];
   onMoreClick: () => void;
   navBadges?: Record<string, number>;
   applicantNavMode?: "preseminar" | "hasApplication" | "newApplication" | "converted";
+  hidden?: boolean;
 }) {
   const pathname = usePathname() ?? "";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border/60 bg-background/95 pb-safe backdrop-blur-md lg:hidden print:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className={cn(
+      "fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border/60 bg-background/95 pb-safe backdrop-blur-md transition-opacity lg:hidden print:hidden",
+      hidden && "pointer-events-none opacity-0"
+    )} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       {items.map((item) => {
         if (item.isMore) {
           return (

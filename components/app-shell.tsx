@@ -21,7 +21,7 @@ import {
   Droplets
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 
 import { signOutAction } from "@/actions/auth";
@@ -129,7 +129,9 @@ function NavContent({
   navBadges,
   profile,
   isSuperAdmin,
-  onClose
+  onClose,
+  onSignOut,
+  isSigningOut = false
 }: {
   navItems: NavItem[];
   pathname: string;
@@ -137,6 +139,8 @@ function NavContent({
   profile: Profile;
   isSuperAdmin?: boolean;
   onClose?: () => void;
+  onSignOut?: () => void;
+  isSigningOut?: boolean;
 }) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -236,12 +240,13 @@ function NavContent({
         </div>
         <button
           type="button"
-          onClick={() => { signOutAction() }}
-          className="inline-flex h-11 w-full items-center justify-center rounded-full border border-border bg-background px-6 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
+          onClick={onSignOut}
+          disabled={isSigningOut}
+          className="inline-flex h-11 w-full items-center justify-center rounded-full border border-border bg-background px-6 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className="flex h-full items-center justify-center gap-2 leading-none">
             <LogOut className="h-4 w-4 shrink-0" />
-            <span className="block leading-none">Sign out</span>
+            <span className="block leading-none">{isSigningOut ? "Signing out..." : "Sign out"}</span>
           </span>
         </button>
       </div>
@@ -252,6 +257,14 @@ function NavContent({
 export function AppShell({ profile, applicantNavMode = "newApplication", navBadges = {}, isSuperAdmin = false, children }: AppShellProps) {
   const pathname = usePathname() ?? "";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isSigningOut, startSignOutTransition] = useTransition();
+
+  const handleSignOut = () => {
+    setMobileOpen(false);
+    startSignOutTransition(async () => {
+      await signOutAction();
+    });
+  };
 
   const navItems =
     profile.role === "applicant"
@@ -273,7 +286,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
 
       {/* Mobile slide-in drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden print:hidden">
+        <div className="fixed inset-0 z-[60] lg:hidden print:hidden">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -299,6 +312,8 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
               profile={profile}
               isSuperAdmin={isSuperAdmin}
               onClose={() => setMobileOpen(false)}
+              onSignOut={handleSignOut}
+              isSigningOut={isSigningOut}
             />
           </div>
         </div>
@@ -314,6 +329,8 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
             navBadges={navBadges}
             profile={profile}
             isSuperAdmin={isSuperAdmin}
+            onSignOut={handleSignOut}
+            isSigningOut={isSigningOut}
           />
         </Card>
 
@@ -354,6 +371,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
         ]}
         onMoreClick={() => setMobileOpen(true)}
         navBadges={navBadges}
+        hidden={mobileOpen}
       />
     </div>
   );
