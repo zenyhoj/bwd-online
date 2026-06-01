@@ -24,7 +24,8 @@ import {
   getAdminApplicationDetail,
   getAdminApplicationsQueue,
   getAdminDashboardStats,
-  getOrganizationInspectors
+  getOrganizationInspectors,
+  getApplicantSeminarState
 } from "@/lib/queries";
 import type { Document, Payment } from "@/types";
 
@@ -237,6 +238,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
   const selectedId = getStringParam(resolvedSearchParams, "selected") ?? String(applications.data[0]?.id ?? "");
   const selectedApplication = selectedId ? await getAdminApplicationDetail(selectedId) : null;
+  const seminarState = selectedApplication ? await getApplicantSeminarState(String(selectedApplication.applicant_id)) : null;
   const hasActiveFilters = Boolean(q) || workflow !== "all";
   const noQueueResults = applications.data.length === 0;
   const hasMatchesInOtherStages = Boolean(searchMatchesAcrossAllStages && searchMatchesAcrossAllStages.count > 0);
@@ -609,6 +611,18 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                   <div className="flex flex-col items-end gap-2">
                     <StatusBadge status={getEffectiveApplicationStatus(selectedApplication as Record<string, unknown>)} />
                     <div className="flex items-center gap-3">
+                      {seminarState?.allCompleted ? (
+                        <Button variant="outline" asChild className="font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
+                          <Link href={`/certificate/${selectedApplication.applicant_id}`} target="_blank">
+                            View Certificate
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" disabled className="font-medium shadow-sm">
+                          View Certificate
+                        </Button>
+                      )}
+
                       {latestSelectedPayment?.status === "paid" ? (
                         <Button variant="default" asChild className="font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
                           <Link href={`/admin/reports/waco/${selectedApplication.id}`} target="_blank">
