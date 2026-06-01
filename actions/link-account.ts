@@ -22,7 +22,7 @@ export async function linkLegacyAccountAction(
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id, organization_id, role")
+      .select("id, organization_id, role, full_name")
       .eq("id", user.id)
       .single();
 
@@ -89,17 +89,19 @@ export async function linkLegacyAccountAction(
       .maybeSingle();
 
     if (!applicant) {
-      // Create applicant record
-      const { data: newApp, error: appError } = await supabase
+      // Create applicant record - use adminClient to bypass RLS
+      const { data: newApp, error: appError } = await adminClient
         .from("applicants")
         .insert({
           profile_id: profile.id,
           organization_id: profile.organization_id,
+          full_name: profile.full_name || cleanAccountName,
         })
         .select("id")
         .single();
         
       if (appError || !newApp) {
+        console.error("Applicant insert error:", appError);
         throw new Error("Failed to create applicant record for linking.");
       }
       applicant = newApp;
