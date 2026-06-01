@@ -234,17 +234,16 @@ function NavContent({
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 mb-2 px-1">Settings</p>
           <PushRegistration />
         </div>
-        <form action={signOutAction}>
-          <button
-            type="submit"
-            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-border bg-background px-6 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground active:scale-[0.98]"
-          >
-            <span className="flex h-full items-center justify-center gap-2 leading-none">
-              <LogOut className="h-4 w-4 shrink-0" />
-              <span className="block leading-none">Sign out</span>
-            </span>
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={() => { signOutAction() }}
+          className="inline-flex h-11 w-full items-center justify-center rounded-full border border-border bg-background px-6 py-2 text-sm font-bold text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
+        >
+          <span className="flex h-full items-center justify-center gap-2 leading-none">
+            <LogOut className="h-4 w-4 shrink-0" />
+            <span className="block leading-none">Sign out</span>
+          </span>
+        </button>
       </div>
     </div>
   );
