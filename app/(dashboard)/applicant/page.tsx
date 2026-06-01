@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
+import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -261,9 +262,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
       : null;
   const selectedApplicantName = selectedApplicant?.full_name ?? "No applicant selected";
 
-  const historyView = getStringParam(resolvedSearchParams, "history") === "all" ? "all" : "selected";
-  const historyApplications = historyView === "all" ? applications : selectedApplication ? [selectedApplication] : [];
-
   const primaryAction = getPrimaryAction({
     allCompleted: seminarState.allCompleted,
     hasApplication: Boolean(selectedApplication),
@@ -277,21 +275,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   });
   const showPrimaryActionButton = Boolean(primaryAction) && !(selectedApplication && !latestPayment && !inhouseCompleted);
 
-  const selectedHistoryHref = (() => {
-    const query = new URLSearchParams();
-    if (selectedApplicant?.id) query.set("applicant", selectedApplicant.id);
-    if (selectedApplication?.id) query.set("application", selectedApplication.id);
-    return `/applicant${query.toString() ? `?${query.toString()}` : ""}`;
-  })();
-
-  const allHistoryHref = (() => {
-    const query = new URLSearchParams();
-    if (selectedApplicant?.id) query.set("applicant", selectedApplicant.id);
-    if (selectedApplication?.id) query.set("application", selectedApplication.id);
-    query.set("history", "all");
-    return `/applicant?${query.toString()}`;
-  })();
-
   return (
     <div className="space-y-6">
       <div className="space-y-2">
@@ -304,7 +287,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           applicants={applicants}
           selectedApplicantId={selectedApplicant?.id}
           basePath="/applicant"
-          queryParams={{ history: historyView === "all" ? "all" : undefined }}
           title="Records"
           description="Switch records."
         />
@@ -465,31 +447,31 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           ) : null}
 
-          <div className="grid grid-cols-4" style={{ gap: "clamp(8px, 1.5vw, 12px)" }}>
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-2 transition-colors hover:bg-muted/10 sm:p-3">
-              <div className="flex items-center justify-between gap-1">
-                <p className="whitespace-nowrap font-bold uppercase tracking-[0.14em] text-muted-foreground" style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Inspection</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: "clamp(8px, 1.5vw, 12px)" }}>
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Inspection</p>
                 {selectedApplication?.inspections?.[0] && (
-                  <div className="scale-[0.65] origin-right sm:scale-75">
+                  <div className="mt-0.5 sm:mt-0">
                     <StatusBadge status={selectedApplication.inspections[0].status ?? "pending"} />
                   </div>
                 )}
               </div>
-              <p className="mt-1 font-medium tabular-nums leading-tight text-foreground/80" style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
+              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
                 {latestInspectionSchedule ? formatDate(latestInspectionSchedule) : "Not scheduled"}
               </p>
             </div>
             
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-2 transition-colors hover:bg-muted/10 sm:p-3">
-              <div className="flex items-center justify-between gap-1">
-                <p className="whitespace-nowrap font-bold uppercase tracking-[0.14em] text-muted-foreground" style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Payment</p>
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Payment</p>
                 {latestPayment && (
-                  <div className="scale-[0.65] origin-right sm:scale-75">
+                  <div className="mt-0.5 sm:mt-0">
                     <StatusBadge status={latestPayment.status ?? "scheduled"} />
                   </div>
                 )}
               </div>
-              <p className="mt-1 font-medium tabular-nums leading-tight text-foreground/80" style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
+              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
                 {latestPayment ? (
                   latestPayment.status === "paid" 
                     ? formatDate(latestPayment.paid_at ?? latestPayment.office_payment_at ?? null) 
@@ -498,50 +480,50 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </p>
             </div>
 
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-2 transition-colors hover:bg-muted/10 sm:p-3">
-              <div className="flex items-center justify-between gap-1">
-                <p className="whitespace-nowrap font-bold uppercase tracking-[0.14em] text-muted-foreground" style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Plumbing</p>
+            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Plumbing</p>
                 {selectedApplication?.inhouse_installation_completed && (
-                  <div className="scale-[0.65] origin-right sm:scale-75">
+                  <div className="mt-0.5 sm:mt-0">
                     <StatusBadge status="completed" />
                   </div>
                 )}
               </div>
-              <p className="mt-1 font-medium tabular-nums leading-tight text-foreground/80" style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
+              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
                 {selectedApplication?.inhouse_installation_completed_at
                   ? formatDate(selectedApplication.inhouse_installation_completed_at)
                   : "Pending"}
               </p>
             </div>
 
-            <div className={`rounded-xl border p-2 transition-colors sm:p-3 ${
+            <div className={`rounded-xl border p-3 transition-colors ${
               selectedApplication?.water_meter_installed_at
                 ? "border-emerald-500/30 bg-emerald-50/30"
                 : selectedApplication?.water_meter_installation_scheduled_at
                   ? "border-primary/30 bg-primary/5"
                   : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <div className="flex items-center justify-between gap-1">
-                <p className={`whitespace-nowrap uppercase tracking-[0.14em] font-bold ${
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className={`uppercase tracking-[0.14em] font-bold text-[10px] xl:text-xs ${
                   selectedApplication?.water_meter_installed_at 
                     ? "text-emerald-600" 
                     : selectedApplication?.water_meter_installation_scheduled_at 
                       ? "text-primary" 
                       : "text-muted-foreground"
-                }`} style={{ fontSize: "clamp(8px, 1.2vw, 10px)" }}>Water Meter</p>
+                }`}>Water Meter</p>
                 {selectedApplication?.water_meter_installed_at && (
-                  <div className="scale-[0.65] origin-right sm:scale-75">
+                  <div className="mt-0.5 sm:mt-0">
                     <StatusBadge status="completed" />
                   </div>
                 )}
               </div>
-              <p className={`mt-1 font-medium tabular-nums leading-tight ${
+              <p className={`mt-2 font-medium tabular-nums leading-tight text-xs xl:text-sm ${
                 selectedApplication?.water_meter_installed_at 
                   ? "text-emerald-600" 
                   : selectedApplication?.water_meter_installation_scheduled_at 
                     ? "text-primary" 
                     : "text-foreground/80"
-              }`} style={{ fontSize: "clamp(11px, 1.4vw, 14px)" }}>
+              }`}>
                 {selectedApplication?.water_meter_installed_at
                   ? formatDate(selectedApplication.water_meter_installed_at)
                   : selectedApplication?.water_meter_installation_scheduled_at
@@ -582,79 +564,15 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
       </Card>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <CardTitle>Application history</CardTitle>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {historyView === "all"
-                  ? "Most recent activity across all applicant records."
-                  : "Most recent activity for the selected applicant record."}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button asChild variant={historyView === "selected" ? "secondary" : "outline"} size="sm">
-                <Link href={selectedHistoryHref}>Selected only</Link>
-              </Button>
-              <Button asChild variant={historyView === "all" ? "secondary" : "outline"} size="sm">
-                <Link href={allHistoryHref}>Show all</Link>
-              </Button>
-              <span className="rounded-full border border-border/80 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-                {historyApplications.length} showing
-              </span>
-              <span className="rounded-full border border-border/80 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
-                {applications.filter((application) => getLatestPayment(application)).length} with payment
-              </span>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {historyApplications.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No applicant information has been submitted yet. Finish the seminar and complete your form to appear here.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {historyApplications.map((application) => {
-                const latestApplicationPayment = getLatestPayment(application);
-                const applicationAccount = getAssignedAccount(application);
-                const effectiveApplicationWorkflowStatus = getEffectiveWorkflowStatus(application);
-
-                return (
-                  <div key={application.id} className="rounded-lg border border-border/80 p-4">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="font-semibold">{application.full_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatServiceType(application.service_type)} - Submitted {formatDate(application.submitted_at)}
-                        </p>
-                      </div>
-                      <StatusBadge status={effectiveApplicationWorkflowStatus} />
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-baseline gap-y-1" style={{ fontSize: "clamp(10px, 1.2vw, 12px)", columnGap: "clamp(8px, 1.5vw, 16px)" }}>
-                      <p className="whitespace-nowrap">
-                        <span className="text-muted-foreground">Account no.:</span>{" "}
-                        {applicationAccount.accountNumber ? (
-                          <span className="font-mono font-semibold text-emerald-700">
-                            {applicationAccount.accountNumber}
-                          </span>
-                        ) : (
-                          "Not assigned"
-                        )}
-                      </p>
-                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Inspection:</span>{" "}<span className="font-medium tabular-nums">{formatDate(getScheduledInspectionDate(application))}</span></p>
-                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Payment:</span>{" "}<span className="font-medium tabular-nums">{latestApplicationPayment ? formatPaymentType(latestApplicationPayment.payment_type) : "Not scheduled"}</span></p>
-                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Plumbing:</span>{" "}<span className="font-medium tabular-nums">{application.inhouse_installation_completed_at ? formatDate(application.inhouse_installation_completed_at) : "Pending"}</span></p>
-                      <p className="whitespace-nowrap"><span className="text-muted-foreground">Water Meter:</span>{" "}<span className="font-medium tabular-nums">{application.water_meter_installation_scheduled_at ? formatDate(application.water_meter_installation_scheduled_at) : "Not scheduled"}</span></p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {applications.length > 1 ? (
+        <ApplicationSwitcher
+          applications={applications}
+          selectedApplicationId={selectedApplication?.id}
+          basePath="/applicant"
+          title="Other applications"
+          description="You have multiple applications. Choose which one to view."
+        />
+      ) : null}
 
     </div>
   );
