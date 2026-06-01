@@ -66,10 +66,10 @@ export function WaterBillsUpload() {
         return {
           account_number: getVal(1),
           account_name: getVal(2),
-          address: getVal(3),
+          address: getVal(3) || null,
           amount: isNaN(rawAmount) ? 0 : rawAmount,
           due_date: parsedDate,
-          amount_after_duedate: isNaN(rawAmountAfter) ? undefined : rawAmountAfter,
+          amount_after_duedate: isNaN(rawAmountAfter) ? null : rawAmountAfter,
         };
       }).filter(r => r.account_number !== "");
 

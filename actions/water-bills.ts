@@ -6,9 +6,9 @@ import { type ActionState } from "@/types";
 export type WaterBillUploadData = {
   account_number: string;
   account_name: string;
-  address?: string;
+  address?: string | null;
   amount: number;
-  amount_after_duedate?: number;
+  amount_after_duedate?: number | null;
   due_date: string; // ISO date string
 };
 
