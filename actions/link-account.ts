@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { adminClient } from "@/lib/supabase/admin";
 import { type ActionState } from "@/types";
 
 export async function linkLegacyAccountAction(
@@ -38,7 +39,8 @@ export async function linkLegacyAccountAction(
     const cleanAccountNumber = accountNumber.trim();
     const cleanAccountName = accountName.trim();
 
-    const { data: concessionaire, error: findError } = await supabase
+    // USE adminClient to bypass RLS since applicants might not have read access to unlinked concessionaires
+    const { data: concessionaire, error: findError } = await adminClient
       .from("concessionaires")
       .select("id, applicant_id")
       .eq("organization_id", profile.organization_id)
@@ -58,7 +60,8 @@ export async function linkLegacyAccountAction(
     }
 
     // Verify account name against water bills
-    const { data: bills } = await supabase
+    // USE adminClient here as well
+    const { data: bills } = await adminClient
       .from("water_bills")
       .select("account_name")
       .eq("concessionaire_id", concessionaire.id)
@@ -103,7 +106,8 @@ export async function linkLegacyAccountAction(
     }
 
     // Update concessionaire with this applicant_id
-    const { error: updateError } = await supabase
+    // USE adminClient to bypass RLS
+    const { error: updateError } = await adminClient
       .from("concessionaires")
       .update({ applicant_id: applicant.id })
       .eq("id", concessionaire.id);
