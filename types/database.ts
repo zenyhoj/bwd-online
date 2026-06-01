@@ -814,42 +814,6 @@ export type Database = {
             foreignKeyName: "payments_scheduled_by_fkey";
             columns: ["scheduled_by"];
             isOneToOne: false;
-          material_list?: string | null;
-          latitude?: number | null;
-          longitude?: number | null;
-          plumber_name?: string | null;
-          reference_account_number?: string | null;
-          reference_account_name?: string | null;
-          account_number?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "inspections_application_id_fkey";
-            columns: ["application_id"];
-            isOneToOne: false;
-            referencedRelation: "applications";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "inspections_registry_inspector_id_fkey";
-            columns: ["registry_inspector_id"];
-            isOneToOne: false;
-            referencedRelation: "inspectors";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "inspections_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "inspections_scheduled_by_fkey";
-            columns: ["scheduled_by"];
-            isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
           }
@@ -872,8 +836,8 @@ export type Database = {
         Insert: {
           id?: string;
           organization_id: string;
-          application_id?: string | null;
-          applicant_id?: string | null;
+          application_id: string | null;
+          applicant_id: string | null;
           concessionaire_number: string;
           connection_date: string;
           meter_number?: string | null;
@@ -885,8 +849,8 @@ export type Database = {
         Update: {
           id?: string;
           organization_id?: string;
-          application_id?: string | null;
-          applicant_id?: string | null;
+          application_id?: string;
+          applicant_id?: string;
           concessionaire_number?: string;
           connection_date?: string;
           meter_number?: string | null;
@@ -926,6 +890,8 @@ export type Database = {
           }
         ];
       };
+    };
+    
       water_bills: {
         Row: {
           id: string;
@@ -971,22 +937,21 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "water_bills_organization_id_fkey";
-            columns: ["organization_id"];
-            isOneToOne: false;
-            referencedRelation: "organizations";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "water_bills_concessionaire_id_fkey";
             columns: ["concessionaire_id"];
             isOneToOne: false;
             referencedRelation: "concessionaires";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "water_bills_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
           }
         ];
       };
-    };
     Views: Record<string, never>;
     Functions: Record<string, never>;
     Enums: {
