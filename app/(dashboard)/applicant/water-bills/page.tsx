@@ -95,36 +95,26 @@ export default async function ApplicantWaterBillsPage() {
               }`} />
               <CardHeader className="pb-2">
                 <CardDescription className="text-xs font-medium uppercase tracking-wider">
-                  <span>Bill Date</span>
+                  Account # {bill.account_number}
                 </CardDescription>
-                <CardTitle className="text-xl">
-                  {formatDate(bill.created_at)}
+                <CardTitle className="text-3xl font-bold font-mono">
+                  ₱{bill.amount.toFixed(2)}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Due Date</p>
-                    <p className="font-medium text-destructive">{formatDate(bill.due_date)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-xs uppercase tracking-wider font-semibold mb-1">Account #</p>
-                    <p className="font-medium font-mono">{bill.account_number}</p>
-                  </div>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Due:</span>
+                  <span className="text-sm font-bold text-destructive">{formatDate(bill.due_date)}</span>
                 </div>
 
-                <div className="rounded-lg bg-muted/50 p-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Current Bill</span>
-                    <span className="font-bold font-mono">₱{bill.amount.toFixed(2)}</span>
-                  </div>
-                  {bill.amount_after_duedate !== null && (
-                    <div className="flex justify-between items-center pt-2 border-t border-border/50">
-                      <span className="text-xs text-muted-foreground">After Due Date</span>
+                {bill.amount_after_duedate !== null && (
+                  <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted-foreground">Amount after due date</span>
                       <span className="text-sm font-bold text-destructive font-mono">₱{bill.amount_after_duedate.toFixed(2)}</span>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
