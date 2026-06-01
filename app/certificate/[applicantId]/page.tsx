@@ -65,39 +65,39 @@ export default async function CertificatePage({
         <div className="flex-1 flex flex-col items-center pt-8">
           
           {/* Header */}
-          <div className="flex items-center gap-6 mb-16 self-start">
-            <div className="h-24 w-24 shrink-0 flex items-center justify-center bg-white">
+          <div className="flex flex-col items-center mb-[clamp(24px,6vw,64px)] w-full text-center">
+            <div className="h-[clamp(48px,10vw,64px)] w-[clamp(48px,10vw,64px)] shrink-0 flex items-center justify-center bg-white mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-main.jpg" alt="Logo" className="w-full h-full object-contain" />
             </div>
-            <div className="text-left">
-              <h2 className="font-black text-[24px] uppercase tracking-wide text-gray-900">{organization?.name || "Organization Name"}</h2>
-              <p className="text-[16px] font-medium text-gray-600 mt-1">Rizal Avenue, Brgy. 3, Buenavista, Agusan del Norte</p>
+            <div>
+              <h2 className="font-black text-[clamp(18px,4vw,24px)] uppercase tracking-wide text-gray-900">Buenavista Water District</h2>
+              <p className="text-[clamp(12px,2.5vw,16px)] font-medium text-gray-600 mt-1">Rizal Avenue, Brgy. 3, Buenavista, Agusan del Norte</p>
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-[32px] font-black uppercase tracking-[0.15em] text-gray-800 mb-16">
+          <h1 className="text-[clamp(24px,5vw,32px)] font-black uppercase tracking-[0.15em] text-gray-800 mb-[clamp(32px,8vw,64px)] text-center">
             Certificate of Completion
           </h1>
 
           {/* Name Section */}
-          <div className="w-full max-w-2xl text-center mb-10">
+          <div className="w-full max-w-2xl text-center mb-[clamp(24px,6vw,40px)]">
             <div className="border-b-[3px] border-gray-800 mb-4"></div>
-            <h2 className="text-[32px] font-bold uppercase tracking-widest text-gray-900 py-2">
+            <h2 className="text-[clamp(24px,5vw,32px)] font-bold uppercase tracking-widest text-gray-900 py-2">
               {applicant.full_name}
             </h2>
             <div className="border-t-[3px] border-gray-800 mt-4"></div>
           </div>
 
           {/* Subtext */}
-          <p className="text-center text-[16px] max-w-2xl mb-8 leading-relaxed font-medium text-gray-700">
+          <p className="text-center text-[clamp(14px,3vw,16px)] max-w-2xl mb-8 leading-relaxed font-medium text-gray-700">
             Congratulations for successfully completing the {organization?.name || "Organization"} Online Pre-Membership seminar with the following courses:
           </p>
 
           {/* Courses List */}
-          <div className="w-full max-w-xl text-left mb-16">
-            <ol className="list-decimal pl-8 space-y-3 text-[16px] font-sans">
+          <div className="w-full max-w-xl text-left mb-[clamp(32px,8vw,64px)]">
+            <ol className="list-decimal pl-[clamp(16px,4vw,32px)] space-y-3 text-[clamp(14px,3vw,16px)] font-sans">
               {completedCourses.map((course) => (
                 <li key={course.id} className="pl-4">{course.title}</li>
               ))}
@@ -105,7 +105,7 @@ export default async function CertificatePage({
           </div>
 
           {/* Date */}
-          <p className="text-[16px] font-bold uppercase tracking-wider text-gray-800 mt-auto mb-12">
+          <p className="text-[clamp(14px,3vw,16px)] font-bold uppercase tracking-wider text-gray-800 mt-auto mb-[clamp(24px,6vw,48px)]">
             Given this {formattedDate}
           </p>
           
@@ -113,10 +113,10 @@ export default async function CertificatePage({
 
         {/* Footer & QR Code */}
         <div className="flex flex-col items-center pb-4">
-          <div className="p-2 border-2 border-gray-200 rounded-lg bg-white shadow-sm">
-            <QRCode value={verificationUrl} size={104} />
+          <div className="p-2 border-2 border-gray-200 rounded-lg bg-white shadow-sm w-[clamp(80px,25vw,120px)] h-[clamp(80px,25vw,120px)] flex justify-center items-center">
+            <QRCode value={verificationUrl} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
           </div>
-          <p className="text-[16px] mt-4 text-center font-medium text-gray-500">
+          <p className="text-[clamp(12px,2.5vw,16px)] mt-4 text-center font-medium text-gray-500">
             This Certificate is not valid without the system generated QR Code.
           </p>
         </div>
