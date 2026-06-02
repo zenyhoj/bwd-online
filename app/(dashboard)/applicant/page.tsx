@@ -248,6 +248,23 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
     .in("applicant_id", applicants.map(a => a.id));
   const isConverted = concessionaires && concessionaires.length > 0;
 
+  const accountNames: Record<string, string> = {};
+  if (isConverted) {
+    const { data: bills } = await supabase
+      .from("water_bills")
+      .select("concessionaire_id, account_name")
+      .in("concessionaire_id", concessionaires.map((c) => c.id))
+      .order("due_date", { ascending: false });
+
+    if (bills) {
+      for (const bill of bills) {
+        if (!accountNames[bill.concessionaire_id] && bill.account_name) {
+          accountNames[bill.concessionaire_id] = bill.account_name;
+        }
+      }
+    }
+  }
+
   const selectedApplicationId = getStringParam(resolvedSearchParams, "application") ?? applications[0]?.id ?? null;
   const selectedApplication = applications.find((application) => application.id === selectedApplicationId) ?? applications[0];
   
@@ -326,7 +343,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </p>
             <div className="mt-4 space-y-1 rounded-md bg-emerald-100/50 p-3">
               {concessionaires?.map((c) => {
-                const name = applicants.find((a) => a.id === c.applicant_id)?.full_name ?? "Unknown Account";
+                const name = accountNames[c.id] || applicants.find((a) => a.id === c.applicant_id)?.full_name || "Unknown Account";
                 return (
                   <div key={c.id} className="flex items-center text-sm font-medium text-emerald-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
