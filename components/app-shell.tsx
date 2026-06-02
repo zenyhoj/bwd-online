@@ -111,7 +111,7 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
   if (mode === "hasApplication") {
     return [
       { href: "/applicant", label: "Dashboard", icon: Home },
-      { href: "/applicant/applications/new", label: "Add applicant", icon: FileCheck2 },
+      { href: "/applicant/applications/new", label: "New Application", icon: FileCheck2 },
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
@@ -355,7 +355,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
               : [
                   { href: "/applicant", label: "Home", icon: Home },
                   { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
-                  { href: "/applicant/applications/new", label: "Add App", icon: FileCheck2 },
+                  { href: "/applicant/applications/new", label: "New App", icon: FileCheck2 },
                 ]
             : profile.role === "admin"
             ? [

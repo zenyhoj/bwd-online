@@ -307,8 +307,8 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
       <PushPromptCard />
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-semibold">Applicant records</h2>
-        <p className="text-sm text-muted-foreground">Choose the applicant record you want to view.</p>
+        <h2 className="text-2xl font-semibold">Concessionaire Accounts</h2>
+        <p className="text-sm text-muted-foreground">Choose concessionaire record you want to view.</p>
       </div>
 
       {applicants.length > 1 ? (
@@ -316,8 +316,8 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           applicants={applicants}
           selectedApplicantId={selectedApplicant?.id}
           basePath="/applicant"
-          title="Records"
-          description="Switch records."
+          title="Accounts"
+          description="Switch accounts."
         />
       ) : (
         <div className="flex justify-end gap-2">
@@ -327,7 +327,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </Button>
           )}
           <Button asChild variant="secondary" size="sm">
-            <Link href="/applicant/new">Add Applicant</Link>
+            <Link href="/applicant/new">New Application</Link>
           </Button>
         </div>
       )}
