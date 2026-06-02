@@ -5,12 +5,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Droplets } from "lucide-react";
 import { formatDate } from "@/lib/format";
+import { ConcessionaireFilter } from "@/components/applicant/concessionaire-filter";
 
 export const metadata = {
   title: "My Water Bills | BWD Online",
 };
 
-export default async function ApplicantWaterBillsPage() {
+export default async function ApplicantWaterBillsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const accountFilter =
+    typeof resolvedSearchParams?.["account"] === "string"
+      ? resolvedSearchParams["account"]
+      : null;
+
   const profile = await getCurrentProfile();
 
   if (profile.role !== "applicant") {
@@ -51,14 +62,41 @@ export default async function ApplicantWaterBillsPage() {
     );
   }
 
-  const concessionaireIds = concessionaires.map((c) => c.id);
+  // Determine which concessionaire IDs to query bills for
+  const filterIds =
+    accountFilter && concessionaires.some((c) => c.id === accountFilter)
+      ? [accountFilter]
+      : concessionaires.map((c) => c.id);
 
   // Fetch water bills
   const { data: bills } = await supabase
     .from("water_bills")
     .select("*")
-    .in("concessionaire_id", concessionaireIds)
+    .in("concessionaire_id", filterIds)
     .order("due_date", { ascending: false });
+
+  // Build a map of concessionaire_id → latest account_name from bills for the dropdown labels
+  const allBillsForNames = accountFilter
+    ? await supabase
+        .from("water_bills")
+        .select("concessionaire_id, account_name")
+        .in("concessionaire_id", concessionaires.map((c) => c.id))
+        .order("due_date", { ascending: false })
+        .then((res) => res.data)
+    : bills;
+
+  const accountNameMap = new Map<string, string>();
+  for (const bill of allBillsForNames ?? []) {
+    if (bill.concessionaire_id && bill.account_name && !accountNameMap.has(bill.concessionaire_id)) {
+      accountNameMap.set(bill.concessionaire_id, bill.account_name);
+    }
+  }
+
+  const concessionaireOptions = concessionaires.map((c) => ({
+    id: c.id,
+    concessionaire_number: c.concessionaire_number,
+    account_name: accountNameMap.get(c.id) ?? null,
+  }));
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-PH", {
@@ -67,13 +105,18 @@ export default async function ApplicantWaterBillsPage() {
       minimumFractionDigits: 2,
     }).format(value);
 
+  const showFilter = concessionaires.length > 1;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-semibold tracking-tight">Water Bills</h1>
-        <p className="text-muted-foreground">
-          View your monthly water consumption bills and due dates.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Water Bills</h1>
+          <p className="text-muted-foreground">
+            View your monthly water consumption bills and due dates.
+          </p>
+        </div>
+        {showFilter && <ConcessionaireFilter concessionaires={concessionaireOptions} />}
       </div>
 
       <Alert className="rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
@@ -90,7 +133,9 @@ export default async function ApplicantWaterBillsPage() {
             <Droplets className="mb-4 h-10 w-10 text-muted-foreground/30" />
             <h3 className="text-lg font-medium">No bills found</h3>
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              We couldn't find any water bills attached to your account yet. New bills will appear here when they are generated.
+              {accountFilter
+                ? "No water bills found for this account. Try selecting a different account or view all."
+                : "We couldn't find any water bills attached to your account yet. New bills will appear here when they are generated."}
             </p>
           </CardContent>
         </Card>
