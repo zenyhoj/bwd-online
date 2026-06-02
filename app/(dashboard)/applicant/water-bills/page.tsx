@@ -145,10 +145,15 @@ export default async function ApplicantWaterBillsPage({
             <Card key={bill.id} className="relative overflow-hidden border-border/80 shadow-sm transition-shadow hover:shadow-md">
               <div className="absolute right-0 top-0 h-full w-1.5 bg-primary" />
               <CardHeader className="space-y-3 pb-2">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-col gap-0.5">
                   <CardDescription className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Account # {bill.account_number}
                   </CardDescription>
+                  {bill.account_name && (
+                    <div className="text-sm font-medium text-foreground/90">
+                      {bill.account_name}
+                    </div>
+                  )}
                 </div>
                 <CardDescription className="text-xs font-medium uppercase tracking-wider">Bill amount</CardDescription>
                 <CardTitle className="text-3xl font-bold leading-none">{formatCurrency(bill.amount)}</CardTitle>
