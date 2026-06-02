@@ -244,7 +244,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const supabase = createSupabaseAdminClient();
   const { data: concessionaires } = await supabase
     .from("concessionaires")
-    .select("id")
+    .select("id, concessionaire_number, applicant_id")
     .in("applicant_id", applicants.map(a => a.id));
   const isConverted = concessionaires && concessionaires.length > 0;
 
@@ -324,6 +324,19 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             <p className="mt-2 text-sm text-emerald-700/80">
               Your account is successfully linked. You can now view your water bills from the navigation menu.
             </p>
+            <div className="mt-4 space-y-1 rounded-md bg-emerald-100/50 p-3">
+              {concessionaires?.map((c) => {
+                const name = applicants.find((a) => a.id === c.applicant_id)?.full_name ?? "Unknown Account";
+                return (
+                  <div key={c.id} className="flex items-center text-sm font-medium text-emerald-800">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
+                    <span className="font-mono">{c.concessionaire_number}</span>
+                    <span className="mx-2 text-emerald-600/50">—</span>
+                    <span>{name}</span>
+                  </div>
+                );
+              })}
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50 bg-white">
                 <Link href="/applicant/water-bills">View Water Bills</Link>
