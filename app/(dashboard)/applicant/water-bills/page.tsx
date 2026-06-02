@@ -109,14 +109,13 @@ export default async function ApplicantWaterBillsPage({
 
   return (
     <div className="space-y-6">
-      <div className="relative z-50 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Water Bills</h1>
           <p className="text-muted-foreground">
             View your monthly water consumption bills and due dates.
           </p>
         </div>
-        {showFilter && <ConcessionaireFilter concessionaires={concessionaireOptions} />}
       </div>
 
       <Alert className="isolate z-0 flex items-start gap-3 rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
@@ -145,6 +144,14 @@ export default async function ApplicantWaterBillsPage({
           </AlertDescription>
         </div>
       </Alert>
+
+      {showFilter && (
+        <div className="flex justify-end">
+          <div className="w-full sm:w-auto">
+            <ConcessionaireFilter concessionaires={concessionaireOptions} />
+          </div>
+        </div>
+      )}
 
       {!bills || bills.length === 0 ? (
         <Card className="border-dashed bg-muted/10">
