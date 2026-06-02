@@ -49,12 +49,12 @@ export default async function UserManualPage() {
           </div>
         </CardHeader>
         <CardContent className="px-8 py-10 lg:px-12 lg:py-16">
-          <article className="prose prose-slate dark:prose-invert max-w-none 
-            prose-headings:font-bold prose-headings:tracking-tight
+          <article className="prose prose-slate dark:prose-invert max-w-none text-foreground
+            prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-foreground
             prose-h1:text-4xl prose-h2:text-2xl prose-h2:mt-12 prose-h2:pb-2 prose-h2:border-b prose-h2:border-border/50
-            prose-p:text-muted-foreground prose-p:leading-relaxed
-            prose-li:text-muted-foreground
-            prose-strong:text-foreground prose-strong:font-bold
+            prose-p:text-foreground prose-p:leading-relaxed prose-p:font-normal
+            prose-li:text-foreground
+            prose-strong:text-foreground prose-strong:font-medium
             prose-hr:border-border/50
             prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none">
             <ReactMarkdown>{content}</ReactMarkdown>
