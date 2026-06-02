@@ -11,15 +11,15 @@ import { roleHome } from "@/lib/routes";
 export default async function UserManualPage() {
   const user = await getSessionUser();
   let backHref = "/";
-  let manualFile = "USER.md";
   let title = "User Manual";
+  let isAdmin = false;
   
   if (user) {
     try {
       const profile = await getCurrentProfile();
       backHref = roleHome[profile.role];
       if (profile.role === "admin") {
-        manualFile = "ADMIN.md";
+        isAdmin = true;
         title = "Admin Manual";
       }
     } catch (e) {
@@ -27,8 +27,10 @@ export default async function UserManualPage() {
     }
   }
 
-  const manualPath = path.join(process.cwd(), manualFile);
-  const content = fs.readFileSync(manualPath, "utf8");
+  // Next.js file tracing requires static path literals to bundle files in production
+  const content = isAdmin
+    ? fs.readFileSync(path.join(process.cwd(), "ADMIN.md"), "utf8")
+    : fs.readFileSync(path.join(process.cwd(), "USER.md"), "utf8");
 
   return (
     <div className="container mx-auto py-8 px-4 max-w-4xl animate-fade-in-up">
