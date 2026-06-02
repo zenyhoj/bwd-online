@@ -318,22 +318,27 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
       {isConverted ? (
         <Card className="border-emerald-500/30 bg-emerald-50/50 shadow-sm">
           <CardContent className="p-6">
-            <h2 className="text-xl font-bold text-emerald-800">You have an active water connection!</h2>
+            <h2 className="text-xl font-bold text-emerald-800">
+              You have {concessionaires.length > 1 ? `${concessionaires.length} active water connections!` : "an active water connection!"}
+            </h2>
             <p className="mt-2 text-sm text-emerald-700/80">
               Your account is successfully linked. You can now view your water bills from the navigation menu.
             </p>
-            <div className="mt-4">
-              <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50 bg-white">
                 <Link href="/applicant/water-bills">View Water Bills</Link>
+              </Button>
+              <Button asChild variant="ghost" className="text-emerald-700 hover:bg-emerald-100/50 hover:text-emerald-800">
+                <a href="#link-account">Link another account</a>
               </Button>
             </div>
           </CardContent>
         </Card>
-      ) : (
-        <div id="link-account">
-          <LinkAccountCard />
-        </div>
-      )}
+      ) : null}
+
+      <div id="link-account" className={isConverted ? "opacity-90 transition-opacity hover:opacity-100" : ""}>
+        <LinkAccountCard />
+      </div>
 
       <Card className="border-border/70 shadow-sm">
         <CardContent className="space-y-4 p-6">
