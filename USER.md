@@ -45,6 +45,11 @@ The application process is sequential. You must complete each stage before the n
 - **Action**: BWD will schedule your **Water Meter Installation**.
 - **Completion**: Once the meter is installed, your account is converted to an active **Concessionaire**.
 
+### Stage 7: Managing Water Bills & Accounts
+- **Water Bills**: Once your account is converted to a concessionaire, you can view your monthly water consumption bills and due dates on the **Water Bills** page.
+- **Multiple Accounts**: If you have multiple legacy accounts linked to your profile, use the dropdown filter below the payment instructions to switch between different concessionaire records.
+- **Payment**: Payment information on the "Payments" page is exclusively for the initial application fees. To pay your water bills, please follow the payment instructions provided directly on the Water Bills page (e.g., via GCash, Maya, or Wing-on Buenavista).
+
 ---
 
 ## 🔎 Support & Troubleshooting

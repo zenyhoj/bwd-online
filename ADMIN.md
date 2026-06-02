@@ -24,6 +24,12 @@ The dashboard organizes applications into strict stages based on system logic:
 - **Document Purging**: This is restricted to specific super-admins and requires a successful **Export Docs (ZIP)** as a prerequisite to prevent data loss.
 - **Live Search**: Use the search bar to find applicants instantly. The system is optimized to handle thousands of records using a dedicated database view.
 
+### 4. Managing Water Bills
+- **Uploading Bills**: Admins can bulk-upload water bills via the **Water Bills** dashboard using an Excel file (.xlsx or .xls).
+- **Required Format**: The uploaded spreadsheet must contain columns for `account_number`, `account_name`, `amount`, `due_date`, and optionally `amount_after_duedate`. 
+- **Mapping**: The system automatically links the uploaded bills to the corresponding concessionaire records based on their account numbers.
+- **Concessionaire View**: Once uploaded, the bills become immediately visible to the respective end-users in their Applicant Portal.
+
 ---
 
 ## 🛠️ System Management
