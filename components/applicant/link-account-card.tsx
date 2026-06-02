@@ -34,6 +34,9 @@ export function LinkAccountCard() {
       setIsSubmitting(false);
     } else {
       // Success
+      setAccountNumber("");
+      setAccountName("");
+      setIsSubmitting(false);
       router.refresh(); // This will reload the layout and set applicantNavMode = "converted"
     }
   };
