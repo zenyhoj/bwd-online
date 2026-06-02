@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, Droplets } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { ConcessionaireFilter } from "@/components/applicant/concessionaire-filter";
@@ -120,10 +120,27 @@ export default async function ApplicantWaterBillsPage({
       </div>
 
       <Alert className="rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
-        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-        <AlertDescription>
-          <strong>For your reference:</strong> This page shows your latest water bill details. If you have already paid,
-          your payment is recorded in your official BWD ledger.
+        <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <AlertTitle className="mb-2 font-bold tracking-tight">Payment Instructions</AlertTitle>
+        <AlertDescription className="space-y-3">
+          <p>
+            <strong>For your reference:</strong> This page shows your latest water bill details. If you have already paid,
+            your payment is recorded in your official BWD ledger.
+          </p>
+          <div className="rounded-lg bg-white/60 p-4 dark:bg-black/20">
+            <p className="font-semibold mb-2">How to pay your water bills:</p>
+            <ul className="list-disc space-y-2 pl-5 text-sm">
+              <li>
+                <strong>GCash:</strong> Upon login, navigate to Bills &rarr; Water Utilities &rarr; Search for <strong>Buenavista Water District (with the square logo)</strong> and provide the exact Account Name and 11 Digit Account Number with Dash.
+              </li>
+              <li>
+                <strong>Maya:</strong> Upon login, navigate to Bills &rarr; Water Utility &rarr; Search for <strong>Buenavista Water District (with the square logo)</strong> and provide the exact Account Name and 11 Digit Account Number with Dash.
+              </li>
+              <li>
+                <strong>On-site:</strong> You may also pay your water bills at <strong>Wing-on Buenavista</strong>.
+              </li>
+            </ul>
+          </div>
         </AlertDescription>
       </Alert>
 
