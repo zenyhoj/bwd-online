@@ -104,10 +104,11 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
         </p>
       </div>
 
-      <Alert className="rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
-        <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-        <AlertTitle className="mb-2 font-bold tracking-tight">Important Payment Notice</AlertTitle>
-        <AlertDescription className="space-y-3">
+      <Alert className="flex items-start gap-3 rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500 dark:text-yellow-400" />
+        <div className="flex-1">
+          <AlertTitle className="mb-2 font-bold tracking-tight">Important Payment Notice</AlertTitle>
+          <AlertDescription className="space-y-3">
           <p>
             The payment information on this page is <strong>only intended for the application fee</strong> and not for water bills.
           </p>
@@ -126,6 +127,7 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
             </ul>
           </div>
         </AlertDescription>
+        </div>
       </Alert>
       <ApplicantSwitcher
         applicants={applicants}
