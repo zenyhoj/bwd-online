@@ -119,7 +119,7 @@ export default async function ApplicantWaterBillsPage({
         {showFilter && <ConcessionaireFilter concessionaires={concessionaireOptions} />}
       </div>
 
-      <Alert className="flex items-start gap-3 rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
+      <Alert className="isolate z-0 flex items-start gap-3 rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
         <Info className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500 dark:text-yellow-400" />
         <div className="flex-1">
           <AlertTitle className="mb-2 font-bold tracking-tight">Payment Instructions</AlertTitle>
