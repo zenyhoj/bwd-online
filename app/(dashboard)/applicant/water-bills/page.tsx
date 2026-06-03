@@ -201,6 +201,9 @@ export default async function ApplicantWaterBillsPage({
                   <strong>On-site:</strong> You may also pay your water bills at <strong>Wing-on Buenavista</strong>.
                 </li>
               </ul>
+              <div className="mt-4 rounded-md border border-orange-200 bg-orange-50 p-3 text-sm text-orange-900 dark:border-orange-900/30 dark:bg-orange-950/20 dark:text-orange-200">
+                <span className="font-semibold text-orange-800 dark:text-orange-400">Note:</span> For all disconnected accounts, payments must be made at BWD Office to settle both the bill amount plus the surcharge and disconnection fee.
+              </div>
             </div>
           </AlertDescription>
         </div>
