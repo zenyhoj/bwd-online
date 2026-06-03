@@ -36,6 +36,13 @@ export function PushRegistration() {
       const registration = await navigator.serviceWorker.ready;
       if (!registration) return;
 
+      const currentPerm = await Notification.requestPermission();
+      setPermission(currentPerm);
+      
+      if (currentPerm !== "granted") {
+        return;
+      }
+
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: VAPID_PUBLIC_KEY,
