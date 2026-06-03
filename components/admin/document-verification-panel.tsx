@@ -25,7 +25,10 @@ const NO_DOCUMENT_VALUE = "__no_document__";
 
 export function DocumentVerificationPanel({ applicationId, applicationStatus, requirements }: DocumentVerificationPanelProps) {
   const [selectedType, setSelectedType] = useState<string>(NO_DOCUMENT_VALUE);
+  const [previewDocumentId, setPreviewDocumentId] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState(completeDocumentVerificationAction, initialActionState);
+
+  const previewDocument = useMemo(() => requirements.find(r => r.document?.id === previewDocumentId)?.document ?? null, [requirements, previewDocumentId]);
 
   const selectedRow = useMemo(
     () => requirements.find((row) => row.type === selectedType) ?? null,
@@ -88,9 +91,13 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, re
                 <TableCell className="font-medium">{row.label}</TableCell>
                 <TableCell className="max-w-[150px] sm:max-w-[250px]">
                   {row.document ? (
-                    <a href={getDocumentDownloadHref(row.document.id)} target="_blank" rel="noopener noreferrer" className="block truncate text-primary hover:underline" title={row.document.file_name}>
+                    <button 
+                      onClick={() => setPreviewDocumentId(row.document!.id)} 
+                      className="block truncate text-primary hover:underline text-left w-full" 
+                      title={row.document.file_name}
+                    >
                       {row.document.file_name}
-                    </a>
+                    </button>
                   ) : (
                     <span className="text-muted-foreground">Not uploaded</span>
                   )}
@@ -191,6 +198,19 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, re
               )}
             </div>
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!previewDocument} onOpenChange={(open) => !open && setPreviewDocumentId(null)}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{previewDocument?.file_name}</DialogTitle>
+          </DialogHeader>
+          {previewDocument && (
+            <div className="mt-4">
+              <DocumentPreview document={previewDocument} />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

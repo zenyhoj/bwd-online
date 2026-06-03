@@ -313,6 +313,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       status?: string;
       plumbing_approved?: boolean | null;
       scheduled_at?: string | null;
+      inspected_at?: string | null;
     }[] | undefined) ?? []);
   const hasScheduledInspection = selectedInspections.length > 0;
   const latestSelectedInspection =
@@ -504,16 +505,12 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                 <TableHeader>
                   <TableRow>
                     <TableHead>Applicant</TableHead>
-                    <TableHead>Stage</TableHead>
-                    <TableHead>Next action</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
+                    <TableHead>Contact number</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(applications.data as Record<string, unknown>[]).map((record) => {
-                    const recordStage = queueStage(record);
                     const isSelected = String(record.id) === selectedId;
                     const query = new URLSearchParams();
                     query.set("page", String(applications.page));
@@ -536,18 +533,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="inline-block rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium whitespace-nowrap">
-                            {queueStageLabel(recordStage)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm font-medium">{nextAction(record)}</span>
-                        </TableCell>
-                        <TableCell>
-                          <StatusBadge status={getEffectiveApplicationStatus(record)} />
-                        </TableCell>
-                        <TableCell>
-                          {formatDateTime((record.submitted_at as string | null | undefined) ?? null)}
+                          <span className="text-sm text-muted-foreground">{record.cellphone_number ? String(record.cellphone_number) : "No contact number"}</span>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant={isSelected ? "secondary" : "outline"} size="sm">
@@ -691,42 +677,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                   </div>
                 </div>
 
-                <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] divide-y lg:divide-y-0 lg:divide-x divide-border/50">
-                  <div className="p-6">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Current details</p>
-                    <dl className="mt-4 grid gap-4 sm:grid-cols-2 text-sm">
-                      <div>
-                        <dt className="text-muted-foreground">Inspection schedule</dt>
-                        <dd className="mt-1 font-medium">{formatDateTime(selectedInspectionSchedule)}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Inspection result</dt>
-                        <dd className="mt-1">
-                          <StatusBadge status={latestSelectedInspection?.status ?? "Not scheduled"} />
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Uploaded documents</dt>
-                        <dd className="mt-1 flex items-center gap-2 font-medium">
-                          {selectedDocuments.length}
-                          {selectedDocuments.some((document) => document.status === "pending") ? (
-                            <Badge className="bg-sky-600/10 text-sky-700 hover:bg-sky-600/10">
-                              Needs review
-                            </Badge>
-                          ) : null}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-muted-foreground">Payment records</dt>
-                        <dd className="mt-1 font-medium">{selectedPayments.length}</dd>
-                      </div>
-                    </dl>
-                  </div>
-
-                  <div className="p-6 bg-primary/[0.02]">
-                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Next action</p>
-                    <p className="mt-3 text-lg font-semibold">{nextAction(selectedApplication)}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                <div className="grid gap-0 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] divide-y lg:divide-y-0 lg:divide-x divide-border/50">
+                  <div className="p-6 bg-primary/[0.03]">
+                    <p className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Next action</p>
+                    <h3 className="mt-3 text-2xl font-bold text-foreground">{nextAction(selectedApplication)}</h3>
+                    <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                       {activeAction === "inhouse-plumbing" && "Waiting for applicant: In-house plumbing must be completed by the applicant before you can schedule an inspection."}
                       {activeAction === "inspection" && !hasScheduledInspection && "Action required: In-house plumbing is complete. Schedule an inspection date for the applicant."}
                       {activeAction === "inspection" && hasScheduledInspection && "Waiting for inspector: Inspection is scheduled. Wait for the inspector to submit the result."}
@@ -742,7 +697,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       <div className="mt-8 rounded-xl border-2 border-primary/20 bg-background p-6 shadow-sm">
                         <div className="mb-6 flex items-start justify-between gap-4">
                           <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">Active Workflow Step</p>
-                          <Badge variant="default" className="text-[10px] shrink-0">Next</Badge>
+                          <Badge variant="default" className="text-[10px] shrink-0 font-medium px-2.5 py-0.5">Next</Badge>
                         </div>
                         {activeAction === "inhouse-plumbing" && (
                           <InhouseInstallationForm
@@ -798,6 +753,58 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                         )}
                       </div>
                     ) : null}
+                  </div>
+
+                  <div className="p-6">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Current details</p>
+                    <dl className="mt-6 grid gap-6 sm:grid-cols-2 text-sm">
+                      <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                        <dt className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Inspection schedule</dt>
+                        <dd className="mt-2 text-xs font-medium text-foreground whitespace-nowrap">{selectedInspectionSchedule ? formatDateTime(selectedInspectionSchedule) : "None"}</dd>
+                      </div>
+                      <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                        <dt className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Inspection result</dt>
+                        <dd className="mt-2 space-y-1.5">
+                          <div>
+                            <StatusBadge status={latestSelectedInspection?.status ?? "Not scheduled"} />
+                          </div>
+                          {latestSelectedInspection?.inspected_at && (
+                            <p className="text-xs font-medium text-foreground whitespace-nowrap">
+                              {formatDateTime(latestSelectedInspection.inspected_at)}
+                            </p>
+                          )}
+                        </dd>
+                      </div>
+                      <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                        <dt className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Uploaded documents</dt>
+                        <dd className="mt-2 flex flex-col gap-1.5 items-start">
+                          <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                            {selectedDocuments.length}
+                            {selectedDocuments.some((document) => document.status === "pending") ? (
+                              <Badge className="bg-sky-600/10 text-sky-700 hover:bg-sky-600/10">
+                                Needs review
+                              </Badge>
+                            ) : null}
+                          </div>
+                          {selectedDocuments.length > 0 && (
+                            <p className="text-xs font-medium text-foreground whitespace-nowrap">
+                              {formatDateTime(selectedDocuments.map(d => d.created_at).sort().reverse()[0])}
+                            </p>
+                          )}
+                        </dd>
+                      </div>
+                      <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                        <dt className="text-muted-foreground text-xs uppercase tracking-wider font-medium">Payment records</dt>
+                        <dd className="mt-2 flex flex-col gap-1.5 items-start">
+                          <div className="text-lg font-semibold text-foreground">{selectedPayments.length}</div>
+                          {latestSelectedPayment && (
+                            <p className="text-xs font-medium text-foreground whitespace-nowrap">
+                              {formatDateTime(latestSelectedPayment.paid_at ?? latestSelectedPayment.office_payment_at ?? latestSelectedPayment.due_date)}
+                            </p>
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
                   </div>
                 </div>
 

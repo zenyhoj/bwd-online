@@ -341,7 +341,7 @@ async function getAdminApplicationsQueueLegacy(
   let query = supabase
     .from("applications")
     .select(
-      "id, applicant_id, full_name, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, water_meter_installed_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
+      "id, applicant_id, full_name, cellphone_number, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, water_meter_installed_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
       { count: "exact" }
     )
     .eq("organization_id", profile.organization_id)

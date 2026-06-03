@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { ZoomIn, ZoomOut, Maximize } from "lucide-react";
 import { getDocumentDownloadHref, getDocumentViewHref } from "@/lib/document-links";
 import { Button } from "@/components/ui/button";
 import type { Document } from "@/types";
@@ -23,6 +27,7 @@ function getDocumentPreviewKind(document: Document) {
 }
 
 export function DocumentPreview({ document, compact = false }: DocumentPreviewProps) {
+  const [zoom, setZoom] = useState(1);
   const previewKind = getDocumentPreviewKind(document);
   const viewHref = getDocumentViewHref(document.id);
   const downloadHref = getDocumentDownloadHref(document.id);
@@ -54,9 +59,30 @@ export function DocumentPreview({ document, compact = false }: DocumentPreviewPr
       </div>
 
       {previewKind === "image" ? (
-        <div className={`overflow-hidden rounded-lg border border-border/70 bg-muted/20 ${compact ? "max-w-xl" : ""}`}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={viewHref} alt={document.file_name} className="max-h-[420px] w-full object-contain bg-white" />
+        <div className={`flex flex-col gap-2 rounded-lg border border-border/70 bg-muted/20 p-2 ${compact ? "max-w-xl" : ""}`}>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" size="icon" onClick={() => setZoom(z => Math.max(0.25, z - 0.25))} title="Zoom Out">
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button variant="secondary" size="icon" onClick={() => setZoom(1)} title="Reset Zoom">
+              <Maximize className="h-4 w-4" />
+            </Button>
+            <Button variant="secondary" size="icon" onClick={() => setZoom(z => Math.min(3, z + 0.25))} title="Zoom In">
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="overflow-auto bg-white rounded" style={{ maxHeight: compact ? '420px' : '80vh' }}>
+            <div 
+              className="flex justify-center items-center transition-all duration-200" 
+              style={{ width: `${zoom * 100}%`, height: `calc(${compact ? '420px' : '80vh'} * ${zoom})` }}
+            >
+              <img 
+                src={viewHref} 
+                alt={document.file_name} 
+                className="w-full h-full object-contain" 
+              />
+            </div>
+          </div>
         </div>
       ) : null}
 

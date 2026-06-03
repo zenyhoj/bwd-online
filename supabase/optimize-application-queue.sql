@@ -50,5 +50,6 @@ SELECT
         WHEN a.water_meter_installation_scheduled_at IS NULL THEN 40
         WHEN a.water_meter_installed_at IS NULL THEN 50
         ELSE 60
-    END as workflow_priority
+    END as workflow_priority,
+    a.cellphone_number
 FROM applications a;
