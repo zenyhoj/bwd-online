@@ -231,7 +231,7 @@ function NavContent({
         </div>
       )}
       <div className="mt-auto px-1 space-y-4 pt-8">
-        <div className="px-4 lg:hidden">
+        <div className="px-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 mb-2 px-1">Settings</p>
           <PushRegistration />
         </div>
