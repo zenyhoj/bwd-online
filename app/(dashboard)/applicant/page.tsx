@@ -314,7 +314,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
     allCompleted: seminarState.allCompleted,
     hasApplication: Boolean(selectedApplication),
     hasPayment: Boolean(selectedApplication?.payments?.[0]),
-    isCompleted: selectedApplication?.status === "completed" || selectedApplication?.status === "converted",
+    isCompleted: selectedApplication?.status === "converted",
     inhouseCompleted: Boolean(selectedApplication?.inhouse_installation_completed_at),
     inspectionApproved,
     documentsReady,
