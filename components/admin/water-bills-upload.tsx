@@ -30,7 +30,9 @@ export function WaterBillsUpload() {
       const worksheet = workbook.Sheets[firstSheetName];
       
       // Convert to JSON array of arrays to rely strictly on column indices
-      const rows: any[][] = xlsx.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+      // Using raw: false ensures we get the formatted string exactly as seen in Excel,
+      // preventing Account Numbers or Dates from being read as weird float values.
+      const rows: any[][] = xlsx.utils.sheet_to_json(worksheet, { header: 1, defval: "", raw: false });
 
       if (!rows || rows.length === 0) {
         throw new Error("The Excel file is empty.");
@@ -41,35 +43,59 @@ export function WaterBillsUpload() {
       const dataRows = hasHeader ? rows.slice(1) : rows;
 
       // The user specified exact columns: 
-      // 0: concessionaire_id
-      // 1: account_number
-      // 2: account_name
-      // 3: address
-      // 4: current_bill_amount
-      // 5: due_date
-      // 6: amount_after_duedate
+      // 0: account_number
+      // 1: name
+      // 2: date_bill
+      // 3: consumption
+      // 4: total
+      // 5: amount_after_due_date
+      // 6: due
+      // 7: disconnection
       
       const data: WaterBillUploadData[] = dataRows.map((row) => {
         const getVal = (idx: number) => String(row[idx] || "").trim();
         
-        const rawAmount = parseFloat(getVal(4).replace(/[^0-9.-]+/g, ""));
-        const rawAmountAfter = parseFloat(getVal(6).replace(/[^0-9.-]+/g, ""));
+        const rawConsumption = parseFloat(getVal(3).replace(/[^0-9.-]+/g, ""));
+        const rawTotal = parseFloat(getVal(4).replace(/[^0-9.-]+/g, ""));
+        const rawAmountAfter = parseFloat(getVal(5).replace(/[^0-9.-]+/g, ""));
         
-        let parsedDate = getVal(5);
-        if (!isNaN(Number(parsedDate)) && parsedDate !== "") {
-          const dateObj = xlsx.SSF.parse_date_code(Number(parsedDate));
-          if (dateObj) {
-            parsedDate = `${dateObj.y}-${String(dateObj.m).padStart(2, '0')}-${String(dateObj.d).padStart(2, '0')}`;
+        const parseExcelDate = (val: string) => {
+          if (!isNaN(Number(val)) && val !== "") {
+            const dateObj = xlsx.SSF.parse_date_code(Number(val));
+            if (dateObj) {
+              return `${dateObj.y}-${String(dateObj.m).padStart(2, '0')}-${String(dateObj.d).padStart(2, '0')}`;
+            }
           }
-        }
+          return val;
+        };
+        
+        const parseAccountNumber = (val: string) => {
+          // If Excel auto-formatted the account number as a date (e.g. 12/20/91)
+          // we can reconstruct it back to XXXX-XX-XXX format.
+          if (val.includes("/")) {
+            const parts = val.split("/");
+            if (parts.length === 3) {
+              const p1 = parts[0].padStart(4, "0");
+              const p2 = parts[1].padStart(2, "0");
+              let p3 = parts[2];
+              // extract last two digits if year is 4 digits
+              if (p3.length >= 4) p3 = p3.slice(-2);
+              p3 = p3.padStart(3, "0");
+              return `${p1}-${p2}-${p3}`;
+            }
+          }
+          return val;
+        };
 
         return {
-          account_number: getVal(1),
-          account_name: getVal(2),
-          address: getVal(3) || null,
-          amount: isNaN(rawAmount) ? 0 : rawAmount,
-          due_date: parsedDate,
-          amount_after_duedate: isNaN(rawAmountAfter) ? null : rawAmountAfter,
+          account_number: parseAccountNumber(getVal(0)),
+          name: getVal(1),
+          date_bill: parseExcelDate(getVal(2)) || null,
+          consumption: isNaN(rawConsumption) ? 0 : rawConsumption,
+          total: isNaN(rawTotal) ? 0 : rawTotal,
+          amount_after_due_date: isNaN(rawAmountAfter) ? null : rawAmountAfter,
+          due: parseExcelDate(getVal(6)) || null,
+          disconnection: parseExcelDate(getVal(7)) || null,
         };
       }).filter(r => r.account_number !== "");
 
@@ -128,7 +154,7 @@ export function WaterBillsUpload() {
         <CardTitle>Bulk Upload Water Bills</CardTitle>
         <CardDescription>
           Upload an Excel (.xlsx) file containing the monthly water bills. 
-          The system expects columns in this order: Concessionaire ID, Account Number, Account Name, Address, Current Bill Amount, Due Date, Amount After Due Date.
+          The system expects columns in this exact order: Account Number, Name, Date Bill, Consumption, Total, Amount After Due Date, Due, Disconnection.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -186,22 +212,30 @@ export function WaterBillsUpload() {
                   <tr>
                     <th className="p-2 font-medium">Account #</th>
                     <th className="p-2 font-medium">Name</th>
-                    <th className="p-2 font-medium">Amount</th>
+                    <th className="p-2 font-medium">Date Bill</th>
+                    <th className="p-2 font-medium">Consumption</th>
+                    <th className="p-2 font-medium">Total</th>
+                    <th className="p-2 font-medium">Amount After Due</th>
                     <th className="p-2 font-medium">Due Date</th>
+                    <th className="p-2 font-medium">Disconnection</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {parsedData.slice(0, 50).map((row, i) => (
                     <tr key={i}>
                       <td className="p-2">{row.account_number}</td>
-                      <td className="p-2 truncate max-w-[150px]">{row.account_name}</td>
-                      <td className="p-2 font-mono">₱{row.amount.toFixed(2)}</td>
-                      <td className="p-2">{row.due_date}</td>
+                      <td className="p-2 truncate max-w-[150px]">{row.name}</td>
+                      <td className="p-2">{row.date_bill || "-"}</td>
+                      <td className="p-2">{row.consumption}</td>
+                      <td className="p-2 font-mono">₱{row.total.toFixed(2)}</td>
+                      <td className="p-2 font-mono">{row.amount_after_due_date !== null && row.amount_after_due_date !== undefined ? `₱${row.amount_after_due_date.toFixed(2)}` : "-"}</td>
+                      <td className="p-2">{row.due || "-"}</td>
+                      <td className="p-2">{row.disconnection || "-"}</td>
                     </tr>
                   ))}
                   {parsedData.length > 50 && (
                     <tr>
-                      <td colSpan={4} className="p-2 text-center text-muted-foreground text-xs italic">
+                      <td colSpan={8} className="p-2 text-center text-muted-foreground text-xs italic">
                         ...and {parsedData.length - 50} more rows
                       </td>
                     </tr>

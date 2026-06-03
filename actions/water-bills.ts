@@ -1,15 +1,17 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, createSupabaseAdminClient } from "@/lib/supabase/server";
 import { type ActionState } from "@/types";
 
 export type WaterBillUploadData = {
   account_number: string;
-  account_name: string;
-  address?: string | null;
-  amount: number;
-  amount_after_duedate?: number | null;
-  due_date: string; // ISO date string
+  name: string;
+  date_bill?: string | null;
+  consumption?: number | null;
+  total: number;
+  amount_after_due_date?: number | null;
+  due?: string | null;
+  disconnection?: string | null;
 };
 
 export async function uploadWaterBillsAction(
@@ -48,15 +50,30 @@ export async function uploadWaterBillsAction(
       return { success: false, message: "Failed to clear old water bills before upload." };
     }
 
-    // 1. Fetch all existing concessionaires to minimize DB roundtrips
-    const { data: existingConcessionaires } = await supabase
-      .from("concessionaires")
-      .select("id, concessionaire_number")
-      .eq("organization_id", profile.organization_id);
+    // 1. Fetch all existing concessionaires for the given account numbers in chunks
+    const supabaseAdmin = createSupabaseAdminClient();
+    const accNumbers = Array.from(new Set(bills.map(b => b.account_number)));
+    
+    const existingConcessionaires = [];
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < accNumbers.length; i += CHUNK_SIZE) {
+      const chunk = accNumbers.slice(i, i + CHUNK_SIZE);
+      const { data, error } = await supabaseAdmin
+        .from("concessionaires")
+        .select("id, concessionaire_number, applicant_id, created_at")
+        .in("concessionaire_number", chunk)
+        .order("created_at", { ascending: false }); // Newest first
+        
+      if (error) {
+        console.error("Failed to fetch concessionaires chunk:", error);
+      } else if (data) {
+        existingConcessionaires.push(...data);
+      }
+    }
 
     const accToId = new Map<string, string>();
-    if (existingConcessionaires) {
-      for (const c of existingConcessionaires) {
+    for (const c of existingConcessionaires) {
+      if (!accToId.has(c.concessionaire_number) || c.applicant_id) {
         accToId.set(c.concessionaire_number, c.id);
       }
     }
@@ -105,11 +122,13 @@ export async function uploadWaterBillsAction(
           organization_id: profile.organization_id,
           concessionaire_id: cId,
           account_number: bill.account_number,
-          account_name: bill.account_name,
-          address: bill.address || null,
-          amount: bill.amount,
-          amount_after_duedate: bill.amount_after_duedate || null,
-          due_date: bill.due_date,
+          name: bill.name,
+          date_bill: bill.date_bill || null,
+          consumption: bill.consumption ?? 0,
+          total: bill.total,
+          amount_after_due_date: bill.amount_after_due_date || null,
+          due: bill.due || null,
+          disconnection: bill.disconnection || null,
           status: "unpaid",
         });
       }
@@ -140,6 +159,52 @@ export async function uploadWaterBillsAction(
     return {
       success: false,
       message: "An unexpected error occurred while processing water bills",
+    };
+  }
+}
+
+export async function clearWaterBillsAction(): Promise<ActionState> {
+  try {
+    const supabase = await createSupabaseServerClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { success: false, message: "Not authenticated" };
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("organization_id, role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || profile.role !== "admin") {
+      return { success: false, message: "Not authorized" };
+    }
+
+    const { error: deleteError } = await supabase
+      .from("water_bills")
+      .delete()
+      .eq("organization_id", profile.organization_id);
+
+    if (deleteError) {
+      console.error("Failed to clear water bills:", deleteError);
+      return { success: false, message: "Failed to clear water bills." };
+    }
+
+    return {
+      success: true,
+      message: "Successfully cleared all water bills.",
+    };
+  } catch (error) {
+    console.error("Clear water bills error:", error);
+    return {
+      success: false,
+      message: "An unexpected error occurred while clearing water bills",
     };
   }
 }

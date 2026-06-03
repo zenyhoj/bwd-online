@@ -69,26 +69,26 @@ export default async function ApplicantWaterBillsPage({
       : concessionaires.map((c) => c.id);
 
   // Fetch water bills
-  const { data: bills } = await supabase
+  const { data: bills, error: billsError } = await supabase
     .from("water_bills")
     .select("*")
     .in("concessionaire_id", filterIds)
-    .order("due_date", { ascending: false });
+    .order("due", { ascending: false });
 
-  // Build a map of concessionaire_id → latest account_name from bills for the dropdown labels
+  // Build a map of concessionaire_id → latest name from bills for the dropdown labels
   const allBillsForNames = accountFilter
     ? await supabase
         .from("water_bills")
-        .select("concessionaire_id, account_name")
+        .select("concessionaire_id, name")
         .in("concessionaire_id", concessionaires.map((c) => c.id))
-        .order("due_date", { ascending: false })
+        .order("due", { ascending: false })
         .then((res) => res.data)
     : bills;
 
   const accountNameMap = new Map<string, string>();
   for (const bill of allBillsForNames ?? []) {
-    if (bill.concessionaire_id && bill.account_name && !accountNameMap.has(bill.concessionaire_id)) {
-      accountNameMap.set(bill.concessionaire_id, bill.account_name);
+    if (bill.concessionaire_id && bill.name && !accountNameMap.has(bill.concessionaire_id)) {
+      accountNameMap.set(bill.concessionaire_id, bill.name);
     }
   }
 
@@ -136,6 +136,18 @@ export default async function ApplicantWaterBillsPage({
                 ? "No water bills found for this account. Try selecting a different account or view all."
                 : "We couldn't find any water bills attached to your account yet. New bills will appear here when they are generated."}
             </p>
+            {billsError && (
+              <div className="mt-4 p-4 bg-red-100 text-red-900 rounded-md text-left text-xs max-w-xl break-words">
+                <strong>Database Error:</strong> {billsError.message} <br/>
+                Details: {billsError.details} <br/>
+                Hint: {billsError.hint}
+              </div>
+            )}
+            <div className="mt-4 p-4 bg-yellow-100 text-yellow-900 rounded-md text-left text-xs max-w-xl break-words">
+              <strong>Debug Info:</strong><br/>
+              Filter IDs: {JSON.stringify(filterIds)}<br/>
+              Linked Concessionaires: {JSON.stringify(concessionaires)}<br/>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -148,28 +160,48 @@ export default async function ApplicantWaterBillsPage({
                   <CardDescription className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Account # {bill.account_number}
                   </CardDescription>
-                  {bill.account_name && (
+                  {bill.name && (
                     <div className="text-sm font-medium text-foreground/90">
-                      {bill.account_name}
+                      {bill.name}
                     </div>
                   )}
                 </div>
                 <CardDescription className="text-xs font-medium uppercase tracking-wider">Bill amount</CardDescription>
-                <CardTitle className="text-3xl font-bold leading-none">{formatCurrency(bill.amount)}</CardTitle>
+                <CardTitle className="text-3xl font-bold leading-none">{formatCurrency(bill.total)}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-lg bg-muted/40 px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Due date</span>
-                    <span className="text-sm font-semibold text-foreground">{formatDate(bill.due_date)}</span>
+                    <span className="text-sm font-semibold text-foreground">{bill.due ? formatDate(bill.due) : "N/A"}</span>
                   </div>
+                  {bill.date_bill && (
+                    <div className="flex items-center justify-between gap-2 mt-2">
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Date Bill</span>
+                      <span className="text-sm font-semibold text-foreground">{formatDate(bill.date_bill)}</span>
+                    </div>
+                  )}
+                  {bill.consumption !== null && (
+                    <div className="flex items-center justify-between gap-2 mt-2">
+                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Consumption</span>
+                      <span className="text-sm font-semibold text-foreground">{bill.consumption} m³</span>
+                    </div>
+                  )}
                 </div>
 
-                {bill.amount_after_duedate !== null && (
+                {bill.amount_after_due_date !== null && (
                   <div className="rounded-lg border border-destructive/15 bg-destructive/5 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-xs font-medium text-muted-foreground">Amount after due date</span>
-                      <span className="text-sm font-bold text-destructive">{formatCurrency(bill.amount_after_duedate)}</span>
+                      <span className="text-sm font-bold text-destructive">{formatCurrency(bill.amount_after_due_date)}</span>
+                    </div>
+                  </div>
+                )}
+                {bill.disconnection && (
+                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-950/20">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-orange-900 dark:text-orange-200">Disconnection</span>
+                      <span className="text-sm font-bold text-orange-800 dark:text-orange-400">{formatDate(bill.disconnection)}</span>
                     </div>
                   </div>
                 )}

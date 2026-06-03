@@ -1,4 +1,5 @@
 import { WaterBillsUpload } from "@/components/admin/water-bills-upload";
+import { ClearWaterBillsButton } from "@/components/admin/clear-water-bills-button";
 
 export const metadata = {
   title: "Water Bills | BWD Online Admin",
@@ -13,6 +14,9 @@ export default function AdminWaterBillsPage() {
           <p className="text-muted-foreground mt-2">
             Upload and manage monthly water bills for all concessionaires.
           </p>
+        </div>
+        <div className="flex shrink-0">
+          <ClearWaterBillsButton />
         </div>
       </div>
 
