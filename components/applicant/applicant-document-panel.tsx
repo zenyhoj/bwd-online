@@ -1,4 +1,3 @@
-import { DocumentSubmissionPreferenceForm } from "@/components/applicant/document-submission-preference-form";
 import { DocumentUploadForm } from "@/components/applicant/document-upload-form";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
