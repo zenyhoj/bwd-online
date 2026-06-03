@@ -6,6 +6,7 @@ import { WaterMeterCompletionForm } from "@/components/admin/water-meter-complet
 import { AdditionalDocumentsForm } from "@/components/admin/additional-documents-form";
 import { DocumentVerificationPanel } from "@/components/admin/document-verification-panel";
 import { InspectionSchedulerForm } from "@/components/admin/inspection-scheduler-form";
+import { InspectionForm } from "@/components/inspector/inspection-form";
 import { InstallationSchedulerForm } from "@/components/admin/installation-scheduler-form";
 import { PaymentSchedulerForm } from "@/components/admin/payment-scheduler-form";
 import { QueueFilters } from "@/components/admin/queue-filters";
@@ -712,20 +713,28 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                           />
                         )}
                         {activeAction === "inspection" && (
-                          <InspectionSchedulerForm
-                            applicationId={String(selectedApplication.id)}
-                            inspectors={inspectors}
-                            existingInspection={
-                              latestSelectedInspection?.id
-                                ? {
-                                    id: String(latestSelectedInspection.id),
-                                    status: latestSelectedInspection.status,
-                                    scheduled_at: latestSelectedInspection.scheduled_at,
-                                    inspector_name: (latestSelectedInspection as Record<string, unknown>).inspector_name as string | null ?? null
-                                  }
-                                : null
-                            }
-                          />
+                          <div className="space-y-6">
+                            <InspectionSchedulerForm
+                              applicationId={String(selectedApplication.id)}
+                              inspectors={inspectors}
+                              existingInspection={
+                                latestSelectedInspection?.id
+                                  ? {
+                                      id: String(latestSelectedInspection.id),
+                                      status: latestSelectedInspection.status,
+                                      scheduled_at: latestSelectedInspection.scheduled_at,
+                                      inspector_name: (latestSelectedInspection as Record<string, unknown>).inspector_name as string | null ?? null
+                                    }
+                                  : null
+                              }
+                            />
+                            {latestSelectedInspection?.id && (
+                              <InspectionForm
+                                inspection={latestSelectedInspection as any}
+                                pulledPlumberName={(selectedApplication.accredited_plumbers as { full_name: string } | undefined)?.full_name ?? null}
+                              />
+                            )}
+                          </div>
                         )}
                         {activeAction === "payment" && (
                           <PaymentSchedulerForm
@@ -830,6 +839,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     <DocumentVerificationPanel 
                       applicationId={String(selectedApplication.id)}
                       applicationStatus={String(selectedApplication.status)}
+                      documentSubmissionMode={String(selectedApplication.document_submission_mode)}
                       requirements={selectedDocumentRequirements} 
                     />
                   </div>

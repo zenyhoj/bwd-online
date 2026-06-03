@@ -382,35 +382,7 @@ export async function updateInhouseInstallationAction(
       };
     }
 
-    if (profile.role === "applicant" && completedAtValue) {
-      const { data: latestSeminarProgress, error: seminarProgressError } = await supabase
-        .from("applicant_seminar_progress")
-        .select("completed_at")
-        .eq("applicant_id", application.applicant_id)
-        .eq("completed", true)
-        .order("completed_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (seminarProgressError) {
-        return { success: false, message: seminarProgressError.message };
-      }
-
-      if (latestSeminarProgress?.completed_at) {
-        const seminarCompletedDate = new Date(latestSeminarProgress.completed_at);
-        seminarCompletedDate.setHours(0, 0, 0, 0);
-
-        if (toStartOfDay(completedAtValue).getTime() < seminarCompletedDate.getTime()) {
-          return {
-            success: false,
-            message: "Completion date cannot be earlier than the online seminar completion date.",
-            fieldErrors: {
-              completedAt: ["Choose a date on or after the online seminar completion date."]
-            }
-          };
-        }
-      }
-    }
+    // Plumbing completion data might be before the seminar data because we are not strictly tracking the exact inhouse plumbing completion date.
 
     const { data: plumber, error: plumberError } = await supabase
       .from("accredited_plumbers")

@@ -48,7 +48,6 @@ const navByRole: Record<AppRole, NavItem[]> = {
     { href: "/applicant", label: "Dashboard", icon: Home },
     { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
     { href: "/applicant/applications/new", label: "Information", icon: FileCheck2 },
-    { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
     { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
     { href: "/applicant/payments", label: "Payments", icon: CreditCard },
     { href: "/manual", label: "User Manual", icon: HelpCircle }
@@ -101,7 +100,6 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
     return [
       { href: "/applicant", label: "Dashboard", icon: Home },
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
-      { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
       { href: "/applicant/payments", label: "Payments", icon: CreditCard },
       { href: "/manual", label: "User Manual", icon: HelpCircle }
@@ -113,7 +111,6 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
       { href: "/applicant", label: "Dashboard", icon: Home },
       { href: "/applicant/applications/new", label: "New Application", icon: FileCheck2 },
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
-      { href: "/applicant/documents", label: "Documents", icon: ShieldCheck },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
       { href: "/applicant/payments", label: "Payments", icon: CreditCard },
       { href: "/manual", label: "User Manual", icon: HelpCircle }
@@ -350,7 +347,6 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
               ? [
                   { href: "/applicant", label: "Home", icon: Home },
                   { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
-                  { href: "/applicant/documents", label: "Docs", icon: ShieldCheck },
                 ]
               : [
                   { href: "/applicant", label: "Home", icon: Home },

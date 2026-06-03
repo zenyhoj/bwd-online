@@ -39,9 +39,8 @@ export function isOfficeDocumentSubmission(application: ApplicationDocumentWorkf
 }
 
 export function areDocumentsReadyForPayment(application: ApplicationDocumentWorkflowInput) {
-  if (isOfficeDocumentSubmission(application)) {
-    return true;
-  }
+  // Office document submissions still need to be verified by the admin
+  // so we wait for the documents_verified status.
 
   const readyStatuses = [
     "documents_verified",

@@ -18,12 +18,13 @@ import type { DocumentRequirementRow } from "@/lib/document-workflow";
 type DocumentVerificationPanelProps = {
   applicationId: string;
   applicationStatus: string;
+  documentSubmissionMode?: string;
   requirements: DocumentRequirementRow[];
 };
 
 const NO_DOCUMENT_VALUE = "__no_document__";
 
-export function DocumentVerificationPanel({ applicationId, applicationStatus, requirements }: DocumentVerificationPanelProps) {
+export function DocumentVerificationPanel({ applicationId, applicationStatus, documentSubmissionMode, requirements }: DocumentVerificationPanelProps) {
   const [selectedType, setSelectedType] = useState<string>(NO_DOCUMENT_VALUE);
   const [previewDocumentId, setPreviewDocumentId] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState(completeDocumentVerificationAction, initialActionState);
@@ -38,18 +39,66 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, re
   const isDialogOpen = selectedType !== NO_DOCUMENT_VALUE;
   const closeDialog = () => setSelectedType(NO_DOCUMENT_VALUE);
 
+  const isOfficeSubmission = documentSubmissionMode === "office";
   const hasRejected = requirements.some((row) => row.status === "rejected");
   const hasUnreviewed = requirements.some((row) => row.document && row.status === "pending");
-  const canComplete = !hasRejected && !hasUnreviewed;
+  const canComplete = isOfficeSubmission || (!hasRejected && !hasUnreviewed);
   
   // If the application is already past the document verification stage, hide the complete button
   const showCompleteForm = applicationStatus === "inspection_completed" || applicationStatus === "under_review";
-  const isVerificationComplete = !showCompleteForm && canComplete && requirements.some((row) => row.document);
+  const isVerificationComplete = !showCompleteForm && canComplete && (isOfficeSubmission || requirements.some((row) => row.document));
 
   if (requirements.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 p-6 text-sm text-muted-foreground">
         No document requirements are configured yet.
+      </div>
+    );
+  }
+
+  if (isOfficeSubmission && !isVerificationComplete) {
+    return (
+      <div className="space-y-8">
+        <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 p-6">
+          <p className="text-sm font-semibold text-foreground mb-2">Office Document Verification</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            The applicant chose to submit and verify their physical documents at the office. Please verify the following requirements manually:
+          </p>
+          <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mb-6">
+            {requirements.map((req) => (
+              <li key={req.type}><span className="font-medium text-foreground">{req.label}</span></li>
+            ))}
+          </ul>
+          
+          {showCompleteForm && (
+            <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1.5">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
+                  Manual verification completion
+                </p>
+                <p className="text-sm text-muted-foreground max-w-2xl">
+                  By clicking this button, you certify that you have physically inspected and verified all the required documents at the office.
+                </p>
+              </div>
+              
+              <form action={formAction} className="shrink-0">
+                <input type="hidden" name="applicationId" value={applicationId} />
+                <Button 
+                  type="submit" 
+                  loading={pending} 
+                  disabled={!canComplete}
+                  className="w-full sm:w-auto"
+                >
+                  Verify Documents
+                </Button>
+                <div className="mt-2 text-right">
+                  <FormMessage state={state} />
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

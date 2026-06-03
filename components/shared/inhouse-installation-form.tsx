@@ -141,7 +141,7 @@ export function InhouseInstallationForm({
       ) : isCompleted && !isEditing ? (
         <div className="grid gap-6 rounded-xl border border-border/60 bg-muted/5 p-5 md:grid-cols-2">
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 border-b border-border/40 pb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-border/40 pb-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Plumber</p>
                 <p className="mt-1 text-sm font-semibold">{selectedPlumber?.full_name ?? "Unknown"}</p>
@@ -214,15 +214,9 @@ export function InhouseInstallationForm({
                   name="completedAt"
                   type="date"
                   defaultValue={completionDateValue}
-                  min={minimumCompletedDateValue}
                   required
                   className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 />
-                {minimumCompletedDateValue ? (
-                  <p className="text-xs text-muted-foreground">
-                    On or after seminar completion date.
-                  </p>
-                ) : null}
               </div>
               <div className="space-y-2">
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Photo proof of the plumber</Label>
@@ -262,7 +256,6 @@ export function InhouseInstallationForm({
                   capture="environment"
                   className="hidden"
                   onChange={handleFileChange}
-                  required={!currentProofImageUrl}
                 />
                 <input
                   type="file"

@@ -63,12 +63,12 @@ export async function linkLegacyAccountAction(
     // USE adminClient here as well
     const { data: bills } = await adminClient
       .from("water_bills")
-      .select("account_name")
+      .select("name")
       .eq("concessionaire_id", concessionaire.id)
       .limit(1);
 
     if (bills && bills.length > 0) {
-      const billName = bills[0].account_name.trim().toLowerCase();
+      const billName = bills[0].name.trim().toLowerCase();
       if (billName !== cleanAccountName.toLowerCase()) {
         return { success: false, message: "Account name does not match our records." };
       }

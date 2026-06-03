@@ -98,7 +98,6 @@ export async function markWaterMeterInstalledAction(_prevState: ActionState, for
         .insert({
           organization_id: profile.organization_id,
           application_id: applicationId,
-          applicant_id: application.applicant_id,
           concessionaire_number: accountNumber,
           connection_date: installedAt.slice(0, 10),
           meter_number: null,

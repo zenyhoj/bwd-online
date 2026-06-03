@@ -459,7 +459,7 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
     // Verify application exists and belongs to the admin's organization
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, status")
+      .select("id, status, document_submission_mode")
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -468,19 +468,21 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
       return { success: false, message: applicationError?.message ?? "Application not found." };
     }
 
-    // Verify there are no rejected documents
-    const { data: documents, error: documentsError } = await supabase
-      .from("documents")
-      .select("status")
-      .eq("application_id", applicationId)
-      .eq("organization_id", profile.organization_id);
+    if (application.document_submission_mode !== "office") {
+      // Verify there are no rejected documents
+      const { data: documents, error: documentsError } = await supabase
+        .from("documents")
+        .select("status")
+        .eq("application_id", applicationId)
+        .eq("organization_id", profile.organization_id);
 
-    if (documentsError) {
-      return { success: false, message: documentsError.message };
-    }
+      if (documentsError) {
+        return { success: false, message: documentsError.message };
+      }
 
-    if (documents?.some((doc) => doc.status === "rejected")) {
-      return { success: false, message: "Cannot complete verification while there are rejected documents." };
+      if (documents?.some((doc) => doc.status === "rejected")) {
+        return { success: false, message: "Cannot complete verification while there are rejected documents." };
+      }
     }
 
     // Update application status
