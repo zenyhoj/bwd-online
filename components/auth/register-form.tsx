@@ -165,7 +165,11 @@ export function RegisterForm() {
                 aria-invalid={hasError("email")}
                 className={`h-11 ${hasError("email") ? "border-destructive focus-visible:ring-destructive" : ""}`}
               />
-              {hasError("email") ? <p className="text-xs text-destructive">{errorText("email")}</p> : null}
+              {hasError("email") ? (
+                <p className="text-xs text-destructive">{errorText("email")}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Please provide an active and working email address for password resets and updates.</p>
+              )}
             </div>
 
             <div className="space-y-0.5">
