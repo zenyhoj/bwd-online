@@ -114,6 +114,11 @@ export function LoginForm() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            <div className="flex justify-end pt-0.5">
+              <Link href="/forgot-password" className="text-xs font-medium text-muted-foreground hover:text-primary transition-colors relative z-10 cursor-pointer">
+                Forgot password?
+              </Link>
+            </div>
           </div>
           <FormMessage state={state} />
           <Button type="submit" className="w-full shadow-none" loading={pending}>
