@@ -1,12 +1,13 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { Toaster } from "@/components/ui/toaster";
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
   variable: "--font-sans"
 });
@@ -41,7 +42,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning className={`${inter.variable} font-sans`}>
+      <body suppressHydrationWarning className={`${poppins.variable} font-sans`}>
         <NavigationProgress />
         {children}
         <Toaster />
