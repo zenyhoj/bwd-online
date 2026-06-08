@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UploadCloud, CheckCircle2, FileWarning, Loader2 } from "lucide-react";
-import { uploadWaterBillsAction, type WaterBillUploadData } from "@/actions/water-bills";
+import { uploadWaterBillsAction, clearWaterBillsAction, type WaterBillUploadData } from "@/actions/water-bills";
 import { useRouter } from "next-nprogress-bar";
 
 export function WaterBillsUpload() {
@@ -16,6 +16,7 @@ export function WaterBillsUpload() {
   const [parsedData, setParsedData] = useState<WaterBillUploadData[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [successResult, setSuccessResult] = useState<string | null>(null);
 
   const processFile = async (selectedFile: File) => {
@@ -131,13 +132,31 @@ export function WaterBillsUpload() {
     if (!parsedData) return;
     setIsUploading(true);
     setError(null);
+    setUploadProgress(0);
     
     try {
-      const res = await uploadWaterBillsAction(parsedData);
-      if (!res.success) {
-        throw new Error(res.message);
+      // Clear existing bills first
+      const clearRes = await clearWaterBillsAction();
+      if (!clearRes.success) {
+        throw new Error(clearRes.message);
       }
-      setSuccessResult(res.message || "Bills uploaded successfully.");
+
+      const CHUNK_SIZE = 500;
+      let insertedCount = 0;
+      
+      for (let i = 0; i < parsedData.length; i += CHUNK_SIZE) {
+        const chunk = parsedData.slice(i, i + CHUNK_SIZE);
+        const res = await uploadWaterBillsAction(chunk, false); // false = do not clear existing
+        
+        if (!res.success) {
+          throw new Error(res.message);
+        }
+        
+        insertedCount += chunk.length;
+        setUploadProgress(Math.round((insertedCount / parsedData.length) * 100));
+      }
+
+      setSuccessResult(`Successfully uploaded ${insertedCount} bills.`);
       setParsedData(null);
       setFile(null);
       router.refresh();
@@ -145,6 +164,7 @@ export function WaterBillsUpload() {
       setError(e.message || "Failed to upload water bills to the server.");
     } finally {
       setIsUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -248,9 +268,15 @@ export function WaterBillsUpload() {
               <Button variant="ghost" onClick={() => { setParsedData(null); setFile(null); }} disabled={isUploading}>
                 Cancel
               </Button>
-              <Button onClick={handleUpload} disabled={isUploading}>
-                {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Confirm & Upload
+              <Button onClick={handleUpload} disabled={isUploading} className="min-w-[160px]">
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {uploadProgress !== null ? `Uploading... ${uploadProgress}%` : "Uploading..."}
+                  </>
+                ) : (
+                  "Confirm & Upload"
+                )}
               </Button>
             </div>
           </div>

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, Droplets } from "lucide-react";
@@ -116,15 +118,18 @@ export default async function ApplicantWaterBillsPage({
             View your monthly water consumption bills and due dates.
           </p>
         </div>
-      </div>
-
-      {showFilter && (
-        <div className="flex justify-end">
-          <div className="w-full sm:w-auto">
-            <ConcessionaireFilter concessionaires={concessionaireOptions} />
-          </div>
+        
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 items-end sm:items-center">
+          <Button asChild variant="ghost" className="text-primary hover:text-primary/80 hover:bg-primary/10">
+            <Link href="/applicant#link-account">Link another account</Link>
+          </Button>
+          {showFilter && (
+            <div className="w-full sm:w-auto">
+              <ConcessionaireFilter concessionaires={concessionaireOptions} />
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {!bills || bills.length === 0 ? (
         <Card className="border-dashed bg-muted/10">

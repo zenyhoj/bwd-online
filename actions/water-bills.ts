@@ -15,7 +15,8 @@ export type WaterBillUploadData = {
 };
 
 export async function uploadWaterBillsAction(
-  bills: WaterBillUploadData[]
+  bills: WaterBillUploadData[],
+  clearExisting: boolean = true
 ): Promise<ActionState & { data?: { inserted: number } }> {
   try {
     const supabase = await createSupabaseServerClient();
@@ -39,15 +40,17 @@ export async function uploadWaterBillsAction(
       return { success: false, message: "Not authorized" };
     }
 
-    // Delete all existing water bills for this organization before uploading new ones
-    const { error: deleteError } = await supabase
-      .from("water_bills")
-      .delete()
-      .eq("organization_id", profile.organization_id);
+    if (clearExisting) {
+      // Delete all existing water bills for this organization before uploading new ones
+      const { error: deleteError } = await supabase
+        .from("water_bills")
+        .delete()
+        .eq("organization_id", profile.organization_id);
 
-    if (deleteError) {
-      console.error("Failed to delete existing water bills:", deleteError);
-      return { success: false, message: "Failed to clear old water bills before upload." };
+      if (deleteError) {
+        console.error("Failed to delete existing water bills:", deleteError);
+        return { success: false, message: "Failed to clear old water bills before upload." };
+      }
     }
 
     // 1. Fetch all existing concessionaires for the given account numbers in chunks
