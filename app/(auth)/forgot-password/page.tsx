@@ -7,7 +7,7 @@ export default function ForgotPasswordPage() {
       {/* Left Column: Branding */}
       <div className="flex flex-1 flex-col items-center justify-center bg-primary/5 p-6 text-center md:p-8 border-r border-border/50">
         <div className="max-w-md w-full flex flex-col items-center space-y-4">
-          <div className="relative h-20 w-20 flex items-center justify-center overflow-hidden rounded-2xl bg-white border border-border/50">
+          <div className="relative h-20 w-20 flex items-center justify-center overflow-hidden bg-white border border-border/50">
             <Image
               src="/logo-main.jpg"
               alt="BWD Logo"

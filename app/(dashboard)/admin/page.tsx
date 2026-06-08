@@ -581,7 +581,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
 
       {selectedApplication ? (
-        <div className="mx-auto max-w-4xl space-y-6 pb-12">
+        <div className="space-y-6 pb-12">
           <div className="space-y-6">
             <Card className="overflow-hidden border-border/70 shadow-sm">
               <CardHeader className="border-b border-border/50 bg-muted/10">
@@ -644,7 +644,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
               </CardHeader>
               <CardContent className="p-0">
                 <div className="border-b border-border/50 px-6 py-4">
-                  <div className="flex items-center gap-0 overflow-x-auto">
+                  <div className="flex items-center gap-0 overflow-x-auto w-full custom-scrollbar pb-2 sm:pb-0">
                     {[
                       { label: "Plumbing", value: stepState.plumbing },
                       { label: "Inspection", value: stepState.inspection },
@@ -655,11 +655,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       const isDone = step.value === "Complete";
                       const isActive = !isDone && (idx === 0 || arr[idx - 1]?.value === "Complete");
                       return (
-                        <div key={step.label} className="flex items-center">
-                          <div className={`flex flex-col items-center gap-1 px-3 py-1 rounded-lg text-center min-w-[90px] text-xs font-medium ${
+                        <div key={step.label} className={`flex items-center ${idx < arr.length - 1 ? 'flex-1' : ''}`}>
+                          <div className={`flex flex-col shrink-0 items-center gap-1 px-3 py-1 rounded-lg text-center min-w-[90px] text-xs font-medium ${
                             isDone ? "text-emerald-600" : isActive ? "text-primary" : "text-muted-foreground/50"
                           }`}>
-                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
                               isDone ? "bg-emerald-100 text-emerald-600" : isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground/40"
                             }`}>{idx + 1}</span>
                             <span>{step.label}</span>
@@ -668,7 +668,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                             }`}>{step.value}</span>
                           </div>
                           {idx < arr.length - 1 && (
-                            <div className={`h-px w-6 shrink-0 ${
+                            <div className={`h-px flex-1 shrink-0 min-w-[16px] ${
                               arr[idx].value === "Complete" ? "bg-emerald-300" : "bg-border/60"
                             }`} />
                           )}

@@ -7,7 +7,7 @@ export default function RegisterPage() {
       {/* Left Column: Branding */}
       <div className="shrink-0 border-b border-border/50 bg-primary/5 px-4 py-6 text-center md:flex md:flex-1 md:flex-col md:items-center md:justify-center md:border-b-0 md:border-r md:p-8">
         <div className="mx-auto flex w-full max-w-md flex-col items-center space-y-3 md:space-y-4">
-          <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-white md:h-20 md:w-20">
+          <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden border border-border/50 bg-white md:h-20 md:w-20">
             <Image
               src="/logo-main.jpg"
               alt="BWD Logo"
