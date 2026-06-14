@@ -19,7 +19,7 @@ import {
   useSortable
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 
 import { createSeminarItemAction, deleteSeminarItemAction, updateSeminarItemAction, reorderSeminarItemsAction } from "@/actions/seminar";
 import { initialActionState } from "@/actions/state";
@@ -107,7 +107,19 @@ function DeleteSeminarButton({ seminarItemId }: { seminarItemId: string }) {
   );
 }
 
-function SeminarItemRow({ item }: { item: SeminarItem }) {
+function SeminarItemRow({ 
+  item,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown
+}: { 
+  item: SeminarItem;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+}) {
   const [isEditing, setIsEditing] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [state, formAction, pending] = useActionState(updateSeminarItemAction, initialActionState);
@@ -391,6 +403,12 @@ function SeminarItemRow({ item }: { item: SeminarItem }) {
         </div>
         </div>
       <div className="flex items-center gap-2 shrink-0">
+        <Button variant="outline" size="icon" onClick={onMoveUp} disabled={!canMoveUp} aria-label="Move Up" title="Move Up">
+          <ChevronUp className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon" onClick={onMoveDown} disabled={!canMoveDown} aria-label="Move Down" title="Move Down">
+          <ChevronDown className="h-4 w-4" />
+        </Button>
         <Button variant="outline" size="icon" onClick={() => setIsEditing(true)}>
           <Pencil className="h-4 w-4" />
         </Button>
@@ -448,6 +466,25 @@ export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
       // Fire server action to persist the new order in background
       reorderSeminarItemsAction(reorderedItems.map((i) => ({ id: i.id, displayOrder: i.display_order })));
     }
+  };
+
+  const handleMove = (index: number, direction: 'up' | 'down') => {
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= items.length) return;
+
+    const newItems = arrayMove(items, index, newIndex);
+
+    // Reassign display_order
+    const reorderedItems = newItems.map((item, idx) => ({
+      ...item,
+      display_order: idx
+    }));
+
+    // Update local state first for immediate UI feedback
+    setItems(reorderedItems);
+
+    // Fire server action to persist the new order in background
+    reorderSeminarItemsAction(reorderedItems.map((i) => ({ id: i.id, displayOrder: i.display_order })));
   };
 
   return (
@@ -549,8 +586,15 @@ export function SeminarItemForm({ items: initialItems }: SeminarItemFormProps) {
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-                {items.map((item) => (
-                  <SeminarItemRow key={item.id} item={item} />
+                {items.map((item, index) => (
+                  <SeminarItemRow
+                    key={item.id}
+                    item={item}
+                    onMoveUp={() => handleMove(index, 'up')}
+                    onMoveDown={() => handleMove(index, 'down')}
+                    canMoveUp={index > 0}
+                    canMoveDown={index < items.length - 1}
+                  />
                 ))}
               </SortableContext>
             </DndContext>
