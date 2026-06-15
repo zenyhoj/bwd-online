@@ -91,6 +91,7 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
     return [
       { href: "/applicant", label: "Dashboard", icon: Home },
       { href: "/applicant/water-bills", label: "Water Bills", icon: Droplets },
+      { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/payments", label: "Payments", icon: CreditCard },
       { href: "/manual", label: "User Manual", icon: HelpCircle }
     ];
