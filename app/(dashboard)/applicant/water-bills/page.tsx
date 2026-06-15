@@ -5,7 +5,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info, Droplets } from "lucide-react";
+import { Info, Droplets, Plus } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { ConcessionaireFilter } from "@/components/applicant/concessionaire-filter";
 
@@ -120,8 +120,11 @@ export default async function ApplicantWaterBillsPage({
         </div>
         
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 items-end sm:items-center">
-          <Button asChild variant="ghost" className="text-primary hover:text-primary/80 hover:bg-primary/10">
-            <Link href="/applicant#link-account">Link another account</Link>
+          <Button asChild variant="outline" className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5 bg-background whitespace-nowrap shadow-sm font-medium">
+            <Link href="/applicant#link-account">
+              <Plus className="h-4 w-4" />
+              Link another account
+            </Link>
           </Button>
           {showFilter && (
             <div className="w-full sm:w-auto">

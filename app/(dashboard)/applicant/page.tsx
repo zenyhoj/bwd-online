@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
@@ -385,8 +385,11 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                     <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50 bg-white">
                       <Link href="/applicant/water-bills">View Water Bills</Link>
                     </Button>
-                    <Button asChild variant="ghost" className="text-emerald-700 hover:bg-emerald-100/50 hover:text-emerald-800">
-                      <a href="#link-account">Link another account</a>
+                    <Button asChild variant="outline" className="gap-2 rounded-full border-emerald-500/20 text-emerald-700 hover:bg-emerald-50 bg-white whitespace-nowrap shadow-sm font-medium">
+                      <a href="#link-account">
+                        <Plus className="h-4 w-4" />
+                        Link another account
+                      </a>
                     </Button>
                   </div>
                 </div>
