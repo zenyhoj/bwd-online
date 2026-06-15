@@ -640,7 +640,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                         )
                       ) : null}
                       {/* Temporary Cleanup Button - Comment out or remove when done */}
-                      <DeleteApplicantButton applicantId={String(selectedApplication.applicant_id)} />
+                      {/* <DeleteApplicantButton applicantId={String(selectedApplication.applicant_id)} /> */}
                     </div>
                   </div>
                 </div>
