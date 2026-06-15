@@ -174,3 +174,88 @@ export async function updateApplicationStatusAction(_prevState: ActionState, for
     return { success: true, message: "Application status updated." };
   });
 }
+
+export async function deleteApplicantAndApplicationsAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Unauthorized. Only administrators can delete applicants." };
+    }
+
+    const applicantId = formData.get("applicantId")?.toString();
+    if (!applicantId) {
+      return { success: false, message: "Applicant ID is required." };
+    }
+
+    // Ensure applicant belongs to admin's organization
+    const { data: applicant, error: applicantError } = await supabase
+      .from("applicants")
+      .select("id")
+      .eq("id", applicantId)
+      .eq("organization_id", profile.organization_id)
+      .maybeSingle();
+
+    if (applicantError || !applicant) {
+      return { success: false, message: "Applicant not found or access denied." };
+    }
+
+    // 1. Delete physical files from storage
+    const { data: documents } = await supabase
+      .from("documents")
+      .select("file_path")
+      .eq("applicant_id", applicantId)
+      .eq("organization_id", profile.organization_id);
+
+    if (documents && documents.length > 0) {
+      const filePaths = documents.map((doc) => doc.file_path).filter(Boolean);
+      if (filePaths.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from("application-documents")
+          .remove(filePaths);
+
+        if (storageError) {
+          console.error("Failed to delete some storage files:", storageError);
+          // Continue anyway to clear the database
+        }
+      }
+    }
+
+    // 2. Cascade delete database records manually to avoid FK constraint errors if ON DELETE CASCADE is missing
+    const { data: applications } = await supabase
+      .from("applications")
+      .select("id")
+      .eq("applicant_id", applicantId);
+
+    const appIds = applications?.map(app => app.id) ?? [];
+
+    if (appIds.length > 0) {
+      await supabase.from("documents").delete().in("application_id", appIds);
+      await supabase.from("inspections").delete().in("application_id", appIds);
+      await supabase.from("payments").delete().in("application_id", appIds);
+      await supabase.from("seminar_progress").delete().in("application_id", appIds);
+      await supabase.from("applications").delete().in("id", appIds);
+    }
+
+    await supabase.from("applicant_seminar_progress").delete().eq("applicant_id", applicantId);
+    
+    // Attempt to delete concessionaires (if converted)
+    const { error: concessionaireError } = await supabase.from("concessionaires").delete().eq("applicant_id", applicantId);
+    if (concessionaireError) {
+      return { 
+        success: false, 
+        message: "Cannot delete this applicant because they have active concessionaire records (e.g. water meters or bills) that must be removed first." 
+      };
+    }
+    
+    // Finally, delete the applicant
+    const { error: deleteError } = await supabase.from("applicants").delete().eq("id", applicantId);
+
+    if (deleteError) {
+      return { success: false, message: deleteError.message };
+    }
+
+    revalidatePath("/admin");
+    return { success: true, message: "Applicant and related data successfully deleted.", redirectTo: "/admin" };
+  });
+}

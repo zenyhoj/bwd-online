@@ -10,6 +10,7 @@ import { InspectionForm } from "@/components/inspector/inspection-form";
 import { InstallationSchedulerForm } from "@/components/admin/installation-scheduler-form";
 import { PaymentSchedulerForm } from "@/components/admin/payment-scheduler-form";
 import { QueueFilters } from "@/components/admin/queue-filters";
+import { DeleteApplicantButton } from "@/components/admin/delete-applicant-button";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -638,6 +639,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                           </Button>
                         )
                       ) : null}
+                      {/* Temporary Cleanup Button - Comment out or remove when done */}
+                      <DeleteApplicantButton applicantId={String(selectedApplication.applicant_id)} />
                     </div>
                   </div>
                 </div>
