@@ -8,8 +8,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { UploadCloud, CheckCircle2, FileWarning, Loader2 } from "lucide-react";
 import { uploadWaterBillsAction, clearWaterBillsAction, type WaterBillUploadData } from "@/actions/water-bills";
 import { useRouter } from "next-nprogress-bar";
+import { ClearWaterBillsButton } from "@/components/admin/clear-water-bills-button";
+import { formatDateTime } from "@/lib/format";
 
-export function WaterBillsUpload() {
+export function WaterBillsUpload({
+  recordsCount,
+  lastUploadDate,
+}: {
+  recordsCount: number;
+  lastUploadDate: string | null;
+}) {
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -191,14 +199,27 @@ export function WaterBillsUpload() {
             <UploadCloud className="h-10 w-10 text-muted-foreground mb-4" />
             <p className="mb-2 text-sm font-medium">Drag & drop your Excel file here</p>
             <p className="text-xs text-muted-foreground mb-4">Supports .xlsx and .xls</p>
-            <div className="relative">
-              <Button variant="outline" size="sm">Select File</Button>
-              <input
-                type="file"
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                accept=".xlsx, .xls, .csv"
-                onChange={handleFileSelect}
-              />
+            <div className="flex flex-col items-center gap-4 w-full">
+              <div className="flex items-center justify-center gap-3">
+                <div className="relative">
+                  <Button variant="outline" size="sm" className="rounded-full shadow-sm">
+                    Select File
+                  </Button>
+                  <input
+                    type="file"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    accept=".xlsx, .xls, .csv"
+                    onChange={handleFileSelect}
+                  />
+                </div>
+                <ClearWaterBillsButton />
+              </div>
+              
+              <div className="text-[11px] text-muted-foreground font-medium flex items-center justify-center gap-3 whitespace-nowrap py-1.5 px-4 bg-secondary/50 border border-border/30 rounded-full mt-6">
+                <span>No. of Records: <span className="text-foreground font-bold">{recordsCount}</span></span>
+                <span className="text-muted-foreground/30">|</span>
+                <span>Last Upload Date: <span className="text-foreground font-bold">{lastUploadDate ? formatDateTime(lastUploadDate) : "Never"}</span></span>
+              </div>
             </div>
           </div>
         )}

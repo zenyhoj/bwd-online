@@ -1,11 +1,58 @@
 import { WaterBillsUpload } from "@/components/admin/water-bills-upload";
-import { ClearWaterBillsButton } from "@/components/admin/clear-water-bills-button";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Water Bills | BWD Online Admin",
 };
 
-export default function AdminWaterBillsPage() {
+export default async function AdminWaterBillsPage() {
+  const supabase = await createSupabaseServerClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return redirect("/login");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("organization_id, role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "admin") {
+    return redirect("/");
+  }
+
+  // Get total count of water bills for this organization
+  const { count, error: countError } = await supabase
+    .from("water_bills")
+    .select("*", { count: "exact", head: true })
+    .eq("organization_id", profile.organization_id);
+
+  if (countError) {
+    console.error("Failed to fetch water bills count:", countError);
+  }
+
+  // Get the last upload date (max created_at)
+  const { data: latestBill, error: dateError } = await supabase
+    .from("water_bills")
+    .select("created_at")
+    .eq("organization_id", profile.organization_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (dateError) {
+    console.error("Failed to fetch latest water bill:", dateError);
+  }
+
+  const recordsCount = count ?? 0;
+  const lastUploadDate = latestBill?.created_at ?? null;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -15,14 +62,11 @@ export default function AdminWaterBillsPage() {
             Upload and manage monthly water bills for all concessionaires.
           </p>
         </div>
-        <div className="flex shrink-0">
-          <ClearWaterBillsButton />
-        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <WaterBillsUpload />
+          <WaterBillsUpload recordsCount={recordsCount} lastUploadDate={lastUploadDate} />
         </div>
         <div>
           <div className="rounded-xl border bg-card text-card-foreground shadow">
