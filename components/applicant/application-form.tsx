@@ -283,7 +283,7 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
                 <p className="text-xs text-destructive">{errorText("classification")}</p>
               ) : (
                 <p className="text-xs text-muted-foreground">
-                  Determines the application fee. Residential/Commercial C: P3,000 · Commercial A&B: P4,000 · Industrial/Bulk: P5,000
+                  Determines the application fee. Residential/Government: P3,000 · Commercial: P4,000 · Industrial: P5,000
                 </p>
               )}
             </div>
