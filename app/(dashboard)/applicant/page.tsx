@@ -338,6 +338,16 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
 
       <div className="grid gap-6 md:grid-cols-12 min-w-0">
         <div className="md:col-span-12 space-y-6 min-w-0">
+          {applicants.length > 1 ? (
+            <ApplicantSwitcher
+              applicants={applicants}
+              selectedApplicantId={selectedApplicant?.id}
+              basePath="/applicant"
+              title="Accounts"
+              description="Switch accounts."
+            />
+          ) : null}
+
           <Card className="border-border/70 shadow-sm min-w-0">
             <CardHeader className="pb-4 min-w-0 w-full">
               <CardTitle className="text-2xl font-semibold tracking-tight break-words">Application Workflow: {selectedApplicantName}</CardTitle>
@@ -727,17 +737,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           documents={documents ?? []}
           isUploadUnlocked={inspectionApproved}
           isActive={isUploadDocsActive}
-        />
-      ) : null}
-
-
-      {applicants.length > 1 ? (
-        <ApplicantSwitcher
-          applicants={applicants}
-          selectedApplicantId={selectedApplicant?.id}
-          basePath="/applicant"
-          title="Accounts"
-          description="Switch accounts."
         />
       ) : null}
 
