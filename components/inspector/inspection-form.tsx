@@ -108,7 +108,7 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
         </div>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-4 ${isReadOnly ? "opacity-75" : ""}`}>
+        <form action={formAction} className={`grid gap-4 grid-cols-1 sm:grid-cols-2 ${isReadOnly ? "opacity-75" : ""}`}>
           <input type="hidden" name="inspectionId" value={inspection.id} />
           <div className="space-y-1.5">
             <Label htmlFor="status">Status</Label>
@@ -157,11 +157,11 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
               <p className="text-[10px] leading-tight text-destructive">Set an accredited plumber in Inhouse installation.</p>
             ) : null}
           </div>
-          <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
+          <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="remarks">Remarks</Label>
             <Textarea id="remarks" name="remarks" defaultValue={inspection.remarks ?? ""} disabled={isReadOnly} required rows={2} />
           </div>
-          <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
+          <div className="space-y-1.5 sm:col-span-2">
             <Label htmlFor="materialList">Material list</Label>
             <Textarea
               id="materialList"
@@ -173,7 +173,7 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
               rows={2}
             />
           </div>
-          <div className="space-y-1.5 sm:col-span-2 lg:col-span-2 relative">
+          <div className="space-y-1.5 sm:col-span-2 relative">
             <Label htmlFor="referenceAccountName">Reference account name</Label>
             <div className="flex gap-2">
               <Input
@@ -225,18 +225,18 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
             <Label htmlFor="accountNumber">Account number</Label>
             <Input id="accountNumber" name="accountNumber" defaultValue={inspection.account_number ?? ""} disabled={isReadOnly} required />
           </div>
-          <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
+          <div className="space-y-1.5">
             <Label htmlFor="latitude">Latitude</Label>
             <Input id="latitude" name="latitude" type="number" step="0.0000001" defaultValue={inspection.latitude ?? undefined} disabled={isReadOnly} required ref={latRef} />
           </div>
-          <div className="space-y-1.5 sm:col-span-2 lg:col-span-2">
+          <div className="space-y-1.5">
             <Label htmlFor="longitude">Longitude</Label>
             <Input id="longitude" name="longitude" type="number" step="0.0000001" defaultValue={inspection.longitude ?? undefined} disabled={isReadOnly} required ref={lngRef} />
           </div>
-          <div className="sm:col-span-2 lg:col-span-4">
+          <div className="sm:col-span-2">
             <FormMessage state={state} />
           </div>
-          <div className="sm:col-span-2 lg:col-span-4">
+          <div className="sm:col-span-2">
             <Button type="submit" disabled={!hasPulledPlumber || isReadOnly} loading={pending}>
               Save inspection
             </Button>

@@ -120,7 +120,7 @@ export async function getApplicantApplications(applicantId: string) {
     supabase
       .from("applications")
       .select(
-        "*, inspections(scheduled_at,status,plumbing_approved,remarks,inspected_at,account_number), payments(id,payment_type,amount,due_date,office_payment_at,status,paid_at,official_receipt_number,notes), concessionaires(*)"
+        "*, inspections(scheduled_at,status,plumbing_approved,remarks,inspected_at,account_number,inspector_name), payments(id,payment_type,amount,due_date,office_payment_at,status,paid_at,official_receipt_number,notes), concessionaires(*)"
       )
       .eq("applicant_id", applicantId)
       .order("created_at", { ascending: false });
@@ -129,7 +129,7 @@ export async function getApplicantApplications(applicantId: string) {
     supabase
       .from("applications")
       .select(
-        "*, inspections(scheduled_at,status,plumbing_approved,remarks,inspected_at,account_number), payments(id,payment_type,amount,due_date,status,paid_at,official_receipt_number,notes), concessionaires(*)"
+        "*, inspections(scheduled_at,status,plumbing_approved,remarks,inspected_at,account_number,inspector_name), payments(id,payment_type,amount,due_date,status,paid_at,official_receipt_number,notes), concessionaires(*)"
       )
       .eq("applicant_id", applicantId)
       .order("created_at", { ascending: false });

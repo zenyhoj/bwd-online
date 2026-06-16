@@ -697,74 +697,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       {activeAction === "water-meter-complete" && "Waiting for installation: Water meter installation is scheduled. Wait for completion and mark it here."}
                       {!activeAction && "Workflow completed: All workflow steps have been finished and the account is converted."}
                     </p>
-                    {activeAction ? (
-                      <div className="mt-8 rounded-xl border-2 border-primary/20 bg-background p-6 shadow-sm">
-                        <div className="mb-6 flex items-start justify-between gap-4">
-                          <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">Active Workflow Step</p>
-                          <Badge variant="default" className="text-[10px] shrink-0 font-medium px-2.5 py-0.5">Next</Badge>
-                        </div>
-                        {activeAction === "inhouse-plumbing" && (
-                          <InhouseInstallationForm
-                            applicationId={String(selectedApplication.id)}
-                            plumbers={plumbers}
-                            currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
-                            currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
-                            currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
-                            currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
-                            isCompleted={false}
-                            variant="admin"
-                          />
-                        )}
-                        {activeAction === "inspection" && (
-                          <div className="space-y-6">
-                            <InspectionSchedulerForm
-                              applicationId={String(selectedApplication.id)}
-                              inspectors={inspectors}
-                              existingInspection={
-                                latestSelectedInspection?.id
-                                  ? {
-                                      id: String(latestSelectedInspection.id),
-                                      status: latestSelectedInspection.status,
-                                      scheduled_at: latestSelectedInspection.scheduled_at,
-                                      inspector_name: (latestSelectedInspection as Record<string, unknown>).inspector_name as string | null ?? null
-                                    }
-                                  : null
-                              }
-                            />
-                            {latestSelectedInspection?.id && (
-                              <InspectionForm
-                                inspection={latestSelectedInspection as any}
-                                pulledPlumberName={(selectedApplication.accredited_plumbers as { full_name: string } | undefined)?.full_name ?? null}
-                              />
-                            )}
-                          </div>
-                        )}
-                        {activeAction === "payment" && (
-                          <PaymentSchedulerForm
-                            applicationId={String(selectedApplication.id)}
-                            payment={latestSelectedPayment ?? undefined}
-                            canSchedule={canSchedulePayment}
-                            scheduleHint="You can schedule the office payment date here after the inspection is approved."
-                            classification={(selectedApplication as Record<string, unknown>).concessionaire_classification as string | null}
-                          />
-                        )}
-                        {activeAction === "documents" && null}
-                        {activeAction === "water-meter-schedule" && (
-                          <WaterMeterSchedulerForm
-                            applicationId={String(selectedApplication.id)}
-                            scheduledAt={(selectedApplication.water_meter_installation_scheduled_at as string | null | undefined) ?? null}
-                            canSchedule={Boolean(selectedApplication.inhouse_installation_completed)}
-                            minDateOverride={latestSelectedPayment?.paid_at ?? null}
-                          />
-                        )}
-                        {activeAction === "water-meter-complete" && (
-                          <WaterMeterCompletionForm
-                            applicationId={String(selectedApplication.id)}
-                            scheduledAt={(selectedApplication.water_meter_installation_scheduled_at as string)}
-                          />
-                        )}
-                      </div>
-                    ) : null}
                   </div>
 
                   <div className="p-6">
@@ -819,6 +751,77 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     </dl>
                   </div>
                 </div>
+
+                {activeAction ? (
+                  <div className="border-t border-border/50 p-6 bg-primary/[0.02]">
+                    <div className="rounded-xl border-2 border-primary/20 bg-background p-6 shadow-sm">
+                      <div className="mb-6 flex items-start justify-between gap-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-primary font-semibold">Active Workflow Step</p>
+                        <Badge variant="default" className="text-[10px] shrink-0 font-medium px-2.5 py-0.5">Next</Badge>
+                      </div>
+                      {activeAction === "inhouse-plumbing" && (
+                        <InhouseInstallationForm
+                          applicationId={String(selectedApplication.id)}
+                          plumbers={plumbers}
+                          currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
+                          currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
+                          currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
+                          currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
+                          isCompleted={false}
+                          variant="admin"
+                        />
+                      )}
+                      {activeAction === "inspection" && (
+                        <div className="space-y-6">
+                          <InspectionSchedulerForm
+                            applicationId={String(selectedApplication.id)}
+                            inspectors={inspectors}
+                            existingInspection={
+                              latestSelectedInspection?.id
+                                ? {
+                                    id: String(latestSelectedInspection.id),
+                                    status: latestSelectedInspection.status,
+                                    scheduled_at: latestSelectedInspection.scheduled_at,
+                                    inspector_name: (latestSelectedInspection as Record<string, unknown>).inspector_name as string | null ?? null
+                                  }
+                                : null
+                            }
+                          />
+                          {latestSelectedInspection?.id && (
+                            <InspectionForm
+                              inspection={latestSelectedInspection as any}
+                              pulledPlumberName={(selectedApplication.accredited_plumbers as { full_name: string } | undefined)?.full_name ?? null}
+                            />
+                          )}
+                        </div>
+                      )}
+                      {activeAction === "payment" && (
+                        <PaymentSchedulerForm
+                          applicationId={String(selectedApplication.id)}
+                          payment={latestSelectedPayment ?? undefined}
+                          canSchedule={canSchedulePayment}
+                          scheduleHint="You can schedule the office payment date here after the inspection is approved."
+                          classification={(selectedApplication as Record<string, unknown>).concessionaire_classification as string | null}
+                        />
+                      )}
+                      {activeAction === "documents" && null}
+                      {activeAction === "water-meter-schedule" && (
+                        <WaterMeterSchedulerForm
+                          applicationId={String(selectedApplication.id)}
+                          scheduledAt={(selectedApplication.water_meter_installation_scheduled_at as string | null | undefined) ?? null}
+                          canSchedule={Boolean(selectedApplication.inhouse_installation_completed)}
+                          minDateOverride={latestSelectedPayment?.paid_at ?? null}
+                        />
+                      )}
+                      {activeAction === "water-meter-complete" && (
+                        <WaterMeterCompletionForm
+                          applicationId={String(selectedApplication.id)}
+                          scheduledAt={(selectedApplication.water_meter_installation_scheduled_at as string)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="border-t border-border/50 p-6">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-4">Document verification</p>

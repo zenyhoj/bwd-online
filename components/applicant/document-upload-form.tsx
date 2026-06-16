@@ -11,13 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { compressImage } from "@/lib/image-utils";
+import { cn } from "@/lib/utils";
 
 type DocumentUploadFormProps = {
   applicationId: string;
   allowedDocumentTypes?: string[];
+  isActive?: boolean;
 };
 
-export function DocumentUploadForm({ applicationId, allowedDocumentTypes }: DocumentUploadFormProps) {
+export function DocumentUploadForm({ applicationId, allowedDocumentTypes, isActive }: DocumentUploadFormProps) {
   const [state, formAction, pending] = useActionState(uploadDocumentAction, initialActionState);
   const [isCompressing, setIsCompressing] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -76,7 +78,15 @@ export function DocumentUploadForm({ applicationId, allowedDocumentTypes }: Docu
   };
 
   return (
-    <Card className="border-primary/20 shadow-sm overflow-hidden">
+    <Card className={cn(
+      "border-primary/20 shadow-sm overflow-hidden transition-all duration-300 relative",
+      isActive && "ring-2 ring-primary border-primary/50 shadow-xl shadow-primary/10 bg-[linear-gradient(180deg,rgba(37,99,235,0.015),transparent)]"
+    )}>
+      {isActive && (
+        <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary animate-pulse-slow">
+          Active Next Step
+        </span>
+      )}
       <CardHeader className="bg-primary/[0.02] border-b border-primary/10">
         <CardTitle className="text-xl">Upload required documents</CardTitle>
       </CardHeader>

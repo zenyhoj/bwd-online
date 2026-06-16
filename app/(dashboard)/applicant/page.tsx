@@ -13,9 +13,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { getAccreditedPlumbers, getApplicants, getApplicantApplications, getApplicantSeminarState } from "@/lib/queries";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 
 function getScheduledInspectionDate(application: {
   inspections?: { scheduled_at?: string | null; inspected_at?: string | null; status?: string | null }[];
@@ -30,9 +31,13 @@ function getScheduledInspectionDate(application: {
 }
 
 function hasApprovedInspection(application: {
-  inspections?: { status?: string | null }[];
+  inspections?: { status?: string | null; scheduled_at?: string | null }[];
 }) {
-  return application.inspections?.some((inspection) => inspection.status === "approved") ?? false;
+  if (!application.inspections || application.inspections.length === 0) return false;
+  const latest = [...application.inspections].sort(
+    (a, b) => new Date(b.scheduled_at ?? 0).getTime() - new Date(a.scheduled_at ?? 0).getTime()
+  )[0];
+  return latest?.status === "approved";
 }
 
 function getLatestPayment(application: {
@@ -100,8 +105,11 @@ function getEffectiveWorkflowStatus(application: {
     paid_at?: string | null;
     status?: string | null;
   }[];
+  inspections?: { status?: string | null; scheduled_at?: string | null }[];
 }) {
   const latestPayment = getLatestPayment(application);
+  const hasInspectionApproved = hasApprovedInspection(application);
+  const hasScheduled = (application.inspections ?? []).length > 0;
 
   if (application.status === "converted") {
     return "converted";
@@ -119,8 +127,22 @@ function getEffectiveWorkflowStatus(application: {
     return "ready for installation";
   }
 
-  if (application.inhouse_installation_completed) {
+  if (hasInspectionApproved) {
     return "inspection approved";
+  }
+
+  if (hasScheduled) {
+    const latest = [...(application.inspections ?? [])].sort(
+      (a, b) => new Date(b.scheduled_at ?? 0).getTime() - new Date(a.scheduled_at ?? 0).getTime()
+    )[0];
+    if (latest?.status === "rejected") {
+      return "inspection disapproved";
+    }
+    return "inspection scheduled";
+  }
+
+  if (application.inhouse_installation_completed) {
+    return "plumbing completed";
   }
 
   return application.status ?? "submitted";
@@ -295,6 +317,11 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
     : { accountNumber: null, connectionDate: null, meterNumber: null, isConverted: false };
   const effectiveWorkflowStatus = selectedApplication ? getEffectiveWorkflowStatus(selectedApplication) : null;
   const latestInspectionSchedule = selectedApplication ? getScheduledInspectionDate(selectedApplication) : null;
+  const latestInspection = selectedApplication?.inspections
+    ? [...selectedApplication.inspections].sort(
+        (a, b) => new Date(b.scheduled_at ?? 0).getTime() - new Date(a.scheduled_at ?? 0).getTime()
+      )[0] ?? null
+    : null;
   const inspectionApproved = selectedApplication ? hasApprovedInspection(selectedApplication) : false;
   const documentsReady =
     selectedApplication && inspectionApproved
@@ -324,83 +351,18 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   });
   const showPrimaryActionButton = Boolean(primaryAction) && !(selectedApplication && !latestPayment && !inhouseCompleted);
 
+  const isInhousePlumbingActive = selectedApplication && !inhouseCompleted && primaryAction?.label === "Complete inhouse plumbing";
+  const isInspectionActive = selectedApplication && inhouseCompleted && !inspectionApproved;
+  const isUploadDocsActive = selectedApplication && inspectionApproved && !documentsReady && primaryAction?.label === "Upload documents";
+  const isPaymentActive = selectedApplication && inspectionApproved && documentsReady && latestPayment?.status !== "paid";
+  const isWaterMeterActive = selectedApplication && latestPayment?.status === "paid" && !selectedApplication.water_meter_installed_at;
+
   return (
     <div className="space-y-6">
       <PushPromptCard />
 
       <div className="grid gap-6 md:grid-cols-12 min-w-0">
         <div className="md:col-span-12 space-y-6 min-w-0">
-          <Card className="border-border/70 shadow-sm min-w-0">
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 min-w-0">
-              <div className="min-w-0 w-full">
-                <CardTitle className="text-2xl font-semibold break-words">Concessionaire Accounts & Water Bills</CardTitle>
-                <CardDescription className="break-words">Manage your active water connections, view bills, and link legacy accounts.</CardDescription>
-              </div>
-              {applicants.length <= 1 && (
-                <div className="flex justify-end gap-2 shrink-0">
-                  <Button asChild variant="secondary" size="sm">
-                    <Link href="/applicant/new">New Application</Link>
-                  </Button>
-                </div>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {applicants.length > 1 ? (
-                <ApplicantSwitcher
-                  applicants={applicants}
-                  selectedApplicantId={selectedApplicant?.id}
-                  basePath="/applicant"
-                  title="Accounts"
-                  description="Switch accounts."
-                />
-              ) : null}
-
-              {isConverted ? (
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/50 p-6">
-                  <h2 className="text-xl font-bold text-emerald-800">
-                    You have {concessionaires.length > 1 ? `${concessionaires.length} active water connections!` : "an active water connection!"}
-                  </h2>
-                  <p className="mt-2 text-sm text-emerald-700/80">
-                    Your account is successfully linked. You can now view your water bills from the navigation menu.
-                  </p>
-                  <div className="mt-4 space-y-1 rounded-md bg-emerald-100/50 p-3">
-                    {concessionaires?.map((c) => {
-                      const name = accountNames[c.id] || applicants.find((a) => a.id === c.applicant_id)?.full_name || "Unknown Account";
-                      return (
-                        <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between group gap-2 sm:gap-0">
-                          <div className="flex items-center text-sm font-medium text-emerald-800 min-w-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0" />
-                            <span className="font-mono shrink-0">{c.concessionaire_number}</span>
-                            <span className="mx-2 text-emerald-600/50 shrink-0">—</span>
-                            <span className="truncate">{name}</span>
-                          </div>
-                          <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                            <UnlinkAccountButton concessionaireId={c.id} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50 bg-white">
-                      <Link href="/applicant/water-bills">View Water Bills</Link>
-                    </Button>
-                    <Button asChild variant="outline" className="gap-2 rounded-full border-emerald-500/20 text-emerald-700 hover:bg-emerald-50 bg-white whitespace-nowrap shadow-sm font-medium">
-                      <a href="#link-account">
-                        <Plus className="h-4 w-4" />
-                        Link another account
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-
-              <div id="link-account" className={isConverted ? "opacity-90 transition-opacity hover:opacity-100 max-w-2xl" : "max-w-2xl"}>
-                <LinkAccountCard />
-              </div>
-            </CardContent>
-          </Card>
-
           <Card className="border-border/70 shadow-sm min-w-0">
             <CardHeader className="pb-4 min-w-0 w-full">
               <CardTitle className="text-2xl font-semibold tracking-tight break-words">Application Workflow: {selectedApplicantName}</CardTitle>
@@ -487,7 +449,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                 <div className="rounded-xl border border-muted-foreground/20 bg-muted/10 p-4">
                   <p className="font-medium text-foreground">Waiting for Inspector: Inspection scheduled</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Your inspection is scheduled. Please prepare for the site visit and await the inspector's approval.
+                    Your inspection is scheduled for <span className="font-semibold text-foreground">{formatDateTime(latestInspectionSchedule)}</span>. Please prepare for the site visit and await the inspector's approval.
                   </p>
                 </div>
               );
@@ -552,21 +514,49 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           ) : null}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: "clamp(8px, 1.5vw, 12px)" }}>
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+            <div className={`rounded-xl border p-3 transition-colors ${
+              isInhousePlumbingActive
+                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
+                : "border-border/60 bg-muted/5 hover:bg-muted/10"
+            }`}>
               <div className="flex items-start justify-between gap-2">
-                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Inspection</p>
-                {selectedApplication?.inspections?.[0] && (
+                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Plumbing</p>
+                {selectedApplication?.inhouse_installation_completed && (
                   <div className="mt-0.5 sm:mt-0">
-                    <StatusBadge status={selectedApplication.inspections[0].status ?? "pending"} />
+                    <StatusBadge status="completed" />
                   </div>
                 )}
               </div>
               <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
-                {latestInspectionSchedule ? formatDate(latestInspectionSchedule) : "Not scheduled"}
+                {selectedApplication?.inhouse_installation_completed_at
+                  ? formatDate(selectedApplication.inhouse_installation_completed_at)
+                  : "Pending"}
               </p>
             </div>
-            
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
+
+            <div className={`rounded-xl border p-3 transition-colors ${
+              isInspectionActive
+                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
+                : "border-border/60 bg-muted/5 hover:bg-muted/10"
+            }`}>
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Inspection</p>
+                {latestInspection && (
+                  <div className="mt-0.5 sm:mt-0">
+                    <StatusBadge status={latestInspection.status === "rejected" ? "disapproved" : (latestInspection.status ?? "pending")} />
+                  </div>
+                )}
+              </div>
+              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
+                {latestInspectionSchedule ? formatDateTime(latestInspectionSchedule) : "Not scheduled"}
+              </p>
+            </div>
+
+            <div className={`rounded-xl border p-3 transition-colors ${
+              isPaymentActive || isUploadDocsActive
+                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
+                : "border-border/60 bg-muted/5 hover:bg-muted/10"
+            }`}>
               <div className="flex items-start justify-between gap-2">
                 <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Payment</p>
                 {latestPayment && (
@@ -584,28 +574,14 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </p>
             </div>
 
-            <div className="rounded-xl border border-border/60 bg-muted/5 p-3 transition-colors hover:bg-muted/10">
-              <div className="flex items-start justify-between gap-2">
-                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Plumbing</p>
-                {selectedApplication?.inhouse_installation_completed && (
-                  <div className="mt-0.5 sm:mt-0">
-                    <StatusBadge status="completed" />
-                  </div>
-                )}
-              </div>
-              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
-                {selectedApplication?.inhouse_installation_completed_at
-                  ? formatDate(selectedApplication.inhouse_installation_completed_at)
-                  : "Pending"}
-              </p>
-            </div>
-
             <div className={`rounded-xl border p-3 transition-colors ${
-              selectedApplication?.water_meter_installed_at
-                ? "border-emerald-500/30 bg-emerald-50/30"
-                : selectedApplication?.water_meter_installation_scheduled_at
-                  ? "border-primary/30 bg-primary/5"
-                  : "border-border/60 bg-muted/5 hover:bg-muted/10"
+              isWaterMeterActive
+                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
+                : selectedApplication?.water_meter_installed_at
+                  ? "border-emerald-500/30 bg-emerald-50/30"
+                  : selectedApplication?.water_meter_installation_scheduled_at
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
               <div className="flex items-start justify-between gap-2">
                 <p className={`uppercase tracking-[0.14em] font-bold text-[10px] xl:text-xs ${
@@ -637,8 +613,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           </div>
 
-
-
           {showPrimaryActionButton ? (
             <div className="flex flex-wrap items-center gap-3">
               <Button asChild className={`h-10 w-full text-xs font-bold md:w-auto md:text-sm ${
@@ -663,7 +637,15 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
       </Card>
 
       {selectedApplication ? (
-        <Card className="border-border/70 shadow-sm">
+        <Card className={cn(
+          "border-border/70 shadow-sm transition-all duration-300 relative overflow-hidden",
+          isInhousePlumbingActive && "ring-2 ring-primary border-primary/50 shadow-xl shadow-primary/10 bg-[linear-gradient(180deg,rgba(37,99,235,0.015),transparent)]"
+        )}>
+          {isInhousePlumbingActive && (
+            <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary animate-pulse-slow">
+              Active Next Step
+            </span>
+          )}
           <CardContent className="p-6">
             <InhouseInstallationForm
               applicationId={selectedApplication.id}
@@ -680,13 +662,169 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
         </Card>
       ) : null}
 
+      {selectedApplication && inhouseCompleted ? (
+        <Card className={cn(
+          "border-border/70 shadow-sm transition-all duration-300 relative overflow-hidden",
+          isInspectionActive && "ring-2 ring-primary border-primary/50 shadow-xl shadow-primary/10 bg-[linear-gradient(180deg,rgba(37,99,235,0.015),transparent)]"
+        )}>
+          {isInspectionActive && (
+            <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary animate-pulse-slow">
+              Active Next Step
+            </span>
+          )}
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-xl font-semibold">Inspection Details</CardTitle>
+                <CardDescription>Track BWD inspection schedule, assigned inspector, and findings.</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                {latestInspection ? (
+                  <StatusBadge status={latestInspection.status === "rejected" ? "disapproved" : (latestInspection.status ?? "pending")} />
+                ) : (
+                  <StatusBadge status="pending schedule" />
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {!latestInspection ? (
+              <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-5 text-sm text-muted-foreground">
+                In-house plumbing is complete. BWD is now scheduling an inspector to visit your site. Please await the scheduled date and time.
+              </div>
+            ) : (
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                    <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Scheduled Date & Time</p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {latestInspection.scheduled_at ? formatDateTime(latestInspection.scheduled_at) : "TBD"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                    <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Assigned Inspector</p>
+                    <p className="mt-1 text-sm font-semibold text-foreground">
+                      {latestInspection.inspector_name ?? "Assigned soon"}
+                    </p>
+                  </div>
+                  {latestInspection.inspected_at && (
+                    <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                      <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Inspected At</p>
+                      <p className="mt-1 text-sm font-semibold text-foreground">
+                        {formatDateTime(latestInspection.inspected_at)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  {latestInspection.remarks && (
+                    <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                      <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Remarks / Findings</p>
+                      <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{latestInspection.remarks}</p>
+                    </div>
+                  )}
+
+                  {latestInspection.material_list && (
+                    <div className="rounded-lg bg-muted/30 p-4 border border-border/50">
+                      <p className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Required Materials</p>
+                      <ul className="mt-2 space-y-1 text-sm text-foreground list-disc list-inside">
+                        {latestInspection.material_list
+                          .split("\n")
+                          .map((item) => item.trim())
+                          .filter(Boolean)
+                          .map((item, idx) => (
+                            <li key={idx}>{item}</li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
       {selectedApplication && inspectionApproved ? (
         <ApplicantDocumentPanel
           application={selectedApplication as any}
           documents={documents ?? []}
           isUploadUnlocked={inspectionApproved}
+          isActive={isUploadDocsActive}
         />
       ) : null}
+
+          <Card className="border-border/70 shadow-sm min-w-0">
+            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 min-w-0">
+              <div className="min-w-0 w-full">
+                <CardTitle className="text-2xl font-semibold break-words">Concessionaire Accounts & Water Bills</CardTitle>
+                <CardDescription className="break-words">Manage your active water connections, view bills, and link legacy accounts.</CardDescription>
+              </div>
+              {applicants.length <= 1 && (
+                <div className="flex justify-end gap-2 shrink-0">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href="/applicant/new">New Application</Link>
+                  </Button>
+                </div>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {applicants.length > 1 ? (
+                <ApplicantSwitcher
+                  applicants={applicants}
+                  selectedApplicantId={selectedApplicant?.id}
+                  basePath="/applicant"
+                  title="Accounts"
+                  description="Switch accounts."
+                />
+              ) : null}
+
+              {isConverted ? (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/50 p-6">
+                  <h2 className="text-xl font-bold text-emerald-800">
+                    You have {concessionaires.length > 1 ? `${concessionaires.length} active water connections!` : "an active water connection!"}
+                  </h2>
+                  <p className="mt-2 text-sm text-emerald-700/80">
+                    Your account is successfully linked. You can now view your water bills from the navigation menu.
+                  </p>
+                  <div className="mt-4 space-y-1 rounded-md bg-emerald-100/50 p-3">
+                    {concessionaires?.map((c) => {
+                      const name = accountNames[c.id] || applicants.find((a) => a.id === c.applicant_id)?.full_name || "Unknown Account";
+                      return (
+                        <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between group gap-2 sm:gap-0">
+                          <div className="flex items-center text-sm font-medium text-emerald-800 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0" />
+                            <span className="font-mono shrink-0">{c.concessionaire_number}</span>
+                            <span className="mx-2 text-emerald-600/50 shrink-0">—</span>
+                            <span className="truncate">{name}</span>
+                          </div>
+                          <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                            <UnlinkAccountButton concessionaireId={c.id} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50 bg-white">
+                      <Link href="/applicant/water-bills">View Water Bills</Link>
+                    </Button>
+                    <Button asChild variant="outline" className="gap-2 rounded-full border-emerald-500/20 text-emerald-700 hover:bg-emerald-50 bg-white whitespace-nowrap shadow-sm font-medium">
+                      <a href="#link-account">
+                        <Plus className="h-4 w-4" />
+                        Link another account
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
+              <div id="link-account" className={isConverted ? "opacity-90 transition-opacity hover:opacity-100 max-w-2xl" : "max-w-2xl"}>
+                <LinkAccountCard />
+              </div>
+            </CardContent>
+          </Card>
 
       {applications.length > 1 ? (
         <ApplicationSwitcher

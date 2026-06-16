@@ -5,14 +5,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getDocumentDownloadHref } from "@/lib/document-links";
 import type { Application, Document } from "@/types";
 import { areDocumentsReadyForPayment, getDocumentRequirementRows } from "@/lib/document-workflow";
+import { cn } from "@/lib/utils";
 
 type ApplicantDocumentPanelProps = {
   application: Application;
   documents: Document[];
   isUploadUnlocked: boolean;
+  isActive?: boolean;
 };
 
-export function ApplicantDocumentPanel({ application, documents, isUploadUnlocked }: ApplicantDocumentPanelProps) {
+export function ApplicantDocumentPanel({ application, documents, isUploadUnlocked, isActive }: ApplicantDocumentPanelProps) {
   const requirementRows = getDocumentRequirementRows(documents);
   const documentsReady = isUploadUnlocked ? areDocumentsReadyForPayment(application) : false;
   
@@ -29,10 +31,18 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
       <div className="space-y-4">
         {actionableTypes.length > 0 ? (
           <>
-            <DocumentUploadForm applicationId={application.id} allowedDocumentTypes={actionableTypes} />
+            <DocumentUploadForm applicationId={application.id} allowedDocumentTypes={actionableTypes} isActive={isActive} />
           </>
         ) : (
-          <Card>
+          <Card className={cn(
+            "border-border/70 shadow-sm transition-all duration-300 relative overflow-hidden",
+            isActive && "ring-2 ring-primary border-primary/50 shadow-xl shadow-primary/10 bg-[linear-gradient(180deg,rgba(37,99,235,0.015),transparent)]"
+          )}>
+            {isActive && (
+              <span className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary animate-pulse-slow">
+                Active Next Step
+              </span>
+            )}
             <CardHeader>
               <CardTitle>Uploads complete</CardTitle>
             </CardHeader>
