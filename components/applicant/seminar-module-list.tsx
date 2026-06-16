@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useActionState } from "react";
+import { useState, useEffect, useActionState, useOptimistic } from "react";
 import { Download, ChevronLeft, ChevronRight, CheckCircle2, Lock } from "lucide-react";
 
 import { updateSeminarProgressAction } from "@/actions/seminar";
@@ -39,6 +39,7 @@ type SeminarItemCardProps = {
     label: string;
     description: string;
   } | null;
+  onCompleted: (itemId: string) => void;
 };
 
 function SeminarMedia({ item }: { item: SeminarItem }) {
@@ -105,11 +106,22 @@ function SeminarMedia({ item }: { item: SeminarItem }) {
 
 export function SeminarModuleList({ items, progress, applicantId, completionCta }: SeminarModuleListProps) {
   const completedIds = new Set(progress.filter((entry) => entry.completed).map((entry) => entry.seminar_item_id));
-  const remainingCount = items.filter((item) => !completedIds.has(item.id)).length;
+
+  // Use optimistic state for completed IDs to respond instantly to clicks
+  const [optimisticCompletedIds, addOptimisticCompletedId] = useOptimistic(
+    completedIds,
+    (state, itemIdToMarkComplete: string) => {
+      const next = new Set(state);
+      next.add(itemIdToMarkComplete);
+      return next;
+    }
+  );
+
+  const remainingCount = items.filter((item) => !optimisticCompletedIds.has(item.id)).length;
   const allCompleted = items.length > 0 && remainingCount === 0;
 
   // Find the first uncompleted item index to set as initial active index
-  const firstUncompletedIndex = items.findIndex((item) => !completedIds.has(item.id));
+  const firstUncompletedIndex = items.findIndex((item) => !optimisticCompletedIds.has(item.id));
   const initialIndex = allCompleted ? items.length - 1 : Math.max(0, firstUncompletedIndex);
   
   const [activeIndex, setActiveIndex] = useState(initialIndex);
@@ -117,31 +129,31 @@ export function SeminarModuleList({ items, progress, applicantId, completionCta 
   // Auto-advance if the current item was just completed
   useEffect(() => {
     const currentItem = items[activeIndex];
-    if (completedIds.has(currentItem.id) && activeIndex < items.length - 1 && !allCompleted) {
+    if (optimisticCompletedIds.has(currentItem.id) && activeIndex < items.length - 1 && !allCompleted) {
       // Small delay for satisfaction
       const timer = setTimeout(() => {
         // Only advance if the next one is actually the one we SHOULD be on
-        const nextUncompleted = items.findIndex((item) => !completedIds.has(item.id));
+        const nextUncompleted = items.findIndex((item) => !optimisticCompletedIds.has(item.id));
         if (nextUncompleted !== -1) {
           setActiveIndex(nextUncompleted);
         }
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [progress, allCompleted]);
+  }, [optimisticCompletedIds, allCompleted, activeIndex, items]);
 
   const activeItem = items[activeIndex];
-  const isCompleted = completedIds.has(activeItem.id);
-  const isLocked = !isCompleted && items.slice(0, activeIndex).some(item => !completedIds.has(item.id));
+  const isCompleted = optimisticCompletedIds.has(activeItem.id);
+  const isLocked = !isCompleted && items.slice(0, activeIndex).some(item => !optimisticCompletedIds.has(item.id));
 
   return (
     <div className="space-y-8">
       {/* Chevron Stepper */}
       <div className="flex flex-nowrap items-end justify-start gap-y-6 mb-4 px-2 pb-14 pt-4 overflow-x-auto max-w-full snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
         {items.map((item, idx) => {
-          const itemCompleted = completedIds.has(item.id);
+          const itemCompleted = optimisticCompletedIds.has(item.id);
           const current = idx === activeIndex;
-          const locked = !itemCompleted && items.slice(0, idx).some(prev => !completedIds.has(prev.id));
+          const locked = !itemCompleted && items.slice(0, idx).some(prev => !optimisticCompletedIds.has(prev.id));
 
           const GRADIENTS = [
             "from-rose-400 to-rose-500",
@@ -226,6 +238,7 @@ export function SeminarModuleList({ items, progress, applicantId, completionCta 
           allCompleted={allCompleted}
           applicantId={applicantId}
           completionCta={completionCta}
+          onCompleted={addOptimisticCompletedId}
         />
       </div>
 
@@ -268,12 +281,18 @@ function SeminarItemCard({
   isLocked,
   allCompleted,
   applicantId,
-  completionCta
+  completionCta,
+  onCompleted
 }: SeminarItemCardProps) {
   const [state, formAction, pending] = useActionState(updateSeminarProgressAction, initialActionState);
-  const justFinishedSeries = isLastPendingItem && state.success;
+  const justFinishedSeries = isLastPendingItem && (state.success || completed);
   const showSeriesCompletionCTA = justFinishedSeries || (allCompleted && completed && isFinalItem);
   const statusLabel = completed ? "Completed" : isLocked ? "Locked" : "Pending";
+
+  const handleFormAction = (formData: FormData) => {
+    onCompleted(item.id);
+    formAction(formData);
+  };
 
   return (
     <Card className={cn("transition-all duration-300 shadow-xl border-border/40 overflow-hidden", isLocked && "border-dashed border-muted-foreground/40 bg-muted/20 opacity-80")}>
@@ -310,7 +329,7 @@ function SeminarItemCard({
           }}
         />
         <SeminarMedia item={item} />
-        <form action={formAction} className="flex flex-wrap items-center gap-3 pt-4">
+        <form action={handleFormAction} className="flex flex-wrap items-center gap-3 pt-4">
           <input type="hidden" name="applicantId" value={applicantId} />
           <input type="hidden" name="seminarItemId" value={item.id} />
           <input type="hidden" name="completed" value="true" />

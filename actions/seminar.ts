@@ -67,18 +67,6 @@ export async function updateSeminarProgressAction(_prevState: ActionState, formD
       return parsed.error;
     }
 
-    const { data: seminarItem, error: seminarItemError } = await supabase
-      .from("seminar_items")
-      .select("id")
-      .eq("id", parsed.data.seminarItemId)
-      .eq("organization_id", profile.organization_id)
-      .eq("is_active", true)
-      .single();
-
-    if (seminarItemError || !seminarItem) {
-      return { success: false, message: "This seminar item is no longer available." };
-    }
-
     const { data: orderedItems, error: orderedItemsError } = await supabase
       .from("seminar_items")
       .select("id")
