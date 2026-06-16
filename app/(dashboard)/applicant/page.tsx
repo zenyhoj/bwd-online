@@ -1,13 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
 import { ApplicantDocumentPanel } from "@/components/applicant/applicant-document-panel";
 import { QuickSubmitOfficeButton } from "@/components/applicant/quick-submit-office-button";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
-import { LinkAccountCard } from "@/components/applicant/link-account-card";
-import { UnlinkAccountButton } from "@/components/applicant/unlink-account-button";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -281,29 +279,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const plumbers = await getAccreditedPlumbers();
 
   const supabase = createSupabaseAdminClient();
-  const { data: concessionaires } = await supabase
-    .from("concessionaires")
-    .select("id, concessionaire_number, applicant_id")
-    .in("applicant_id", applicants.map(a => a.id));
-  const isConverted = concessionaires && concessionaires.length > 0;
-
-  const accountNames: Record<string, string> = {};
-  if (isConverted) {
-    const { data: bills } = await supabase
-      .from("water_bills")
-      .select("concessionaire_id, name")
-      .in("concessionaire_id", concessionaires.map((c) => c.id))
-      .order("due", { ascending: false });
-
-    if (bills) {
-      for (const bill of bills) {
-        if (!accountNames[bill.concessionaire_id] && bill.name) {
-          accountNames[bill.concessionaire_id] = bill.name;
-        }
-      }
-    }
-  }
-
   const selectedApplicationId = getStringParam(resolvedSearchParams, "application") ?? applications[0]?.id ?? null;
   const selectedApplication = applications.find((application) => application.id === selectedApplicationId) ?? applications[0];
   
@@ -755,76 +730,16 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
         />
       ) : null}
 
-          <Card className="border-border/70 shadow-sm min-w-0">
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 min-w-0">
-              <div className="min-w-0 w-full">
-                <CardTitle className="text-2xl font-semibold break-words">Concessionaire Accounts & Water Bills</CardTitle>
-                <CardDescription className="break-words">Manage your active water connections, view bills, and link legacy accounts.</CardDescription>
-              </div>
-              {applicants.length <= 1 && (
-                <div className="flex justify-end gap-2 shrink-0">
-                  <Button asChild variant="secondary" size="sm">
-                    <Link href="/applicant/new">New Application</Link>
-                  </Button>
-                </div>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {applicants.length > 1 ? (
-                <ApplicantSwitcher
-                  applicants={applicants}
-                  selectedApplicantId={selectedApplicant?.id}
-                  basePath="/applicant"
-                  title="Accounts"
-                  description="Switch accounts."
-                />
-              ) : null}
 
-              {isConverted ? (
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/50 p-6">
-                  <h2 className="text-xl font-bold text-emerald-800">
-                    You have {concessionaires.length > 1 ? `${concessionaires.length} active water connections!` : "an active water connection!"}
-                  </h2>
-                  <p className="mt-2 text-sm text-emerald-700/80">
-                    Your account is successfully linked. You can now view your water bills from the navigation menu.
-                  </p>
-                  <div className="mt-4 space-y-1 rounded-md bg-emerald-100/50 p-3">
-                    {concessionaires?.map((c) => {
-                      const name = accountNames[c.id] || applicants.find((a) => a.id === c.applicant_id)?.full_name || "Unknown Account";
-                      return (
-                        <div key={c.id} className="flex flex-col sm:flex-row sm:items-center justify-between group gap-2 sm:gap-0">
-                          <div className="flex items-center text-sm font-medium text-emerald-800 min-w-0">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0" />
-                            <span className="font-mono shrink-0">{c.concessionaire_number}</span>
-                            <span className="mx-2 text-emerald-600/50 shrink-0">—</span>
-                            <span className="truncate">{name}</span>
-                          </div>
-                          <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                            <UnlinkAccountButton concessionaireId={c.id} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <Button asChild variant="outline" className="border-emerald-500/50 text-emerald-700 hover:bg-emerald-100/50 bg-white">
-                      <Link href="/applicant/water-bills">View Water Bills</Link>
-                    </Button>
-                    <Button asChild variant="outline" className="gap-2 rounded-full border-emerald-500/20 text-emerald-700 hover:bg-emerald-50 bg-white whitespace-nowrap shadow-sm font-medium">
-                      <a href="#link-account">
-                        <Plus className="h-4 w-4" />
-                        Link another account
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-
-              <div id="link-account" className={isConverted ? "opacity-90 transition-opacity hover:opacity-100 max-w-2xl" : "max-w-2xl"}>
-                <LinkAccountCard />
-              </div>
-            </CardContent>
-          </Card>
+      {applicants.length > 1 ? (
+        <ApplicantSwitcher
+          applicants={applicants}
+          selectedApplicantId={selectedApplicant?.id}
+          basePath="/applicant"
+          title="Accounts"
+          description="Switch accounts."
+        />
+      ) : null}
 
       {applications.length > 1 ? (
         <ApplicationSwitcher

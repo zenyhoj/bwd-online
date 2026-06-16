@@ -8,6 +8,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info, Droplets, Plus } from "lucide-react";
 import { formatDate } from "@/lib/format";
 import { ConcessionaireFilter } from "@/components/applicant/concessionaire-filter";
+import { LinkAccountCard } from "@/components/applicant/link-account-card";
+import { UnlinkAccountButton } from "@/components/applicant/unlink-account-button";
 
 export const metadata = {
   title: "My Water Bills | BWD Online",
@@ -35,34 +37,20 @@ export default async function ApplicantWaterBillsPage({
   // Get the applicant's ID
   const { data: applicants } = await supabase
     .from("applicants")
-    .select("id")
+    .select("id, full_name")
     .eq("profile_id", profile.id);
 
-  if (!applicants || applicants.length === 0) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Water Bills</h1>
-        <p className="text-muted-foreground">You do not have a linked concessionaire account yet.</p>
-      </div>
-    );
-  }
-
-  const applicantIds = applicants.map((a) => a.id);
+  const applicantIds = (applicants ?? []).map((a) => a.id);
 
   // Get concessionaires linked to this applicant
-  const { data: concessionaires } = await supabase
-    .from("concessionaires")
-    .select("id, concessionaire_number")
-    .in("applicant_id", applicantIds);
+  const { data: concessionairesData } = applicantIds.length > 0
+    ? await supabase
+        .from("concessionaires")
+        .select("id, concessionaire_number, applicant_id")
+        .in("applicant_id", applicantIds)
+    : { data: [] };
 
-  if (!concessionaires || concessionaires.length === 0) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-semibold tracking-tight">Water Bills</h1>
-        <p className="text-muted-foreground">You do not have a linked concessionaire account yet.</p>
-      </div>
-    );
-  }
+  const concessionaires = concessionairesData ?? [];
 
   // Determine which concessionaire IDs to query bills for
   const filterIds =
@@ -71,14 +59,16 @@ export default async function ApplicantWaterBillsPage({
       : concessionaires.map((c) => c.id);
 
   // Fetch water bills
-  const { data: bills, error: billsError } = await supabase
-    .from("water_bills")
-    .select("*")
-    .in("concessionaire_id", filterIds)
-    .order("due", { ascending: false });
+  const { data: bills, error: billsError } = filterIds.length > 0
+    ? await supabase
+        .from("water_bills")
+        .select("*")
+        .in("concessionaire_id", filterIds)
+        .order("due", { ascending: false })
+    : { data: [], error: null };
 
   // Build a map of concessionaire_id → latest name from bills for the dropdown labels
-  const allBillsForNames = accountFilter
+  const allBillsForNames = accountFilter && concessionaires.length > 0
     ? await supabase
         .from("water_bills")
         .select("concessionaire_id, name")
@@ -121,10 +111,10 @@ export default async function ApplicantWaterBillsPage({
         
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 items-end sm:items-center">
           <Button asChild variant="outline" className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5 bg-background whitespace-nowrap shadow-sm font-medium">
-            <Link href="/applicant#link-account">
+            <a href="#link-account">
               <Plus className="h-4 w-4" />
               Link another account
-            </Link>
+            </a>
           </Button>
           {showFilter && (
             <div className="w-full sm:w-auto">
@@ -134,13 +124,50 @@ export default async function ApplicantWaterBillsPage({
         </div>
       </div>
 
+      {concessionaires.length > 0 ? (
+        <Card className="border-emerald-500/30 bg-emerald-50/50 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-xl text-emerald-800">
+              You have {concessionaires.length > 1 ? `${concessionaires.length} active water connections` : "an active water connection"}
+            </CardTitle>
+            <CardDescription className="text-emerald-700/80">
+              These linked accounts are available for water bill viewing.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1 rounded-md bg-emerald-100/50 p-3">
+              {concessionaires.map((concessionaire) => {
+                const name =
+                  accountNameMap.get(concessionaire.id) ??
+                  applicants?.find((applicant) => applicant.id === concessionaire.applicant_id)?.full_name ??
+                  "Unknown Account";
+
+                return (
+                  <div key={concessionaire.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center text-sm font-medium text-emerald-800">
+                      <span className="mr-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+                      <span className="shrink-0 font-mono">{concessionaire.concessionaire_number}</span>
+                      <span className="mx-2 shrink-0 text-emerald-600/50">-</span>
+                      <span className="truncate">{name}</span>
+                    </div>
+                    <UnlinkAccountButton concessionaireId={concessionaire.id} />
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       {!bills || bills.length === 0 ? (
         <Card className="border-dashed bg-muted/10">
           <CardContent className="flex flex-col items-center justify-center p-12 text-center">
             <Droplets className="mb-4 h-10 w-10 text-muted-foreground/30" />
             <h3 className="text-lg font-medium">No bills found</h3>
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-              {accountFilter
+              {concessionaires.length === 0
+                ? "Link an existing water account below to view monthly water bills here."
+                : accountFilter
                 ? "No water bills found for this account. Try selecting a different account or view all."
                 : "We couldn't find any water bills attached to your account yet. New bills will appear here when they are generated."}
             </p>
@@ -151,11 +178,6 @@ export default async function ApplicantWaterBillsPage({
                 Hint: {billsError.hint}
               </div>
             )}
-            <div className="mt-4 p-4 bg-yellow-100 text-yellow-900 rounded-md text-left text-xs max-w-xl break-words">
-              <strong>Debug Info:</strong><br/>
-              Filter IDs: {JSON.stringify(filterIds)}<br/>
-              Linked Concessionaires: {JSON.stringify(concessionaires)}<br/>
-            </div>
           </CardContent>
         </Card>
       ) : (
@@ -218,6 +240,10 @@ export default async function ApplicantWaterBillsPage({
           ))}
         </div>
       )}
+
+      <div id="link-account" className="scroll-mt-24">
+        <LinkAccountCard />
+      </div>
 
       <Alert className="isolate z-0 flex items-start gap-3 rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
         <Info className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500 dark:text-yellow-400" />

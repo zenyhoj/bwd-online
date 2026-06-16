@@ -27,13 +27,12 @@ async function getManagedApplication({
   applicationId: string;
   profileId: string;
 }) {
-  const { data: applicant } = await supabase
+  const { data: applicants, error: applicantsError } = await supabase
     .from("applicants")
     .select("id")
-    .eq("profile_id", profileId)
-    .maybeSingle();
+    .eq("profile_id", profileId);
 
-  if (!applicant) {
+  if (applicantsError || !applicants || applicants.length === 0) {
     return null;
   }
 
@@ -41,7 +40,7 @@ async function getManagedApplication({
     .from("applications")
     .select("id, applicant_id")
     .eq("id", applicationId)
-    .eq("applicant_id", applicant.id)
+    .in("applicant_id", applicants.map((applicant) => applicant.id))
     .maybeSingle();
 
   return application ?? null;

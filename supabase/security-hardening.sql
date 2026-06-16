@@ -3,6 +3,8 @@ on public.documents (application_id, document_type);
 
 drop policy if exists "storage_applicant_read_own_documents" on storage.objects;
 drop policy if exists "storage_admin_update_documents" on storage.objects;
+drop policy if exists "storage_authenticated_read_documents" on storage.objects;
+drop policy if exists "storage_admin_update_documents_same_org" on storage.objects;
 
 create policy "storage_authenticated_read_documents"
 on storage.objects
@@ -14,7 +16,7 @@ using (
     from public.documents d
     where d.file_path = storage.objects.name
       and (
-        d.applicant_id = auth.uid()
+        public.user_owns_applicant(d.applicant_id)
         or (
           public.current_profile_role() = 'admin'
           and d.organization_id = public.current_profile_organization_id()

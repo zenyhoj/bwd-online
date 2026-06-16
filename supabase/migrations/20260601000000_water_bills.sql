@@ -40,6 +40,6 @@ CREATE POLICY "Concessionaires can view their own bills" ON public.water_bills
       SELECT 1 FROM public.concessionaires c
       JOIN public.applicants a ON a.id = c.applicant_id
       WHERE c.id = water_bills.concessionaire_id
-      AND a.profile_id = auth.uid()
+      AND public.user_owns_applicant(a.id)
     )
   );

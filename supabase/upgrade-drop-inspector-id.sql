@@ -86,7 +86,7 @@ using (
     from public.documents d
     where d.file_path = storage.objects.name
       and (
-        d.applicant_id = auth.uid()
+        public.user_owns_applicant(d.applicant_id)
         or (
           public.current_profile_role() = 'admin'
           and d.organization_id = public.current_profile_organization_id()
