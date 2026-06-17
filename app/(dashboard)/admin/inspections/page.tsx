@@ -2,7 +2,6 @@ import Form from "next/form";
 import Link from "next/link";
 import { AlertCircle, CalendarDays, CheckCircle2, ClipboardList, Filter, Search, SlidersHorizontal } from "lucide-react";
 
-import { InspectionScheduleInlineEditor } from "@/components/admin/inspection-schedule-inline-editor";
 import { InspectionForm } from "@/components/inspector/inspection-form";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
@@ -300,15 +299,15 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                 {inspectionRows.length === 1 ? "1 record" : `${inspectionRows.length} records`}
               </div>
             </div>
-            <Table className="text-[11px]">
+            <Table className="table-fixed text-sm">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="px-3">Applicant</TableHead>
-                  <TableHead className="px-3">Inspector</TableHead>
-                  <TableHead className="px-3">Schedule</TableHead>
-                  <TableHead className="px-3">Status</TableHead>
-                  <TableHead className="px-3">Plumbing result</TableHead>
-                  <TableHead className="px-3">Report</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="h-14 w-[20%] px-4 text-xs">Applicant</TableHead>
+                  <TableHead className="h-14 w-[16%] px-4 text-xs">Inspector</TableHead>
+                  <TableHead className="h-14 w-[28%] px-4 text-xs">Site inspection</TableHead>
+                  <TableHead className="h-14 w-[13%] px-4 text-xs">Status</TableHead>
+                  <TableHead className="h-14 w-[14%] px-4 text-xs">Plumbing result</TableHead>
+                  <TableHead className="h-14 w-[9%] px-4 text-xs">Report</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -340,7 +339,7 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                         key={inspection.id}
                         className={inspection.id === selectedInspection?.id ? "border-l-4 border-l-primary bg-primary/5" : "hover:bg-muted/20"}
                       >
-                        <TableCell className="px-3 py-3 font-medium whitespace-nowrap">
+                        <TableCell className="px-4 py-4 text-sm font-semibold">
                           <Link
                             href={(
                               `/admin/inspections?${new URLSearchParams({
@@ -356,26 +355,23 @@ export default async function AdminInspectionsPage({ searchParams }: AdminInspec
                             {(inspection.applications as InspectionApplicationRelation)?.full_name ?? "Unknown"}
                           </Link>
                         </TableCell>
-                        <TableCell className="px-3 py-3 whitespace-nowrap">{inspection.inspector_name ?? "Unassigned"}</TableCell>
-                        <TableCell className="px-3 py-3">
-                          <InspectionScheduleInlineEditor
-                            inspectionId={inspection.id}
-                            scheduledAt={inspection.scheduled_at}
-                          />
+                        <TableCell className="px-4 py-4 text-sm">{inspection.inspector_name ?? "Unassigned"}</TableCell>
+                        <TableCell className="px-4 py-4 text-sm font-semibold text-foreground">
+                          {inspection.scheduled_at ? formatDateTime(inspection.scheduled_at) : "Not scheduled"}
                         </TableCell>
-                        <TableCell className="px-3 py-3">
-                          <StatusBadge status={inspection.status} className="text-[11px]" />
+                        <TableCell className="px-4 py-4">
+                          <StatusBadge status={inspection.status} />
                         </TableCell>
-                        <TableCell className="px-3 py-3">
-                          <StatusBadge status={getPlumbingResult(inspection.plumbing_approved)} className="text-[11px]" />
+                        <TableCell className="px-4 py-4">
+                          <StatusBadge status={getPlumbingResult(inspection.plumbing_approved)} />
                         </TableCell>
-                        <TableCell className="px-3 py-3 whitespace-nowrap">
+                        <TableCell className="px-4 py-4">
                           {inspection.status === "approved" || inspection.status === "rejected" ? (
-                            <Link href={`/admin/reports/${inspection.id}`} className="text-primary hover:underline font-bold text-[11px] uppercase tracking-wider">
+                            <Link href={`/admin/reports/${inspection.id}`} className="text-sm font-semibold text-primary hover:underline">
                               Open report
                             </Link>
                           ) : (
-                            <span className="text-muted-foreground/40 font-bold text-[11px] uppercase tracking-wider cursor-not-allowed" title="Inspection must be approved or disapproved first">
+                            <span className="text-sm font-semibold text-muted-foreground/50 cursor-not-allowed" title="Inspection must be approved or disapproved first">
                               Pending
                             </span>
                           )}
