@@ -50,6 +50,18 @@ function formatScheduledAmount(amount: number) {
   return amount > 0 ? formatCurrency(amount) : "To be set on official receipt";
 }
 
+function formatPaymentType(value: string | null | undefined) {
+  if (!value) {
+    return "Application fee";
+  }
+
+  if (value === "inspection_fee") {
+    return "Application fee";
+  }
+
+  return value.replaceAll("_", " ");
+}
+
 function getOfficePaymentDisplay(payment: { office_payment_at?: string | null; due_date: string }) {
   return payment.office_payment_at ? formatDateTime(payment.office_payment_at) : formatDate(payment.due_date);
 }
@@ -224,7 +236,7 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="space-y-1">
                         <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                          {payment.payment_type.replaceAll("_", " ")}
+                          {formatPaymentType(payment.payment_type)}
                         </p>
                         <p className="text-2xl font-bold tracking-tight">
                           {formatScheduledAmount(payment.amount)}
