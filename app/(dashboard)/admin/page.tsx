@@ -380,97 +380,97 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        <Card className="relative overflow-hidden border-l-4 border-l-blue-500 shadow-sm">
+        <Card className="relative overflow-hidden border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">Total in queue</p>
-                <p className="mt-0.5 text-2xl font-bold">{applications.count}</p>
-                <p className="text-[10px] text-muted-foreground/60 font-medium uppercase">active applications</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total in queue</p>
+                <p className="mt-2 text-3xl font-bold tracking-tight text-foreground">{applications.count}</p>
+                <p className="mt-1 text-[10px] font-medium uppercase text-muted-foreground">active applications</p>
               </div>
-              <div className="rounded-lg bg-blue-500/5 p-1.5">
-                <ClipboardList className="h-4 w-4 text-blue-500/40" />
+              <div className="rounded-full bg-primary/10 p-2 text-primary">
+                <ClipboardList className="h-4 w-4" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-primary/5 shadow-none transition-all hover:bg-primary/[0.08]">
+        <Card className="border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
           <CardContent className="p-4">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-primary/70 mb-1">Need Schedule</p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tracking-tighter">{readyForInspection}</span>
-                  <span className="text-[10px] font-bold text-muted-foreground/50 uppercase">apps</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Need schedule</p>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tight text-foreground">{readyForInspection}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">apps</span>
                 </div>
-                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">appointments pending</p>
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">appointments pending</p>
               </div>
-              <div className="rounded-full bg-primary/10 text-primary/40 p-1.5">
-                <Wrench className="h-3.5 w-3.5" />
+              <div className="rounded-full bg-primary/10 p-2 text-primary">
+                <Wrench className="h-4 w-4" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-amber-500/5 shadow-none transition-all hover:bg-amber-500/[0.08]">
+        <Card className="border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
           <CardContent className="p-4">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600/70 mb-1">Awaiting Result</p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tracking-tighter text-amber-600/90">{awaitingInspectionResult}</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Awaiting result</p>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tight text-amber-700 dark:text-amber-300">{awaitingInspectionResult}</span>
                 </div>
-                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">scheduled inspections</p>
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">scheduled inspections</p>
               </div>
-              <div className="rounded-full bg-amber-500/10 text-amber-500/40 p-1.5">
-                <CalendarClock className="h-3.5 w-3.5" />
+              <div className="rounded-full bg-amber-500/10 p-2 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300">
+                <CalendarClock className="h-4 w-4" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-indigo-600/5 shadow-none transition-all hover:bg-indigo-600/[0.08]">
+        <Card className="border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
           <CardContent className="p-4">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600/70 mb-1">Ready for Payment</p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tracking-tighter text-indigo-600/90">{readyForPayment}</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Ready for payment</p>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tight text-indigo-700 dark:text-indigo-300">{readyForPayment}</span>
                 </div>
-                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">awaiting payment</p>
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">awaiting payment</p>
               </div>
-              <div className="rounded-full bg-indigo-600/10 text-indigo-600/40 p-1.5">
-                <CreditCard className="h-3.5 w-3.5" />
+              <div className="rounded-full bg-indigo-500/10 p-2 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300">
+                <CreditCard className="h-4 w-4" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-sky-600/5 shadow-none transition-all hover:bg-sky-600/[0.08]">
+        <Card className="border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
           <CardContent className="p-4">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600/70 mb-1">Docs to Review</p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tracking-tighter text-sky-600/90">{pendingDocumentReviews}</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Docs to review</p>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tight text-sky-700 dark:text-sky-300">{pendingDocumentReviews}</span>
                 </div>
-                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">uploaded by applicants</p>
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">uploaded by applicants</p>
               </div>
-              <div className="rounded-full bg-sky-600/10 text-sky-600/40 p-1.5">
-                <FileCheck2 className="h-3.5 w-3.5" />
+              <div className="rounded-full bg-sky-500/10 p-2 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
+                <FileCheck2 className="h-4 w-4" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-none bg-emerald-600/5 shadow-none transition-all hover:bg-emerald-600/[0.08]">
+        <Card className="border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
           <CardContent className="p-4">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600/70 mb-1">Ready for Conversion</p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tracking-tighter text-emerald-600/90">{readyForConversionEffective}</span>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Ready for conversion</p>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tight text-emerald-700 dark:text-emerald-300">{readyForConversionEffective}</span>
                 </div>
-                <p className="mt-2 text-[10px] text-muted-foreground/60 font-medium">ready for account</p>
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">ready for account</p>
               </div>
-              <div className="rounded-full bg-emerald-600/10 text-emerald-600/40 p-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5" />
+              <div className="rounded-full bg-emerald-500/10 p-2 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
+                <CheckCircle2 className="h-4 w-4" />
               </div>
             </div>
           </CardContent>

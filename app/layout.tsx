@@ -1,16 +1,37 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { Poppins } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { Toaster } from "@/components/ui/toaster";
 
-const poppins = Poppins({
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
   variable: "--font-sans"
 });
+
+const geist = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-heading"
+});
+
+const themeInitScript = `
+  (() => {
+    try {
+      const storedTheme = localStorage.getItem("theme");
+      const theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
+        ? storedTheme
+        : "system";
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const shouldUseDark = theme === "dark" || (theme === "system" && prefersDark);
+
+      document.documentElement.classList.toggle("dark", shouldUseDark);
+      document.documentElement.style.colorScheme = shouldUseDark ? "dark" : "light";
+    } catch (_) {}
+  })();
+`;
 
 export const metadata: Metadata = {
   title: "BWD Online Water Application System",
@@ -41,8 +62,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
-      <body suppressHydrationWarning className={`${poppins.variable} font-sans`}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body suppressHydrationWarning className={`${inter.variable} ${geist.variable} font-sans`}>
         <NavigationProgress />
         {children}
         <Toaster />

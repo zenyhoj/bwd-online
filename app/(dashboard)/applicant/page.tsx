@@ -370,9 +370,9 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             
             if (selectedApplication.status === "converted" || selectedApplication.water_meter_installed_at) {
               return (
-                <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 p-4">
-                  <p className="font-medium text-emerald-700">Workflow completed: Active connection</p>
-                  <p className="mt-1 text-sm text-emerald-700/80">
+                <div className="rounded-xl border border-emerald-500/25 bg-emerald-50/80 p-4 dark:border-emerald-400/30 dark:bg-emerald-400/10">
+                  <p className="font-semibold text-emerald-700 dark:text-emerald-300">Workflow completed: Active connection</p>
+                  <p className="mt-1 text-sm text-emerald-700/85 dark:text-emerald-100/80">
                     Your application is now an active water connection. Your account number is assigned.
                   </p>
                 </div>
@@ -463,7 +463,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             <div
               className={`rounded-xl border p-4 ${
                 assignedAccount.accountNumber
-                  ? "border-emerald-300 bg-emerald-50/70"
+                  ? "border-emerald-300 bg-emerald-50/80 dark:border-emerald-400/35 dark:bg-emerald-400/10"
                   : "border-border/70 bg-muted/10"
               }`}
             >
@@ -472,7 +472,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                   <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                     Assigned account number
                   </p>
-                  <p className={`mt-1 font-mono text-2xl font-bold ${assignedAccount.accountNumber ? "text-emerald-700" : "text-muted-foreground"}`}>
+                  <p className={`mt-1 font-mono text-2xl font-bold ${assignedAccount.accountNumber ? "text-emerald-700 dark:text-emerald-300" : "text-muted-foreground"}`}>
                     {assignedAccount.accountNumber ?? "Not assigned yet"}
                   </p>
                 </div>
@@ -563,7 +563,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               isWaterMeterActive
                 ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
                 : selectedApplication?.water_meter_installed_at
-                  ? "border-emerald-500/30 bg-emerald-50/30"
+                  ? "border-emerald-500/30 bg-emerald-50/60 dark:border-emerald-400/35 dark:bg-emerald-400/10"
                   : selectedApplication?.water_meter_installation_scheduled_at
                     ? "border-primary/30 bg-primary/5"
                     : "border-border/60 bg-muted/5 hover:bg-muted/10"
@@ -571,7 +571,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               <div className="flex items-start justify-between gap-2">
                 <p className={`uppercase tracking-[0.14em] font-bold text-[10px] xl:text-xs ${
                   selectedApplication?.water_meter_installed_at 
-                    ? "text-emerald-600" 
+                    ? "text-emerald-700 dark:text-emerald-300"
                     : selectedApplication?.water_meter_installation_scheduled_at 
                       ? "text-primary" 
                       : "text-muted-foreground"
@@ -584,7 +584,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </div>
               <p className={`mt-2 font-medium tabular-nums leading-tight text-xs xl:text-sm ${
                 selectedApplication?.water_meter_installed_at 
-                  ? "text-emerald-600" 
+                  ? "text-emerald-700 dark:text-emerald-300"
                   : selectedApplication?.water_meter_installation_scheduled_at 
                     ? "text-primary" 
                     : "text-foreground/80"

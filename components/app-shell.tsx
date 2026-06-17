@@ -31,6 +31,7 @@ import { DocumentPurgeButton } from "@/components/admin/document-purge-button";
 import { PushRegistration } from "@/components/push-registration";
 import { InstallPWAButton } from "@/components/pwa/install-button";
 import { AppShellBottomNav } from "@/components/app-shell-bottom-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { AppRole, Profile } from "@/types";
 
 type AppShellProps = {
@@ -271,6 +272,8 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
 
   return (
     <div className="min-h-screen bg-transparent print:bg-white">
+      <ThemeToggle className="fixed right-4 top-20 z-50 print:hidden sm:top-4" />
+
       {/* Mobile top bar */}
       <div className="sticky top-0 z-40 flex items-center justify-between border-b border-border bg-background px-4 py-4 lg:hidden print:hidden">
         <div className="space-y-0.5">

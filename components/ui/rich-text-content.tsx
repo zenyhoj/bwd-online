@@ -97,7 +97,7 @@ export function RichTextContent({ value, className, replacements = {} }: RichTex
         }
 
         .rich-text-content a {
-          color: hsl(var(--primary));
+          color: oklch(var(--primary));
           text-decoration: underline;
           text-underline-offset: 0.2em;
           font-weight: 500;
@@ -109,7 +109,7 @@ export function RichTextContent({ value, className, replacements = {} }: RichTex
           height: auto;
           margin: 1.5rem auto;
           border-radius: var(--radius);
-          border: 1px solid hsl(var(--border));
+          border: 1px solid oklch(var(--border));
           box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
@@ -120,18 +120,18 @@ export function RichTextContent({ value, className, replacements = {} }: RichTex
           min-height: 320px;
           margin: 1.5rem 0;
           border-radius: var(--radius);
-          border: 1px solid hsl(var(--border));
+          border: 1px solid oklch(var(--border));
         }
 
         .rich-text-content strong {
-          color: hsl(var(--foreground));
+          color: oklch(var(--foreground));
           font-weight: 700;
         }
 
         .rich-text-content h1,
         .rich-text-content h2,
         .rich-text-content h3 {
-          color: hsl(var(--foreground));
+          color: oklch(var(--foreground));
           font-weight: 700;
           line-height: 1.2;
           margin-top: 1.5rem;
@@ -142,20 +142,20 @@ export function RichTextContent({ value, className, replacements = {} }: RichTex
         .rich-text-content h3 { font-size: 1.1rem; }
 
         .rich-text-content blockquote {
-          border-left: 4px solid hsl(var(--primary) / 0.3);
+          border-left: 4px solid oklch(var(--primary) / 0.3);
           padding: 0.5rem 0 0.5rem 1.25rem;
           margin: 1rem 0;
-          background: hsl(var(--muted) / 0.2);
+          background: oklch(var(--muted) / 0.2);
           font-style: italic;
-          color: hsl(var(--foreground) / 0.8);
+          color: oklch(var(--foreground) / 0.8);
         }
 
         .rich-text-content .rich-text-table-wrap {
           margin: 1.5rem 0;
           overflow-x: auto;
           border-radius: var(--radius);
-          border: 1px solid hsl(var(--border));
-          background: hsl(var(--background));
+          border: 1px solid oklch(var(--border));
+          background: oklch(var(--background));
           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
@@ -170,15 +170,15 @@ export function RichTextContent({ value, className, replacements = {} }: RichTex
           padding: 0.75rem 1rem;
           text-align: left;
           vertical-align: middle;
-          border-bottom: 1px solid hsl(var(--border));
+          border-bottom: 1px solid oklch(var(--border));
         }
 
         .rich-text-content .rich-text-table thead {
-          background: hsl(var(--muted) / 0.5);
+          background: oklch(var(--muted) / 0.5);
         }
 
         .rich-text-content .rich-text-table th {
-          color: hsl(var(--foreground));
+          color: oklch(var(--foreground));
           font-weight: 700;
           font-size: 0.75rem;
           text-transform: uppercase;
@@ -186,12 +186,12 @@ export function RichTextContent({ value, className, replacements = {} }: RichTex
         }
 
         .rich-text-content .rich-text-table td {
-          color: hsl(var(--foreground) / 0.9);
+          color: oklch(var(--foreground) / 0.9);
           line-height: 1.5;
         }
 
         .rich-text-content .rich-text-table tbody tr:hover {
-          background: hsl(var(--muted) / 0.2);
+          background: oklch(var(--muted) / 0.2);
         }
 
         .rich-text-content .rich-text-table tbody tr:last-child td {

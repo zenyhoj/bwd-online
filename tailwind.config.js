@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const colorVar = (name) => `oklch(var(${name}) / <alpha-value>)`;
+
 const config = {
   darkMode: ["class"],
   content: [
@@ -11,42 +13,60 @@ const config = {
   theme: {
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: colorVar("--border"),
+        input: colorVar("--input"),
+        ring: colorVar("--ring"),
+        background: colorVar("--background"),
+        foreground: colorVar("--foreground"),
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))"
+          DEFAULT: colorVar("--primary"),
+          foreground: colorVar("--primary-foreground")
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))"
+          DEFAULT: colorVar("--secondary"),
+          foreground: colorVar("--secondary-foreground")
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))"
+          DEFAULT: colorVar("--destructive"),
+          foreground: colorVar("--destructive-foreground")
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))"
+          DEFAULT: colorVar("--muted"),
+          foreground: colorVar("--muted-foreground")
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))"
+          DEFAULT: colorVar("--accent"),
+          foreground: colorVar("--accent-foreground")
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))"
+          DEFAULT: colorVar("--card"),
+          foreground: colorVar("--card-foreground")
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))"
+          DEFAULT: colorVar("--popover"),
+          foreground: colorVar("--popover-foreground")
+        },
+        chart: {
+          1: colorVar("--chart-1"),
+          2: colorVar("--chart-2"),
+          3: colorVar("--chart-3"),
+          4: colorVar("--chart-4"),
+          5: colorVar("--chart-5")
+        },
+        sidebar: {
+          DEFAULT: colorVar("--sidebar"),
+          foreground: colorVar("--sidebar-foreground"),
+          primary: colorVar("--sidebar-primary"),
+          "primary-foreground": colorVar("--sidebar-primary-foreground"),
+          accent: colorVar("--sidebar-accent"),
+          "accent-foreground": colorVar("--sidebar-accent-foreground"),
+          border: colorVar("--sidebar-border"),
+          ring: colorVar("--sidebar-ring")
         }
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"]
+        sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"],
+        heading: ["var(--font-heading)", "var(--font-sans)", "ui-sans-serif", "system-ui"]
       },
       keyframes: {
         "fade-in-up": {

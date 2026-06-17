@@ -277,19 +277,19 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           font-size: 0.875rem;
           border-bottom-left-radius: var(--radius);
           border-bottom-right-radius: var(--radius);
-          border-color: hsl(var(--input));
+          border-color: oklch(var(--input));
         }
         .rich-text-editor-wrapper .ql-toolbar {
           border-top-left-radius: var(--radius);
           border-top-right-radius: var(--radius);
-          background-color: hsl(var(--muted) / 0.5);
-          border-color: hsl(var(--input));
+          background-color: oklch(var(--muted) / 0.5);
+          border-color: oklch(var(--input));
         }
         .rich-text-editor-wrapper .ql-editor {
           min-height: 200px;
           line-height: 1.6;
           font-size: 0.95rem;
-          color: hsl(var(--foreground));
+          color: oklch(var(--foreground));
         }
         .rich-text-editor-wrapper .ql-editor p {
           margin-bottom: 1rem;
@@ -300,7 +300,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           margin-top: 1.5rem;
           margin-bottom: 0.75rem;
           font-weight: 700;
-          color: hsl(var(--foreground));
+          color: oklch(var(--foreground));
         }
         .rich-text-editor-wrapper .ql-editor img {
           display: block;
@@ -308,7 +308,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           height: auto;
           margin: 1.5rem auto;
           border-radius: var(--radius);
-          border: 1px solid hsl(var(--border));
+          border: 1px solid oklch(var(--border));
         }
         .rich-text-editor-wrapper .ql-editor .ql-video {
           display: block;
@@ -316,7 +316,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           aspect-ratio: 16 / 9;
           margin: 1.5rem 0;
           border-radius: var(--radius);
-          border: 1px solid hsl(var(--border));
+          border: 1px solid oklch(var(--border));
         }
         .rich-text-editor-wrapper .ql-editor:focus {
           outline: none;
@@ -329,7 +329,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
         }
         .rich-text-editor-wrapper .ql-editor td,
         .rich-text-editor-wrapper .ql-editor th {
-          border: 1px solid hsl(var(--border));
+          border: 1px solid oklch(var(--border));
           padding: 0.5rem;
         }
 
