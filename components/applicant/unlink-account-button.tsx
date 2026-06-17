@@ -34,7 +34,7 @@ export function UnlinkAccountButton({ concessionaireId }: { concessionaireId: st
       size="sm" 
       onClick={handleUnlink} 
       disabled={isPending}
-      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 px-2 text-xs"
+      className="h-8 px-3 text-xs font-semibold text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
       title="Unlink Account"
     >
       {isPending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Unlink className="h-3 w-3 mr-1" />}

@@ -125,17 +125,17 @@ export default async function ApplicantWaterBillsPage({
       </div>
 
       {concessionaires.length > 0 ? (
-        <Card className="border-emerald-500/30 bg-emerald-50/50 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-xl text-emerald-800">
+        <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
+          <CardHeader className="border-b border-border/70 bg-muted/20">
+            <CardTitle className="text-xl text-foreground">
               You have {concessionaires.length > 1 ? `${concessionaires.length} active water connections` : "an active water connection"}
             </CardTitle>
-            <CardDescription className="text-emerald-700/80">
+            <CardDescription>
               These linked accounts are available for water bill viewing.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-1 rounded-md bg-emerald-100/50 p-3">
+            <div className="mt-5 divide-y divide-border overflow-hidden rounded-xl border border-border/70 bg-background">
               {concessionaires.map((concessionaire) => {
                 const name =
                   accountNameMap.get(concessionaire.id) ??
@@ -143,12 +143,15 @@ export default async function ApplicantWaterBillsPage({
                   "Unknown Account";
 
                 return (
-                  <div key={concessionaire.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex min-w-0 items-center text-sm font-medium text-emerald-800">
-                      <span className="mr-2 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                      <span className="shrink-0 font-mono">{concessionaire.concessionaire_number}</span>
-                      <span className="mx-2 shrink-0 text-emerald-600/50">-</span>
-                      <span className="truncate">{name}</span>
+                  <div key={concessionaire.id} className="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3 text-sm font-medium">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300">
+                        <Droplets className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-mono text-sm font-semibold text-foreground">{concessionaire.concessionaire_number}</p>
+                        <p className="truncate text-sm text-muted-foreground">{name}</p>
+                      </div>
                     </div>
                     <UnlinkAccountButton concessionaireId={concessionaire.id} />
                   </div>
@@ -183,55 +186,57 @@ export default async function ApplicantWaterBillsPage({
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {bills.map((bill) => (
-            <Card key={bill.id} className="relative overflow-hidden border-border/80 shadow-sm transition-shadow hover:shadow-md">
-              <div className="absolute right-0 top-0 h-full w-1.5 bg-primary" />
-              <CardHeader className="space-y-3 pb-2">
+            <Card key={bill.id} className="relative overflow-hidden border-border/70 bg-card shadow-sm transition-all hover:border-primary/30 hover:shadow-md">
+              <div className="absolute right-0 top-0 h-full w-1 bg-primary/70" />
+              <CardHeader className="space-y-3 border-b border-border/70 bg-muted/10 pb-4 pr-7">
                 <div className="flex flex-col gap-0.5">
                   <CardDescription className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                     Account # {bill.account_number}
                   </CardDescription>
                   {bill.name && (
-                    <div className="text-sm font-medium text-foreground/90">
+                    <div className="text-sm font-semibold text-foreground">
                       {bill.name}
                     </div>
                   )}
                 </div>
-                <CardDescription className="text-xs font-medium uppercase tracking-wider">Bill amount</CardDescription>
-                <CardTitle className="text-3xl font-bold leading-none">{formatCurrency(bill.total)}</CardTitle>
+                <div className="space-y-1">
+                  <CardDescription className="text-xs font-semibold uppercase tracking-wider">Bill amount</CardDescription>
+                  <CardTitle className="text-3xl font-bold leading-none tracking-tight text-foreground">{formatCurrency(bill.total)}</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="rounded-lg bg-muted/40 px-3 py-2">
+              <CardContent className="space-y-3 p-5 pr-7">
+                <div className="rounded-xl border border-border/70 bg-muted/20 px-4 py-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Due date</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Due date</span>
                     <span className="text-sm font-semibold text-foreground">{bill.due ? formatDate(bill.due) : "N/A"}</span>
                   </div>
                   {bill.date_bill && (
                     <div className="flex items-center justify-between gap-2 mt-2">
-                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Date Bill</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Date bill</span>
                       <span className="text-sm font-semibold text-foreground">{formatDate(bill.date_bill)}</span>
                     </div>
                   )}
                   {bill.consumption !== null && (
                     <div className="flex items-center justify-between gap-2 mt-2">
-                      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Consumption</span>
+                      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Consumption</span>
                       <span className="text-sm font-semibold text-foreground">{bill.consumption} m³</span>
                     </div>
                   )}
                 </div>
 
                 {bill.amount_after_due_date !== null && (
-                  <div className="rounded-lg border border-destructive/15 bg-destructive/5 p-3">
+                  <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 dark:bg-destructive/10">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium text-muted-foreground">Amount after due date</span>
+                      <span className="text-xs font-semibold text-muted-foreground">Amount after due date</span>
                       <span className="text-sm font-bold text-destructive">{formatCurrency(bill.amount_after_due_date)}</span>
                     </div>
                   </div>
                 )}
                 {bill.disconnection && (
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-900/30 dark:bg-orange-950/20">
+                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 dark:border-amber-400/30 dark:bg-amber-400/10">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium text-orange-900 dark:text-orange-200">Disconnection</span>
-                      <span className="text-sm font-bold text-orange-800 dark:text-orange-400">{formatDate(bill.disconnection)}</span>
+                      <span className="text-xs font-semibold text-amber-900 dark:text-amber-200">Disconnection</span>
+                      <span className="text-sm font-bold text-amber-800 dark:text-amber-300">{formatDate(bill.disconnection)}</span>
                     </div>
                   </div>
                 )}
