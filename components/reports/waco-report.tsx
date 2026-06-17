@@ -8,6 +8,12 @@ type WacoReportProps = {
   plumberName?: string | null;
 };
 
+function toProperCase(value?: string | null) {
+  return (value ?? "")
+    .toLocaleLowerCase("en-PH")
+    .replace(/\b([a-z])/g, (letter) => letter.toLocaleUpperCase("en-PH"));
+}
+
 export function WacoReport({ application, inspection, payment }: WacoReportProps) {
   // Try to use payment paid_at, fallback to current date if needed for printed date maybe?
   // The screenshot shows Date printed or manual date.
@@ -241,20 +247,20 @@ export function WacoReport({ application, inspection, payment }: WacoReportProps
               </div>
             </div>
             
-            <table className="w-full mt-6 border-collapse border border-black text-center text-[8pt]">
-               <thead>
-                 <tr>
-                   <th className="border border-black p-1">Ref. Acct. Name</th>
-                   <th className="border border-black p-1">Ref. Acct. No.</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 <tr>
-                   <td className="border border-black p-2 text-xs truncate max-w-[100px]">{inspection?.reference_account_name ?? ""}</td>
-                   <td className="border border-black p-2 text-xs">{inspection?.reference_account_number ?? ""}</td>
-                 </tr>
-               </tbody>
-            </table>
+            <div className="mt-6 grid grid-cols-2 gap-3 text-center">
+              <div>
+                <div className="h-5 border-b border-black px-1 text-[9pt] leading-5">
+                  {toProperCase(inspection?.reference_account_name)}
+                </div>
+                <p className="mt-1 text-[8pt] leading-tight">Ref. Acct. Name</p>
+              </div>
+              <div>
+                <div className="h-5 border-b border-black px-1 text-[9pt] leading-5">
+                  {inspection?.reference_account_number ?? ""}
+                </div>
+                <p className="mt-1 text-[8pt] leading-tight">Ref. Acct. No.</p>
+              </div>
+            </div>
           </div>
         </div>
 
