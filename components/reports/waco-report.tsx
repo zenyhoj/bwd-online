@@ -8,7 +8,7 @@ type WacoReportProps = {
   plumberName?: string | null;
 };
 
-export function WacoReport({ application, inspection, payment, plumberName }: WacoReportProps) {
+export function WacoReport({ application, inspection, payment }: WacoReportProps) {
   // Try to use payment paid_at, fallback to current date if needed for printed date maybe?
   // The screenshot shows Date printed or manual date.
   // Actually, the screenshot has blanks for most dates.
@@ -265,15 +265,11 @@ export function WacoReport({ application, inspection, payment, plumberName }: Wa
             <div className="space-y-4">
               <div>
                 <p>Installed by:</p>
-                <div className="h-5 w-full border-b border-black text-center font-medium">
-                  {plumberName ?? ""}
-                </div>
+                <div className="h-5 w-full border-b border-black"></div>
                 <p className="text-[8pt] text-center mt-1">BWD Plumber</p>
               </div>
               <div>
-                <div className="h-5 w-full border-b border-black text-center font-medium">
-                  {application.inhouse_installation_completed ? format(new Date(), "MM-dd-yyyy") : ""}
-                </div>
+                <div className="h-5 w-full border-b border-black"></div>
                 <p className="text-[8pt] text-center mt-1">Date</p>
               </div>
               <div>
