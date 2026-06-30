@@ -18,6 +18,7 @@ import type {
   Profile,
   SeminarItem
 } from "@/types";
+import type { Json } from "@/types/database";
 
 function isMissingOfficePaymentAtColumn(error: { code?: string; message?: string } | null) {
   return (
@@ -361,6 +362,32 @@ export async function getAdminApplicationDetail(applicationId: string) {
   }
 
   return data as Record<string, unknown> | null;
+}
+
+export type DocumentVerificationLog = {
+  id: string;
+  applicant_name: string;
+  admin_account_name: string;
+  date_verified: string;
+  list_of_verified_documents: Json;
+};
+
+export async function getDocumentVerificationLogs(applicationId: string) {
+  const supabase = createSupabaseAdminClient();
+  const profile = await getCurrentProfile();
+
+  const { data, error } = await supabase
+    .from("document_verification_audit_logs")
+    .select("id, applicant_name, admin_account_name, date_verified, list_of_verified_documents")
+    .eq("organization_id", profile.organization_id)
+    .eq("application_id", applicationId)
+    .order("date_verified", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as DocumentVerificationLog[];
 }
 
 export async function getOrganizationInspectors() {

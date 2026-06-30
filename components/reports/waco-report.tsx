@@ -6,6 +6,7 @@ type WacoReportProps = {
   inspection?: Inspection | null;
   payment?: Payment | null;
   plumberName?: string | null;
+  seminarCompletedAt?: string | null;
 };
 
 function toProperCase(value?: string | null) {
@@ -14,7 +15,7 @@ function toProperCase(value?: string | null) {
     .replace(/\b([a-z])/g, (letter) => letter.toLocaleUpperCase("en-PH"));
 }
 
-export function WacoReport({ application, inspection, payment }: WacoReportProps) {
+export function WacoReport({ application, inspection, payment, plumberName, seminarCompletedAt }: WacoReportProps) {
   // Try to use payment paid_at, fallback to current date if needed for printed date maybe?
   // The screenshot shows Date printed or manual date.
   // Actually, the screenshot has blanks for most dates.
@@ -75,11 +76,27 @@ export function WacoReport({ application, inspection, payment }: WacoReportProps
         <p className="mb-2">
           I hereby apply for a water service connection size <span className="inline-block w-16 border-b border-black"></span> to be located at the above-mentioned address.
         </p>
-        <p className="mb-6">
+        <p className="mb-3">
           I understand that the connection will not be made until it is approved and all basic charges are paid. I
           assume responsibility for METER and all water that passes through the connection. I'll conform to the Rules
           and Regulations of the District.
         </p>
+        <div className="mb-5 grid grid-cols-3 gap-4 text-center text-[9pt]">
+          <div>
+            <p className="text-[8pt] uppercase tracking-wide">Applicant contact no.</p>
+            <div className="h-5 border-b border-black text-center font-medium leading-5">{application.cellphone_number ?? ""}</div>
+          </div>
+          <div>
+            <p className="text-[8pt] uppercase tracking-wide">Seminar date</p>
+            <div className="h-5 border-b border-black text-center font-medium leading-5">
+              {seminarCompletedAt ? format(new Date(seminarCompletedAt), "MM-dd-yyyy") : ""}
+            </div>
+          </div>
+          <div>
+            <p className="text-[8pt] uppercase tracking-wide">Accredited plumber</p>
+            <div className="h-5 border-b border-black text-center font-medium leading-5">{plumberName ?? ""}</div>
+          </div>
+        </div>
         <div className="flex items-end justify-start gap-12">
           <div className="flex flex-col items-center">
             <div className="h-4 w-56 border-b border-black"></div>

@@ -50,6 +50,22 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
     }
   }
 
+  const { data: latestSeminarProgress } = await supabase
+    .from("applicant_seminar_progress")
+    .select("completed_at, updated_at, created_at")
+    .eq("applicant_id", String(application.applicant_id))
+    .eq("completed", true)
+    .order("completed_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const seminarDate =
+    latestSeminarProgress?.completed_at ??
+    latestSeminarProgress?.updated_at ??
+    latestSeminarProgress?.created_at ??
+    null;
+
   return (
     <div className="flex w-full flex-col items-center gap-8 p-4 print:gap-0 print:p-0 min-h-screen bg-muted/20 print:bg-white print:block relative">
       <PrintButton />
@@ -60,6 +76,7 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
           inspection={latestInspection as any}
           payment={latestPayment}
           plumberName={plumberName}
+          seminarCompletedAt={seminarDate}
         />
       </div>
     </div>

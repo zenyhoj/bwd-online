@@ -8,6 +8,7 @@ alter table public.applicant_seminar_progress enable row level security;
 alter table public.seminar_progress enable row level security;
 alter table public.inspections enable row level security;
 alter table public.documents enable row level security;
+alter table public.document_verification_audit_logs enable row level security;
 alter table public.payments enable row level security;
 alter table public.concessionaires enable row level security;
 
@@ -325,6 +326,19 @@ using (
       and organization_id = documents.organization_id
       and role = 'admin'
   )
+);
+
+drop policy if exists "document_verification_audit_logs_admin_org_manage" on public.document_verification_audit_logs;
+create policy "document_verification_audit_logs_admin_org_manage"
+on public.document_verification_audit_logs
+for all
+using (
+  public.current_profile_role() = 'admin'
+  and organization_id = public.current_profile_organization_id()
+)
+with check (
+  public.current_profile_role() = 'admin'
+  and organization_id = public.current_profile_organization_id()
 );
 
 drop policy if exists "Public access to seminar media" on storage.objects;

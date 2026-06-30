@@ -12,10 +12,6 @@ function isPastOfficePaymentDate(value: string) {
   return toManilaDate(value).getTime() < Date.now();
 }
 
-function isFuturePaymentDate(value: string) {
-  return toManilaDate(value).getTime() > Date.now();
-}
-
 function isValidDateTimeLocal(value: string) {
   return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) && !Number.isNaN(toManilaDate(value).getTime());
 }
@@ -175,10 +171,6 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
 
       if (Number.isNaN(paidAtTime)) {
         return { success: false, message: "Date of payment is invalid." };
-      }
-
-      if (isFuturePaymentDate(parsed.data.paidAt)) {
-        return { success: false, message: "Date of payment cannot be later than the current date and time." };
       }
     }
 

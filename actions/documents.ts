@@ -10,12 +10,46 @@ import {
   documentUploadSchema,
   documentWorkflowNoteSchema
 } from "@/schemas";
-import type { ActionState } from "@/types";
-import { getDocumentRequirementRows } from "@/lib/document-workflow";
+import type { ActionState, Document } from "@/types";
+import { getDocumentRequirementRows, requiredDocumentTypes } from "@/lib/document-workflow";
 import { documentTypeLabels, type ApplicationDocumentType } from "@/lib/constants";
 
 function isMissingDocumentEnumValue(message?: string | null) {
   return message?.includes("invalid input value for enum document_type") ?? false;
+}
+
+function buildVerifiedDocumentAuditList({
+  documents,
+  submissionMode
+}: {
+  documents: Document[];
+  submissionMode: string;
+}) {
+  if (submissionMode === "office") {
+    return requiredDocumentTypes.map((type) => ({
+      document_id: null,
+      document_type: type,
+      label: documentTypeLabels[type],
+      file_name: null,
+      status: "verified",
+      reviewed_at: null,
+      reviewer_id: null,
+      source: "office_submission"
+    }));
+  }
+
+  return getDocumentRequirementRows(documents)
+    .filter((row) => row.status === "verified")
+    .map((row) => ({
+      document_id: row.document?.id ?? null,
+      document_type: row.type,
+      label: row.label,
+      file_name: row.document?.file_name ?? null,
+      status: row.status,
+      reviewed_at: row.document?.reviewed_at ?? null,
+      reviewer_id: row.document?.reviewer_id ?? null,
+      source: "online_upload"
+    }));
 }
 
 async function getManagedApplication({
@@ -458,7 +492,7 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
     // Verify application exists and belongs to the admin's organization
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, status, document_submission_mode")
+      .select("id, organization_id, applicant_id, status, full_name, document_submission_mode")
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -467,18 +501,17 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
       return { success: false, message: applicationError?.message ?? "Application not found." };
     }
 
+    const { data: documents, error: documentsError } = await supabase
+      .from("documents")
+      .select("*")
+      .eq("application_id", applicationId)
+      .eq("organization_id", profile.organization_id);
+
+    if (documentsError) {
+      return { success: false, message: documentsError.message };
+    }
+
     if (application.document_submission_mode !== "office") {
-      // Verify there are no rejected documents
-      const { data: documents, error: documentsError } = await supabase
-        .from("documents")
-        .select("status")
-        .eq("application_id", applicationId)
-        .eq("organization_id", profile.organization_id);
-
-      if (documentsError) {
-        return { success: false, message: documentsError.message };
-      }
-
       if (documents?.some((doc) => doc.status === "rejected")) {
         return { success: false, message: "Cannot complete verification while there are rejected documents." };
       }
@@ -496,6 +529,27 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
 
     if (updateError) {
       return { success: false, message: updateError.message };
+    }
+
+    const verifiedAt = new Date().toISOString();
+    const { error: auditError } = await supabase
+      .from("document_verification_audit_logs")
+      .insert({
+        organization_id: application.organization_id,
+        application_id: application.id,
+        applicant_id: application.applicant_id,
+        applicant_name: application.full_name,
+        admin_account_id: profile.id,
+        admin_account_name: profile.full_name,
+        date_verified: verifiedAt,
+        list_of_verified_documents: buildVerifiedDocumentAuditList({
+          documents: documents ?? [],
+          submissionMode: application.document_submission_mode
+        })
+      });
+
+    if (auditError) {
+      return { success: false, message: auditError.message };
     }
 
     revalidatePath("/admin");

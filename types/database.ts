@@ -746,6 +746,74 @@ export type Database = {
           }
         ];
       };
+      document_verification_audit_logs: {
+        Row: {
+          id: string;
+          organization_id: string;
+          application_id: string;
+          applicant_id: string;
+          applicant_name: string;
+          admin_account_id: string;
+          admin_account_name: string;
+          date_verified: string;
+          list_of_verified_documents: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          application_id: string;
+          applicant_id: string;
+          applicant_name: string;
+          admin_account_id: string;
+          admin_account_name: string;
+          date_verified?: string;
+          list_of_verified_documents?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          application_id?: string;
+          applicant_id?: string;
+          applicant_name?: string;
+          admin_account_id?: string;
+          admin_account_name?: string;
+          date_verified?: string;
+          list_of_verified_documents?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "document_verification_audit_logs_admin_account_id_fkey";
+            columns: ["admin_account_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_verification_audit_logs_applicant_id_fkey";
+            columns: ["applicant_id"];
+            isOneToOne: false;
+            referencedRelation: "applicants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_verification_audit_logs_application_id_fkey";
+            columns: ["application_id"];
+            isOneToOne: false;
+            referencedRelation: "applications";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "document_verification_audit_logs_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       payments: {
         Row: {
           id: string;

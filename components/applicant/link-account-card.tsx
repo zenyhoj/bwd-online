@@ -19,8 +19,8 @@ export function LinkAccountCard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accountNumber || !accountName) {
-      setError("Please fill out both fields.");
+    if (!accountNumber) {
+      setError("Please enter the account number.");
       return;
     }
 
@@ -47,7 +47,7 @@ export function LinkAccountCard() {
         <div className="min-w-0 space-y-1.5">
           <CardTitle className="text-xl leading-tight">Link an existing water connection</CardTitle>
           <CardDescription className="max-w-2xl">
-            Add a legacy account number and account name to show its monthly bills in this page.
+            Add a legacy account number to show its monthly bills in this page.
           </CardDescription>
         </div>
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/15 bg-primary/10 text-primary">
@@ -87,14 +87,14 @@ export function LinkAccountCard() {
                 id="accountName"
                 value={accountName}
                 onChange={(e) => setAccountName(e.target.value)}
-                placeholder="Exactly as it appears on your bill"
+                placeholder="Optional display name"
                 className="h-12 rounded-xl"
                 autoComplete="name"
               />
             </div>
           </div>
           <div className="rounded-xl border border-border/70 bg-muted/20 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-            Use the account number with dashes and the account name printed on your latest water bill.
+            Use the account number with dashes. Account name is kept for display only and is not used to verify the link.
           </div>
         </CardContent>
         <div className="border-t border-border/70 bg-muted/10 px-6 py-4">

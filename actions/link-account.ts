@@ -30,12 +30,6 @@ export async function linkLegacyAccountAction(
       return { success: false, message: "Not authorized as an applicant" };
     }
 
-    // Ensure we match case-insensitively or exact match depending on requirements.
-    // For simplicity and matching Excel exactly, we'll use exact match.
-    // We check if the concessionaire exists, has no applicant_id, and matches account_name in water bills.
-    
-    // Wait, account_name is in water_bills, not concessionaires.
-    // Let's find the concessionaire by concessionaire_number
     const cleanAccountNumber = accountNumber.trim();
     const cleanAccountName = accountName.trim();
 
@@ -43,7 +37,7 @@ export async function linkLegacyAccountAction(
     // duplicate concessionaire row that has the same account number but no bills.
     const { data: latestBill, error: billLookupError } = await adminClient
       .from("water_bills")
-      .select("concessionaire_id, name")
+      .select("concessionaire_id")
       .eq("organization_id", profile.organization_id)
       .eq("account_number", cleanAccountNumber)
       .order("due", { ascending: false })
@@ -56,11 +50,6 @@ export async function linkLegacyAccountAction(
 
     if (!latestBill) {
       return { success: false, message: "Account number not found. Please check your latest bill." };
-    }
-
-    const billName = latestBill.name.trim().toLowerCase();
-    if (billName !== cleanAccountName.toLowerCase()) {
-      return { success: false, message: "Account name does not match our records." };
     }
 
     // USE adminClient to bypass RLS since applicants might not have read access to unlinked concessionaires

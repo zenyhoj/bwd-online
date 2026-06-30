@@ -27,9 +27,11 @@ import {
   getAdminApplicationDetail,
   getAdminApplicationsQueue,
   getAdminDashboardStats,
+  getDocumentVerificationLogs,
   getOrganizationInspectors,
   getApplicantSeminarState
 } from "@/lib/queries";
+import type { Json } from "@/types/database";
 import type { Document, Payment } from "@/types";
 
 type AdminDashboardPageProps = {
@@ -191,6 +193,7 @@ function workflowStepState({
   inspections,
   payments,
   applicationStatus,
+  isConverted,
   inhousePlumbingCompleted,
   documentsReady,
   waterMeterScheduled,
@@ -199,6 +202,7 @@ function workflowStepState({
   inspections: { status?: string; scheduled_at?: string | null }[];
   payments: Payment[];
   applicationStatus: string;
+  isConverted: boolean;
   inhousePlumbingCompleted: boolean;
   documentsReady: boolean;
   waterMeterScheduled: boolean;
@@ -215,8 +219,26 @@ function workflowStepState({
     payment: isPaid ? "Complete" : payments.length > 0 ? "Scheduled" : hasApprovedInspection && documentsReady ? "Ready" : hasApprovedInspection ? "Review docs" : "Waiting",
     waterMeter: waterMeterInstalled ? "Complete" : waterMeterScheduled ? "Scheduled" : isPaid ? "Ready" : "Waiting",
     conversion:
-      applicationStatus === "converted" ? "Complete" : waterMeterInstalled ? "Ready" : "Waiting"
+      isConverted ? "Complete" : waterMeterInstalled ? "Ready" : "Waiting"
   };
+}
+
+function getVerificationLogDocumentLabels(value: Json) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return null;
+      }
+
+      const label = item.label;
+      const type = item.document_type;
+      return typeof label === "string" ? label : typeof type === "string" ? type.replaceAll("_", " ") : null;
+    })
+    .filter((label): label is string => Boolean(label));
 }
 
 
@@ -244,7 +266,12 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
   const selectedId = getStringParam(resolvedSearchParams, "selected") ?? String(applications.data[0]?.id ?? "");
   const selectedApplication = selectedId ? await getAdminApplicationDetail(selectedId) : null;
-  const seminarState = selectedApplication ? await getApplicantSeminarState(String(selectedApplication.applicant_id)) : null;
+  const [seminarState, verificationLogs] = selectedApplication
+    ? await Promise.all([
+        getApplicantSeminarState(String(selectedApplication.applicant_id)),
+        getDocumentVerificationLogs(String(selectedApplication.id))
+      ])
+    : [null, []];
   const hasActiveFilters = Boolean(q) || workflow !== "all";
   const noQueueResults = applications.data.length === 0;
   const hasMatchesInOtherStages = Boolean(searchMatchesAcrossAllStages && searchMatchesAcrossAllStages.count > 0);
@@ -347,10 +374,13 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const selectedQueueStage = selectedApplication ? queueStage(selectedApplication) : "under-review";
   const waterMeterScheduled = Boolean(selectedApplication?.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(selectedApplication?.water_meter_installed_at);
+  const selectedConcessionaires = ((selectedApplication?.concessionaires as { id: string }[] | undefined) ?? []);
+  const selectedApplicationConverted = selectedApplicationStatus === "converted" || selectedConcessionaires.length > 0;
   const stepState = workflowStepState({
     inspections: selectedInspections,
     payments: selectedPayments,
     applicationStatus: selectedApplicationStatus,
+    isConverted: selectedApplicationConverted,
     inhousePlumbingCompleted,
     documentsReady: documentsReadyForPayment,
     waterMeterScheduled,
@@ -861,6 +891,44 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       documentSubmissionMode={String(selectedApplication.document_submission_mode)}
                       requirements={selectedDocumentRequirements} 
                     />
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          Verification Log
+                        </p>
+                        <Badge variant="outline" className="text-[10px]">
+                          {verificationLogs.length}
+                        </Badge>
+                      </div>
+                      {verificationLogs.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          No verification log has been recorded for this application yet.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {verificationLogs.map((log) => {
+                            const documentLabels = getVerificationLogDocumentLabels(log.list_of_verified_documents);
+
+                            return (
+                              <div key={log.id} className="rounded-lg border border-border/60 bg-background p-3 text-sm">
+                                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                                  <div>
+                                    <p className="font-semibold text-foreground">{log.admin_account_name}</p>
+                                    <p className="text-xs text-muted-foreground">Verified {log.applicant_name}</p>
+                                  </div>
+                                  <p className="text-xs font-medium text-muted-foreground">
+                                    {formatDateTime(log.date_verified)}
+                                  </p>
+                                </div>
+                                <p className="mt-2 text-xs text-muted-foreground">
+                                  {documentLabels.length > 0 ? documentLabels.join(", ") : "No document list saved."}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>

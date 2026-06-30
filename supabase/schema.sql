@@ -259,6 +259,19 @@ create table public.documents (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
+create table public.document_verification_audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete restrict,
+  application_id uuid not null references public.applications (id) on delete cascade,
+  applicant_id uuid not null references public.applicants (id) on delete cascade,
+  applicant_name text not null,
+  admin_account_id uuid not null references public.profiles (id) on delete restrict,
+  admin_account_name text not null,
+  date_verified timestamptz not null default timezone('utc', now()),
+  list_of_verified_documents jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 create table public.payments (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete restrict,
@@ -322,6 +335,8 @@ create index idx_inspections_org_status_scheduled on public.inspections (organiz
 create index idx_inspections_registry_inspector_status on public.inspections (registry_inspector_id, status, scheduled_at desc);
 create index idx_documents_application_status on public.documents (application_id, status, document_type);
 create unique index idx_documents_application_document_type_unique on public.documents (application_id, document_type);
+create index idx_document_verification_audit_org_date on public.document_verification_audit_logs (organization_id, date_verified desc);
+create index idx_document_verification_audit_application on public.document_verification_audit_logs (application_id, date_verified desc);
 create index idx_payments_application_due_date on public.payments (application_id, due_date desc);
 create index idx_concessionaires_org_connection_date on public.concessionaires (organization_id, connection_date desc);
 

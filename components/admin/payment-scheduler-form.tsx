@@ -56,7 +56,6 @@ export function PaymentSchedulerForm({
   const action = payment ? updatePaymentStatusAction : schedulePaymentAction;
   const [state, formAction, pending] = useActionState(action, initialActionState);
   const [minOfficePaymentAt, setMinOfficePaymentAt] = useState("");
-  const [maxPaidAt, setMaxPaidAt] = useState("");
   const [paidAtValue, setPaidAtValue] = useState(() => toDateTimeLocal(payment?.paid_at));
   const isPaidLocked = payment?.status === "paid";
   
@@ -69,7 +68,6 @@ export function PaymentSchedulerForm({
     const currentDateTime = getCurrentDateTimeLocal();
 
     setMinOfficePaymentAt(currentDateTime);
-    setMaxPaidAt(currentDateTime);
 
     if (!payment?.paid_at) {
       setPaidAtValue(currentDateTime);
@@ -219,7 +217,6 @@ export function PaymentSchedulerForm({
                     value={paidAtValue}
                     onValueChange={setPaidAtValue}
                     minDateTime={toDateTimeLocal(payment.office_payment_at) || undefined}
-                    maxDateTime={maxPaidAt || undefined}
                     required
                     compact
                   />
