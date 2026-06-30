@@ -504,12 +504,10 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                 ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
                 : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col items-start gap-1">
                 <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Plumbing</p>
                 {selectedApplication?.inhouse_installation_completed && (
-                  <div className="mt-0.5 sm:mt-0">
-                    <StatusBadge status="completed" />
-                  </div>
+                  <StatusBadge status="completed" className="px-2 py-0.5 text-[9px] tracking-[0.1em]" />
                 )}
               </div>
               <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
@@ -524,12 +522,13 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                 ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
                 : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col items-start gap-1">
                 <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Inspection</p>
                 {latestInspection && (
-                  <div className="mt-0.5 sm:mt-0">
-                    <StatusBadge status={latestInspection.status === "rejected" ? "disapproved" : (latestInspection.status ?? "pending")} />
-                  </div>
+                  <StatusBadge
+                    status={latestInspection.status === "rejected" ? "disapproved" : (latestInspection.status ?? "pending")}
+                    className="px-2 py-0.5 text-[9px] tracking-[0.1em]"
+                  />
                 )}
               </div>
               <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
@@ -542,12 +541,10 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                 ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
                 : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col items-start gap-1">
                 <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Payment</p>
                 {latestPayment && (
-                  <div className="mt-0.5 sm:mt-0">
-                    <StatusBadge status={latestPayment.status ?? "scheduled"} />
-                  </div>
+                  <StatusBadge status={latestPayment.status ?? "scheduled"} className="px-2 py-0.5 text-[9px] tracking-[0.1em]" />
                 )}
               </div>
               <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
@@ -570,7 +567,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                     ? "border-primary/30 bg-primary/5"
                     : "border-border/60 bg-muted/5 hover:bg-muted/10"
             }`}>
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-col items-start gap-1">
                 <p className={`uppercase tracking-[0.14em] font-bold text-[10px] xl:text-xs ${
                   selectedApplication?.water_meter_installed_at 
                     ? "text-emerald-700 dark:text-emerald-300"
@@ -579,9 +576,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                       : "text-muted-foreground"
                 }`}>Water Meter</p>
                 {selectedApplication?.water_meter_installed_at && (
-                  <div className="mt-0.5 sm:mt-0">
-                    <StatusBadge status="completed" />
-                  </div>
+                  <StatusBadge status="completed" className="px-2 py-0.5 text-[9px] tracking-[0.1em]" />
                 )}
               </div>
               <p className={`mt-2 font-medium tabular-nums leading-tight text-xs xl:text-sm ${
