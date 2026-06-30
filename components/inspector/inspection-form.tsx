@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
-import type { Inspection } from "@/types";
+import type { Inspection, InspectionStatus } from "@/types";
 
 type InspectionFormProps = {
   inspection: Inspection;
@@ -39,6 +39,8 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
   const isApproved = inspection.status === "approved";
   const [isEditingApproved, setIsEditingApproved] = useState(!isApproved);
   const isReadOnly = isApproved && !isEditingApproved;
+  const [statusValue, setStatusValue] = useState<InspectionStatus>(inspection.status);
+  const [plumbingApprovedValue, setPlumbingApprovedValue] = useState(inspection.plumbing_approved === true);
   const [inspectedAtValue, setInspectedAtValue] = useState(() => toDateTimeLocalValue(inspection.inspected_at));
 
   const [searchQuery, setSearchQuery] = useState(inspection.reference_account_name ?? "");
@@ -73,14 +75,35 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
     if (refAccNumRef.current && account.accountNumber) refAccNumRef.current.value = account.accountNumber;
   };
 
+  const resetEditableValues = () => {
+    setStatusValue(inspection.status);
+    setPlumbingApprovedValue(inspection.plumbing_approved === true);
+    setInspectedAtValue(
+      inspection.inspected_at ? toDateTimeLocalValue(inspection.inspected_at) : toDateTimeLocalValue(new Date().toISOString())
+    );
+  };
+
+  const handleEditToggle = () => {
+    if (isEditingApproved) {
+      resetEditableValues();
+      setIsEditingApproved(false);
+      return;
+    }
+
+    setIsEditingApproved(true);
+  };
+
   useEffect(() => {
+    setStatusValue(inspection.status);
+    setPlumbingApprovedValue(inspection.plumbing_approved === true);
+
     if (inspection.inspected_at) {
       setInspectedAtValue(toDateTimeLocalValue(inspection.inspected_at));
       return;
     }
 
     setInspectedAtValue(toDateTimeLocalValue(new Date().toISOString()));
-  }, [inspection.inspected_at]);
+  }, [inspection.id, inspection.inspected_at, inspection.plumbing_approved, inspection.status]);
 
   return (
     <Card className={isReadOnly ? "border-border/70 bg-muted/30" : undefined}>
@@ -99,7 +122,7 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
               type="button"
               variant={isEditingApproved ? "secondary" : "outline"}
               size="sm"
-              onClick={() => setIsEditingApproved((value) => !value)}
+              onClick={handleEditToggle}
               className="w-full sm:w-auto"
             >
               {isEditingApproved ? "Cancel edit" : "Edit"}
@@ -116,7 +139,14 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
               id="status"
               name="status"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              defaultValue={inspection.status}
+              value={statusValue}
+              onChange={(event) => {
+                const nextStatus = event.target.value as InspectionStatus;
+                setStatusValue(nextStatus);
+                if (nextStatus !== "approved") {
+                  setPlumbingApprovedValue(false);
+                }
+              }}
               disabled={isReadOnly}
             >
               <option value="in_progress">In progress</option>
@@ -131,8 +161,9 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
               id="plumbingApproved"
               name="plumbingApproved"
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              defaultValue={inspection.plumbing_approved ? "true" : "false"}
-              disabled={isReadOnly}
+              value={statusValue === "approved" && plumbingApprovedValue ? "true" : "false"}
+              onChange={(event) => setPlumbingApprovedValue(event.target.value === "true")}
+              disabled={isReadOnly || statusValue !== "approved"}
             >
               <option value="true">Approved</option>
               <option value="false">Disapproved</option>

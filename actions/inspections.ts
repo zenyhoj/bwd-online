@@ -185,6 +185,8 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
       return parsed.error;
     }
 
+    const plumbingApproved = parsed.data.status === "approved" ? parsed.data.plumbingApproved : false;
+
     const { data: inspection, error: fetchError } = await supabase
       .from("inspections")
       .select("application_id")
@@ -232,7 +234,7 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
       .from("inspections")
       .update({
         status: parsed.data.status,
-        plumbing_approved: parsed.data.plumbingApproved,
+        plumbing_approved: plumbingApproved,
         remarks: parsed.data.remarks,
         material_list: parsed.data.materialList,
         latitude: parsed.data.latitude,
