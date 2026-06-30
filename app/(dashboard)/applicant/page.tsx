@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Droplets } from "lucide-react";
 
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
@@ -346,6 +346,30 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               title="Accounts"
               description="Switch accounts."
             />
+          ) : null}
+
+          {!selectedApplication ? (
+            <Card className="overflow-hidden border-primary/20 bg-primary/[0.03] shadow-sm">
+              <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Droplets className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground">Already have a water account?</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Link an existing account number to view your monthly water bills without starting a new application.
+                    </p>
+                  </div>
+                </div>
+                <Button asChild className="w-full shrink-0 sm:w-auto">
+                  <Link href="/applicant/water-bills#link-account">
+                    Link existing account
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
           ) : null}
 
           <Card className="border-border/70 shadow-sm min-w-0">

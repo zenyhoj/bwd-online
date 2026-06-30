@@ -47,6 +47,7 @@ type NavItem = { href: string; label: string; icon: React.ComponentType<{ classN
 const navByRole: Record<AppRole, NavItem[]> = {
   applicant: [
     { href: "/applicant", label: "Dashboard", icon: Home },
+    { href: "/applicant/water-bills", label: "Water Bills", icon: Droplets },
     { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
     { href: "/applicant/applications/new", label: "Information", icon: FileCheck2 },
     { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
@@ -101,6 +102,7 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
   if (mode === "preseminar") {
     return [
       { href: "/applicant", label: "Dashboard", icon: Home },
+      { href: "/applicant/water-bills", label: "Water Bills", icon: Droplets },
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
       { href: "/applicant/payments", label: "Payments", icon: CreditCard },
@@ -111,6 +113,7 @@ function getApplicantNavItems(mode: "preseminar" | "hasApplication" | "newApplic
   if (mode === "hasApplication") {
     return [
       { href: "/applicant", label: "Dashboard", icon: Home },
+      { href: "/applicant/water-bills", label: "Water Bills", icon: Droplets },
       { href: "/applicant/applications/new", label: "New Application", icon: FileCheck2 },
       { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
       { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
@@ -350,10 +353,12 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
               : applicantNavMode === "preseminar"
               ? [
                   { href: "/applicant", label: "Home", icon: Home },
+                  { href: "/applicant/water-bills", label: "Bills", icon: Droplets },
                   { href: "/applicant/seminar", label: "Seminar", icon: BookOpenText },
                 ]
               : [
                   { href: "/applicant", label: "Home", icon: Home },
+                  { href: "/applicant/water-bills", label: "Bills", icon: Droplets },
                   { href: "/applicant/plumbers", label: "Plumbers", icon: BriefcaseBusiness },
                   { href: "/applicant/applications/new", label: "New App", icon: FileCheck2 },
                 ]

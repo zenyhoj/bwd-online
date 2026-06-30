@@ -39,43 +39,40 @@ export async function linkLegacyAccountAction(
     const cleanAccountNumber = accountNumber.trim();
     const cleanAccountName = accountName.trim();
 
+    // Verify against the latest uploaded bill first. This avoids picking an older
+    // duplicate concessionaire row that has the same account number but no bills.
+    const { data: latestBill, error: billLookupError } = await adminClient
+      .from("water_bills")
+      .select("concessionaire_id, name")
+      .eq("organization_id", profile.organization_id)
+      .eq("account_number", cleanAccountNumber)
+      .order("due", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (billLookupError) {
+      return { success: false, message: billLookupError.message };
+    }
+
+    if (!latestBill) {
+      return { success: false, message: "Account number not found. Please check your latest bill." };
+    }
+
+    const billName = latestBill.name.trim().toLowerCase();
+    if (billName !== cleanAccountName.toLowerCase()) {
+      return { success: false, message: "Account name does not match our records." };
+    }
+
     // USE adminClient to bypass RLS since applicants might not have read access to unlinked concessionaires
     const { data: concessionaire, error: findError } = await adminClient
       .from("concessionaires")
       .select("id, applicant_id")
       .eq("organization_id", profile.organization_id)
-      .eq("concessionaire_number", cleanAccountNumber)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("id", latestBill.concessionaire_id)
       .maybeSingle();
 
     if (findError || !concessionaire) {
       return { success: false, message: "Account number not found. Please check your latest bill." };
-    }
-
-    if (concessionaire.applicant_id) {
-      // If it's already linked to this profile, return success anyway
-      // But we can't easily check that without another query.
-      return { success: false, message: "This account is already linked to a user profile." };
-    }
-
-    // Verify account name against water bills
-    // USE adminClient here as well
-    const { data: bills } = await adminClient
-      .from("water_bills")
-      .select("name")
-      .eq("concessionaire_id", concessionaire.id)
-      .limit(1);
-
-    if (bills && bills.length > 0) {
-      const billName = bills[0].name.trim().toLowerCase();
-      if (billName !== cleanAccountName.toLowerCase()) {
-        return { success: false, message: "Account name does not match our records." };
-      }
-    } else {
-      // No bills yet, so we can't verify account name. 
-      // This happens if admin creates concessionaire manually without bills.
-      return { success: false, message: "Cannot verify account at this time. No bills on record." };
     }
 
     // It matches. Link it.

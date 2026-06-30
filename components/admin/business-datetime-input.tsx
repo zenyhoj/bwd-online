@@ -19,6 +19,7 @@ type BusinessDateTimeInputProps = {
   defaultValue?: string;
   onValueChange?: (value: string) => void;
   minDateTime?: string;
+  maxDateTime?: string;
   disabled?: boolean;
   required?: boolean;
   compact?: boolean;
@@ -88,14 +89,20 @@ function isBeforeMinDate(dateKey: string, minDateTime?: string) {
   return Boolean(min && dateKey < min.dateKey);
 }
 
-function hasAvailableTime(dateKey: string, minDateTime?: string) {
+function isAfterMaxDate(dateKey: string, maxDateTime?: string) {
+  const max = parseDateTimeLocal(maxDateTime);
+  return Boolean(max && dateKey > max.dateKey);
+}
+
+function hasAvailableTime(dateKey: string, minDateTime?: string, maxDateTime?: string) {
   const min = parseDateTimeLocal(minDateTime);
+  const max = parseDateTimeLocal(maxDateTime);
 
-  if (!min || dateKey !== min.dateKey) {
+  return getTimeSlots().some((slot) => {
+    if (min && dateKey === min.dateKey && slot < min.time) return false;
+    if (max && dateKey === max.dateKey && slot > max.time) return false;
     return true;
-  }
-
-  return getTimeSlots().some((slot) => slot >= min.time);
+  });
 }
 
 function getDateLabel(dateKey: string) {
@@ -113,6 +120,7 @@ export function BusinessDateTimeInput({
   defaultValue,
   onValueChange,
   minDateTime,
+  maxDateTime,
   disabled = false,
   required = false,
   compact = false,
@@ -122,7 +130,7 @@ export function BusinessDateTimeInput({
   const [selectedDate, setSelectedDate] = useState(parsedDefault?.dateKey ?? "");
   const [selectedTime, setSelectedTime] = useState(parsedDefault?.time ?? "");
   const [visibleMonth, setVisibleMonth] = useState(() => {
-    const baseDate = parsedDefault?.dateKey ?? parseDateTimeLocal(minDateTime)?.dateKey;
+    const baseDate = parsedDefault?.dateKey ?? parseDateTimeLocal(minDateTime)?.dateKey ?? parseDateTimeLocal(maxDateTime)?.dateKey;
     return baseDate ? new Date(`${baseDate}T00:00:00`) : new Date();
   });
   const value = controlledValue ?? toDateTimeLocalValue(selectedDate, selectedTime);
@@ -141,20 +149,27 @@ export function BusinessDateTimeInput({
       return timeSlots;
     }
 
-    const min = unrestrictedDates ? null : parseDateTimeLocal(minDateTime);
-    if (!min || activeDate !== min.dateKey) {
-      return timeSlots;
-    }
+    const min = parseDateTimeLocal(minDateTime);
+    const max = parseDateTimeLocal(maxDateTime);
 
-    return timeSlots.filter((slot) => slot >= min.time);
-  }, [activeDate, minDateTime, timeSlots]);
+    return timeSlots.filter((slot) => {
+      if (min && activeDate === min.dateKey && slot < min.time) return false;
+      if (max && activeDate === max.dateKey && slot > max.time) return false;
+      return true;
+    });
+  }, [activeDate, maxDateTime, minDateTime, timeSlots]);
   const calendarDays = useMemo(() => getMonthGrid(visibleMonth), [visibleMonth]);
 
   function selectDate(date: Date) {
     const dateKey = toDateKey(date);
-    const min = unrestrictedDates ? null : parseDateTimeLocal(minDateTime);
+    const min = parseDateTimeLocal(minDateTime);
+    const max = parseDateTimeLocal(maxDateTime);
     const retainedTime = dateKey === activeDate ? activeTime : "";
-    const nextTime = retainedTime && min?.dateKey === dateKey && retainedTime < min.time ? "" : retainedTime;
+    const nextTime =
+      retainedTime &&
+      ((min?.dateKey === dateKey && retainedTime < min.time) || (max?.dateKey === dateKey && retainedTime > max.time))
+        ? ""
+        : retainedTime;
     const nextValue = toDateTimeLocalValue(dateKey, nextTime);
 
     setSelectedDate(dateKey);
@@ -224,8 +239,9 @@ export function BusinessDateTimeInput({
                 disabled ||
                 !isCurrentMonth ||
                 (!unrestrictedDates && !isAllowedWeekday(date)) ||
-                (!unrestrictedDates && isBeforeMinDate(dateKey, minDateTime)) ||
-                (!unrestrictedDates && !hasAvailableTime(dateKey, minDateTime));
+                isBeforeMinDate(dateKey, minDateTime) ||
+                isAfterMaxDate(dateKey, maxDateTime) ||
+                !hasAvailableTime(dateKey, minDateTime, maxDateTime);
 
               return (
                 <button

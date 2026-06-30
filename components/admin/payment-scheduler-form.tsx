@@ -213,15 +213,15 @@ export function PaymentSchedulerForm({
                 {/* Date of payment */}
                 <div className="space-y-2 sm:col-span-2 xl:col-span-1">
                   <Label htmlFor={`paidAt-${payment.id}`}>Date of payment</Label>
-                  <Input
+                  <BusinessDateTimeInput
                     id={`paidAt-${payment.id}`}
                     name="paidAt"
-                    type="datetime-local"
-                    min={toDateTimeLocal(payment.office_payment_at) || undefined}
-                    max={maxPaidAt || undefined}
                     value={paidAtValue}
-                    onChange={(event) => setPaidAtValue(event.target.value)}
-                    className="h-11"
+                    onValueChange={setPaidAtValue}
+                    minDateTime={toDateTimeLocal(payment.office_payment_at) || undefined}
+                    maxDateTime={maxPaidAt || undefined}
+                    required
+                    compact
                   />
                 </div>
               </div>

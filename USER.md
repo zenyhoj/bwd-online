@@ -8,6 +8,8 @@ Welcome to the **Buenavista Water District (BWD) Online Water Application System
 
 The application process is sequential. Each stage must be completed before the next one becomes available.
 
+If you created an account only to monitor an existing water account, open **Water Bills** and use **Link existing account**. You do not need to start a new water connection application just to view linked monthly bills.
+
 ### Stage 1: Account and Orientation
 1. **Registration**: Create an account with your email and log in.
 2. **Online Seminar**:
@@ -46,6 +48,7 @@ The application process is sequential. Each stage must be completed before the n
 
 ### Stage 7: Managing Water Bills and Accounts
 - **Water bills**: After conversion, you can view monthly water consumption bills and due dates on the **Water Bills** page.
+- **Existing accounts**: If you already have a BWD water account, use **Link existing account** on the **Water Bills** page. Enter the account number and account name exactly as printed on your latest bill.
 - **Multiple accounts**: If you have multiple linked accounts, use the account filter to switch between concessionaire records.
 - **Payment note**: The **Payments** page is for initial application fees. Water bill payment instructions are shown on the **Water Bills** page.
 
