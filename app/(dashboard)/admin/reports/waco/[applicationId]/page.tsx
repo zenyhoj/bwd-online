@@ -60,10 +60,27 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
     .limit(1)
     .maybeSingle();
 
+  const { data: latestLegacySeminarProgress } = await supabase
+    .from("seminar_progress")
+    .select("completed_at, updated_at, created_at")
+    .eq("application_id", String(application.id))
+    .eq("completed", true)
+    .order("completed_at", { ascending: false, nullsFirst: false })
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const applicationSeminarFallback = application.seminar_completed
+    ? String(application.submitted_at ?? application.created_at ?? "") || null
+    : null;
   const seminarDate =
     latestSeminarProgress?.completed_at ??
     latestSeminarProgress?.updated_at ??
     latestSeminarProgress?.created_at ??
+    latestLegacySeminarProgress?.completed_at ??
+    latestLegacySeminarProgress?.updated_at ??
+    latestLegacySeminarProgress?.created_at ??
+    applicationSeminarFallback ??
     null;
 
   return (

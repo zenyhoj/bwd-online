@@ -113,7 +113,7 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
 
       {/* Investigation and Availability */}
       <section className="mb-4 grid grid-cols-2 gap-8 text-[9.5pt]">
-        <div>
+        <div className="col-start-2 row-start-1">
           <h3 className="mb-2 font-bold">Investigation of Application</h3>
           <p className="mb-1">System is:</p>
           <div className="mb-4 flex items-center gap-4">
@@ -129,22 +129,19 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
             </label>
           </div>
           <div className="mt-6">
-            <p className="mb-6">Investigated & Verified by:</p>
-            <div className="flex items-end gap-2">
-              <div className="h-5 w-48 border-b border-black text-center font-medium">
-                {inspection?.inspector_name ?? ""}
-              </div>
-              <span>Date:</span>
-              <div className="h-5 w-24 border-b border-black text-center font-medium">
-                {inspection?.inspected_at ? format(new Date(inspection.inspected_at), "MM-dd-yyyy") : ""}
+            <p className="mb-6">Verified by:</p>
+            <div className="w-64">
+              <div className="h-5 border-b border-black text-center font-medium">
+                Engr. Salvador S. Chan, Jr.
               </div>
             </div>
           </div>
         </div>
 
-        <div>
+        <div className="col-start-1 row-start-1">
           <h3 className="mb-2 font-bold">Availability of Applicant's Plumbing Installation</h3>
-          <div className="mb-4 mt-6 flex items-center gap-4">
+          <p className="mb-1 invisible">System is:</p>
+          <div className="mb-4 flex items-center gap-4">
             <label className="flex items-center gap-1">
               <div className="flex h-4 w-4 items-center justify-center border border-black text-xs font-bold">
                 {application?.inhouse_installation_completed === true ? "✓" : ""}
@@ -157,7 +154,7 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
             </label>
           </div>
           <div className="mt-6">
-            <p className="mb-6">Investigated & Verified by:</p>
+            <p className="mb-6">Investigated by:</p>
             <div className="flex items-end gap-2">
               <div className="h-5 w-48 border-b border-black text-center font-medium">
                 {inspection?.inspector_name ?? ""}
