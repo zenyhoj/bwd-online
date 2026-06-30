@@ -431,22 +431,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Ready for payment</p>
-                <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tracking-tight text-indigo-700 dark:text-indigo-300">{readyForPayment}</span>
-                </div>
-                <p className="mt-1 text-[10px] font-medium text-muted-foreground">awaiting payment</p>
-              </div>
-              <div className="rounded-full bg-indigo-500/10 p-2 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300">
-                <CreditCard className="h-4 w-4" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
-          <CardContent className="p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Docs to review</p>
                 <div className="mt-2 flex items-baseline gap-1.5">
                   <span className="text-3xl font-bold tracking-tight text-sky-700 dark:text-sky-300">{pendingDocumentReviews}</span>
@@ -455,6 +439,22 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
               </div>
               <div className="rounded-full bg-sky-500/10 p-2 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
                 <FileCheck2 className="h-4 w-4" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/70 bg-card shadow-sm transition-colors hover:bg-muted/20">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Ready for payment</p>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tracking-tight text-indigo-700 dark:text-indigo-300">{readyForPayment}</span>
+                </div>
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">awaiting payment</p>
+              </div>
+              <div className="rounded-full bg-indigo-500/10 p-2 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-300">
+                <CreditCard className="h-4 w-4" />
               </div>
             </div>
           </CardContent>
