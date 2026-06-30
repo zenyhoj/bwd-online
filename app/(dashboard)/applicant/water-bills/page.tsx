@@ -110,12 +110,14 @@ export default async function ApplicantWaterBillsPage({
         </div>
         
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 items-end sm:items-center">
-          <Button asChild variant="outline" className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5 bg-background whitespace-nowrap shadow-sm font-medium">
-            <a href="#link-account">
-              <Plus className="h-4 w-4" />
-              Link another account
-            </a>
-          </Button>
+          {concessionaires.length > 0 ? (
+            <Button asChild variant="outline" className="gap-2 rounded-full border-primary/20 text-primary hover:bg-primary/5 bg-background whitespace-nowrap shadow-sm font-medium">
+              <a href="#link-account">
+                <Plus className="h-4 w-4" />
+                Link Account
+              </a>
+            </Button>
+          ) : null}
           {showFilter && (
             <div className="w-full sm:w-auto">
               <ConcessionaireFilter concessionaires={concessionaireOptions} />
@@ -123,6 +125,12 @@ export default async function ApplicantWaterBillsPage({
           )}
         </div>
       </div>
+
+      {concessionaires.length === 0 ? (
+        <div id="link-account" className="scroll-mt-24">
+          <LinkAccountCard />
+        </div>
+      ) : null}
 
       {concessionaires.length > 0 ? (
         <Card className="overflow-hidden border-border/70 bg-card shadow-sm">
@@ -246,9 +254,11 @@ export default async function ApplicantWaterBillsPage({
         </div>
       )}
 
-      <div id="link-account" className="scroll-mt-24">
-        <LinkAccountCard />
-      </div>
+      {concessionaires.length > 0 ? (
+        <div id="link-account" className="scroll-mt-24">
+          <LinkAccountCard />
+        </div>
+      ) : null}
 
       <Alert className="isolate z-0 flex items-start gap-3 rounded-xl border-blue-200 bg-gradient-to-r from-blue-50 to-sky-50 text-blue-900 shadow-sm dark:border-blue-900/30 dark:from-blue-950/30 dark:to-sky-950/20 dark:text-blue-200">
         <Info className="mt-0.5 h-5 w-5 shrink-0 text-yellow-500 dark:text-yellow-400" />
