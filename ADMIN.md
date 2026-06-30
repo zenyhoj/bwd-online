@@ -4,43 +4,53 @@ This section is for BWD administrative personnel managing the application queue.
 
 ---
 
-## 🛡️ Administrative Workflow
+## Administrative Workflow
 
-### 1. The Admin Dashboard (Workflow Control)
-The dashboard organizes applications into strict stages based on system logic:
-- **For In-house Plumbing**: Waiting for the applicant to finish their plumbing.
-- **For Inspection**: Plumbing marked done; waiting for an inspector assignment.
-- **Under Review**: Inspection done; awaiting final admin/supervisor approval.
-- **For Documents**: Inspection approved; waiting for applicant uploads or verification.
-- **For Payment**: Documents verified; ready for the admin to set a payment date.
-- **For Conversion**: Payment confirmed; ready for final water meter installation.
+### 1. The Admin Dashboard
+The dashboard organizes applications into workflow stages. The summary cards, sidebar dashboard badge, workflow filter, and applicant table stage labels should follow the same stage rules.
+
+- **For In-house Plumbing**: Waiting for the applicant to finish and mark in-house plumbing complete.
+- **For Inspection**: Plumbing is complete; waiting for BWD to schedule inspection.
+- **Under Review**: Inspection is scheduled or submitted, but not yet approved.
+- **For Documents**: Inspection is approved; waiting for applicant uploads, office-submission verification, or document review.
+- **For Payment**: Documents are verified; ready for admin to set or monitor the office payment date.
+- **For Water Meter Scheduling**: Payment is confirmed; ready to schedule water meter installation.
+- **For Water Meter Completion**: Water meter installation is scheduled; waiting for completion.
+- **For Conversion**: Required workflow steps are done; ready for final account conversion if needed.
+- **Completed**: The application is converted and water meter installation is marked complete.
 
 ### 2. Processing Applications
-1. **Review Documents**: Review the applicant's submitted documents (IDs, Clearances) in the "View Requirements" tab.
-2. **Set Payment Dates**: Once documents are verified, you can set the official office payment date.
-3. **Print Reports**: The **Print WACO** and **Print Inspection** buttons are automatically disabled until the system confirms the applicant has settled their payment.
+1. **Use the Stage column**: In the application queue, check the **Stage** column to see why an applicant is counted in a dashboard card.
+2. **Schedule inspection**: After in-house plumbing is complete, assign an inspector and schedule the site inspection.
+3. **Review inspection findings**: Inspection status and plumbing result should stay aligned. If the inspection status is not approved, the plumbing result should not be approved.
+4. **Review documents**: Review uploaded requirements in the document verification panel. If the applicant chose office submission, verify the requirements when they bring them to BWD.
+5. **Set payment dates**: Once documents are verified, schedule the official office payment date.
+6. **Confirm payment**: Mark payment complete only after the applicant settles fees at the office.
+7. **Schedule and complete water meter installation**: After payment is confirmed, schedule the water meter installation. Mark installation complete only after the work is finished; this finalizes conversion.
+8. **Print reports**: **Print WACO** and **Print Inspection** are disabled until the system confirms the needed workflow milestones.
 
-### 3. Safeguards & Security
-- **Document Purging**: This is restricted to specific super-admins and requires a successful **Export Docs (ZIP)** as a prerequisite to prevent data loss.
-- **Live Search**: Use the search bar to find applicants instantly. The system is optimized to handle thousands of records using a dedicated database view.
+### 3. Safeguards and Security
+- **Document purging**: Restricted to authorized super-admins and should be done only after a successful **Export Docs (ZIP)**.
+- **Search and filters**: Use the search bar and workflow filter to find applicants. If a summary card count looks unexpected, filter by that workflow stage and check the table's **Stage** column.
+- **Scheduling rules**: Admin scheduling follows the configured business window: Monday to Thursday, 7:00 AM to 6:00 PM.
 
 ### 4. Managing Water Bills
-- **Uploading Bills**: Admins can bulk-upload water bills via the **Water Bills** dashboard using an Excel file (.xlsx or .xls).
-- **Required Format**: The uploaded spreadsheet must contain columns for `account_number`, `account_name`, `amount`, `due_date`, and optionally `amount_after_duedate`. 
-- **Mapping**: The system automatically links the uploaded bills to the corresponding concessionaire records based on their account numbers.
-- **Concessionaire View**: Once uploaded, the bills become immediately visible to the respective end-users in their Applicant Portal.
+- **Uploading bills**: Admins can bulk-upload water bills through the **Water Bills** dashboard using an Excel file (`.xlsx` or `.xls`).
+- **Required format**: The spreadsheet must contain `account_number`, `account_name`, `amount`, `due_date`, and optionally `amount_after_duedate`.
+- **Mapping**: The system links uploaded bills to concessionaire records by account number.
+- **Concessionaire view**: Once uploaded, bills become visible to the matching end users in their applicant portal.
 
 ---
 
-## 🛠️ System Management
+## System Management
 
 ### 1. Managing Plumbers
-- Admins can add, edit, or deactivate plumbers in the directory.
-- Changes are instantly reflected in the applicant portal.
+- Admins can add, edit, or deactivate accredited plumbers.
+- Changes are reflected in the applicant portal.
 
 ### 2. Managing Seminars
-- Upload and manage video content for the Online Seminar.
+- Upload and manage Online Seminar content.
 - Use the shortcode `{{PLUMBERS_LIST}}` in descriptions to display the official plumbers list.
 
 ### 3. Push Notifications
-- The system automatically notifies applicants whenever you update their application status.
+- The system notifies applicants when important workflow statuses change.
