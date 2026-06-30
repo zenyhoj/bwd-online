@@ -45,8 +45,7 @@ export function areDocumentsReadyForPayment(application: ApplicationDocumentWork
   const readyStatuses = [
     "documents_verified",
     "payment_scheduled",
-    "approved",
-    "converted"
+    "approved"
   ];
 
   return application?.status ? readyStatuses.includes(application.status) : false;

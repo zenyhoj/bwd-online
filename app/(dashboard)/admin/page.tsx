@@ -75,8 +75,9 @@ function getEffectiveApplicationStatus(record: Record<string, unknown>) {
   const converted = (((record.concessionaires as { id: string }[] | undefined) ?? []).length ?? 0) > 0;
   const installationComplete = Boolean(record.inhouse_installation_completed);
   const latestPayment = getLatestPaymentRecord(record);
+  const waterMeterInstalled = Boolean(record.water_meter_installed_at);
 
-  if (converted || status === "converted") {
+  if (waterMeterInstalled && (converted || status === "converted")) {
     return "converted";
   }
 
@@ -108,8 +109,9 @@ function nextAction(record: Record<string, unknown>) {
   const documentsReady = areDocumentsReadyForPayment(record as never);
   const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
+  const workflowComplete = waterMeterInstalled && (converted || status === "converted");
 
-  if (converted || status === "converted") return "Completed";
+  if (workflowComplete) return "Completed";
   if (!inhousePlumbingComplete) return "Wait for applicant plumbing";
   if (!hasScheduledInspection) return "Schedule inspection";
   if (!hasApprovedInspection) return "Wait for inspector result";
@@ -145,8 +147,9 @@ function queueStage(record: Record<string, unknown>) {
   const documentsReady = areDocumentsReadyForPayment(record as never);
   const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
+  const workflowComplete = waterMeterInstalled && (converted || status === "converted");
 
-  if (converted || status === "converted") return "completed";
+  if (workflowComplete) return "completed";
   if (!inhousePlumbingComplete) return "for-inhouse-plumbing";
   if (!hasScheduledInspection) return "for-inspection";
   if (!hasApprovedInspection) return "under-review";
@@ -249,6 +252,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const {
     readyForInspection,
     awaitingInspectionResult,
+    documentsInWorkflow,
     readyForPayment,
     readyForConversion: readyForConversionEffective,
     pendingDocumentReviews
@@ -433,9 +437,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Docs to review</p>
                 <div className="mt-2 flex items-baseline gap-1.5">
-                  <span className="text-3xl font-bold tracking-tight text-sky-700 dark:text-sky-300">{pendingDocumentReviews}</span>
+                  <span className="text-3xl font-bold tracking-tight text-sky-700 dark:text-sky-300">{documentsInWorkflow}</span>
                 </div>
-                <p className="mt-1 text-[10px] font-medium text-muted-foreground">uploaded by applicants</p>
+                <p className="mt-1 text-[10px] font-medium text-muted-foreground">
+                  {pendingDocumentReviews > 0 ? `${pendingDocumentReviews} uploaded for review` : "awaiting documents"}
+                </p>
               </div>
               <div className="rounded-full bg-sky-500/10 p-2 text-sky-700 dark:bg-sky-400/15 dark:text-sky-300">
                 <FileCheck2 className="h-4 w-4" />
@@ -508,12 +514,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                   <TableRow>
                     <TableHead>Applicant</TableHead>
                     <TableHead>Contact number</TableHead>
+                    <TableHead>Stage</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {(applications.data as Record<string, unknown>[]).map((record) => {
                     const isSelected = String(record.id) === selectedId;
+                    const stage = queueStage(record);
                     const query = new URLSearchParams();
                     query.set("page", String(applications.page));
                     query.set("pageSize", String(applications.pageSize));
@@ -536,6 +544,11 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">{record.cellphone_number ? String(record.cellphone_number) : "No contact number"}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={stage === "for-documents" ? "default" : "secondary"} className="whitespace-nowrap text-[10px]">
+                            {queueStageLabel(stage)}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant={isSelected ? "secondary" : "outline"} size="sm">

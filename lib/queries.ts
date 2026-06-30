@@ -224,7 +224,7 @@ export async function getAdminApplications(pagination: PaginationParams): Promis
   return buildPaginatedResult((data ?? []) as Record<string, unknown>[], count ?? 0, pagination);
 }
 
-function getAdminQueueStage(record: Record<string, unknown>) {
+export function getAdminQueueStage(record: Record<string, unknown>) {
   const status = String(record.status);
   const inspections =
     ((record.inspections as {
@@ -247,8 +247,9 @@ function getAdminQueueStage(record: Record<string, unknown>) {
   const documentsReady = areDocumentsReadyForPayment(record as never);
   const waterMeterScheduled = Boolean(record.water_meter_installation_scheduled_at);
   const waterMeterInstalled = Boolean(record.water_meter_installed_at);
+  const workflowComplete = waterMeterInstalled && (converted || status === "converted");
   const effectiveStatus =
-    converted || status === "converted"
+    workflowComplete
       ? "converted"
       : latestPayment?.status === "paid" && installationComplete
         ? "approved"
@@ -289,48 +290,9 @@ export async function getAdminApplicationsQueue(
   pagination: PaginationParams,
   filters?: { q?: string; status?: string; workflow?: string }
 ): Promise<PaginatedResult<Record<string, unknown>>> {
-  const supabase = createSupabaseAdminClient();
-  const profile = await getCurrentProfile();
-
-  // OPTIMIZATION: Use the database view to perform all filtering, sorting, and 
-  // pagination at the database level. This is 100x faster for large datasets.
-  let query = supabase
-    .from("admin_applications_queue_view")
-    .select("*", { count: "exact" })
-    .eq("organization_id", profile.organization_id);
-
-  if (filters?.q) {
-    const searchTerms = filters.q.split(/[\s,]+/).filter(Boolean);
-    for (const term of searchTerms) {
-      query = query.ilike("full_name", `%${term}%`);
-    }
-  }
-
-  if (filters?.workflow && filters.workflow !== "all") {
-    query = query.eq("workflow_stage", filters.workflow);
-  }
-
-  // Primary sort by priority (defined in view), then by creation date
-  query = query
-    .order("workflow_priority", { ascending: true })
-    .order("created_at", { ascending: false });
-
-  const from = (pagination.page - 1) * pagination.pageSize;
-  const to = from + pagination.pageSize - 1;
-
-  const { data, count, error } = await query.range(from, to);
-
-  if (error) {
-    console.error("View query error:", error);
-    // FALLBACK: If the view hasn't been created yet, we fall back to the original table
-    // to prevent the site from breaking immediately after deployment.
-    return getAdminApplicationsQueueLegacy(pagination, filters);
-  }
-
-  return buildPaginatedResult((data ?? []) as Record<string, unknown>[], count ?? 0, pagination);
+  return getAdminApplicationsQueueLegacy(pagination, filters);
 }
 
-// Keep the legacy implementation as a fallback until the migration is confirmed
 async function getAdminApplicationsQueueLegacy(
   pagination: PaginationParams,
   filters?: { q?: string; status?: string; workflow?: string }
@@ -576,25 +538,28 @@ export async function getAdminDashboardStats() {
   const supabase = createSupabaseAdminClient();
   const profile = await getCurrentProfile();
 
-  // We still need the workflow stage logic, but we can fetch less data
+  let readyForInspection = 0;
+  let awaitingInspectionResult = 0;
+  let documentsInWorkflow = 0;
+  let readyForPayment = 0;
+  let readyForConversion = 0;
+
   const { data, error } = await supabase
     .from("applications")
-    .select("id, status, document_submission_mode, inhouse_installation_completed, water_meter_installation_scheduled_at, water_meter_installed_at, inspections(id, status), documents(id, status), payments(id, status), concessionaires(id)")
+    .select("id, status, document_submission_mode, inhouse_installation_completed, water_meter_installation_scheduled_at, water_meter_installed_at, inspections(id, status), documents(id, status), payments(id, status, paid_at, due_date), concessionaires(id)")
     .eq("organization_id", profile.organization_id);
 
   if (error) throw error;
 
-  const records = data as Record<string, unknown>[];
-  
-  let readyForInspection = 0;
-  let awaitingInspectionResult = 0;
-  let readyForPayment = 0;
-  let readyForConversion = 0;
+  const records = (data ?? []) as Record<string, unknown>[];
+  let activeWorkflowItems = 0;
 
   for (const record of records) {
     const stage = getAdminQueueStage(record);
+    if (stage !== "completed") activeWorkflowItems++;
     if (stage === "for-inspection") readyForInspection++;
     if (stage === "under-review") awaitingInspectionResult++;
+    if (stage === "for-documents") documentsInWorkflow++;
     if (stage === "for-payment") readyForPayment++;
     if (stage === "for-conversion") readyForConversion++;
   }
@@ -609,8 +574,10 @@ export async function getAdminDashboardStats() {
 
   return {
     total: records.length,
+    activeWorkflowItems,
     readyForInspection,
     awaitingInspectionResult,
+    documentsInWorkflow,
     readyForPayment,
     readyForConversion,
     pendingDocumentReviews: pendingDocumentReviews ?? 0

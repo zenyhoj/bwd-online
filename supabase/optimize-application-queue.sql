@@ -24,13 +24,15 @@ SELECT
     (SELECT count(*) FROM payments p WHERE p.application_id = a.id AND p.status = 'paid') as paid_payment_count,
     (SELECT count(*) FROM concessionaires c WHERE c.application_id = a.id) as concessionaire_count,
     CASE
-        WHEN (SELECT count(*) FROM concessionaires c WHERE c.application_id = a.id) > 0 OR a.status = 'converted' THEN 'completed'
+        WHEN a.water_meter_installed_at IS NOT NULL AND (
+            (SELECT count(*) FROM concessionaires c WHERE c.application_id = a.id) > 0 OR a.status = 'converted'
+        ) THEN 'completed'
         WHEN a.inhouse_installation_completed = false THEN 'for-inhouse-plumbing'
         WHEN (SELECT count(*) FROM inspections i WHERE i.application_id = a.id) = 0 THEN 'for-inspection'
         WHEN (SELECT count(*) FROM inspections i WHERE i.application_id = a.id AND i.status = 'approved') = 0 THEN 'under-review'
         WHEN (
             a.document_submission_mode != 'office' AND 
-            a.status NOT IN ('documents_verified', 'payment_scheduled', 'approved', 'converted')
+            a.status NOT IN ('documents_verified', 'payment_scheduled', 'approved')
         ) THEN 'for-documents'
         WHEN (SELECT count(*) FROM payments p WHERE p.application_id = a.id AND p.status = 'paid') = 0 THEN 'for-payment'
         WHEN a.water_meter_installation_scheduled_at IS NULL THEN 'for-water-meter-schedule'
@@ -38,13 +40,15 @@ SELECT
         ELSE 'for-conversion'
     END as workflow_stage,
     CASE
-        WHEN (SELECT count(*) FROM concessionaires c WHERE c.application_id = a.id) > 0 OR a.status = 'converted' THEN 90
+        WHEN a.water_meter_installed_at IS NOT NULL AND (
+            (SELECT count(*) FROM concessionaires c WHERE c.application_id = a.id) > 0 OR a.status = 'converted'
+        ) THEN 90
         WHEN a.inhouse_installation_completed = false THEN 80
         WHEN (SELECT count(*) FROM inspections i WHERE i.application_id = a.id) = 0 THEN 10
         WHEN (SELECT count(*) FROM inspections i WHERE i.application_id = a.id AND i.status = 'approved') = 0 THEN 70
         WHEN (
             a.document_submission_mode != 'office' AND 
-            a.status NOT IN ('documents_verified', 'payment_scheduled', 'approved', 'converted')
+            a.status NOT IN ('documents_verified', 'payment_scheduled', 'approved')
         ) THEN 20
         WHEN (SELECT count(*) FROM payments p WHERE p.application_id = a.id AND p.status = 'paid') = 0 THEN 30
         WHEN a.water_meter_installation_scheduled_at IS NULL THEN 40
