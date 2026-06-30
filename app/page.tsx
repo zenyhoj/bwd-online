@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { getSessionUser, getCurrentProfile } from "@/lib/auth";
 import { roleHome } from "@/lib/routes";
 
@@ -14,6 +15,7 @@ export default async function HomePage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
+      <ThemeToggle className="fixed right-4 top-4 z-50" />
       <div className="mx-auto max-w-[800px] space-y-10 text-center">
         <div className="flex flex-col items-center">
           <div className="relative mb-8 h-24 w-24 overflow-hidden shadow-2xl shadow-primary/20 transition-transform hover:scale-105">

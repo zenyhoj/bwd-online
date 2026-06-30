@@ -514,7 +514,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </div>
               <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
                 {selectedApplication?.inhouse_installation_completed_at
-                  ? formatDate(selectedApplication.inhouse_installation_completed_at)
+                  ? formatDateTime(selectedApplication.inhouse_installation_completed_at)
                   : "Pending"}
               </p>
             </div>
@@ -552,9 +552,11 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </div>
               <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
                 {latestPayment ? (
-                  latestPayment.status === "paid" 
-                    ? formatDate(latestPayment.paid_at ?? latestPayment.office_payment_at ?? null) 
-                    : formatDate(latestPayment.due_date ?? null)
+                  latestPayment.status === "paid"
+                    ? formatDateTime(latestPayment.paid_at ?? latestPayment.office_payment_at ?? null)
+                    : latestPayment.office_payment_at
+                      ? formatDateTime(latestPayment.office_payment_at)
+                      : formatDate(latestPayment.due_date ?? null)
                 ) : "Not scheduled"}
               </p>
             </div>
@@ -590,9 +592,9 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                     : "text-foreground/80"
               }`}>
                 {selectedApplication?.water_meter_installed_at
-                  ? formatDate(selectedApplication.water_meter_installed_at)
+                  ? formatDateTime(selectedApplication.water_meter_installed_at)
                   : selectedApplication?.water_meter_installation_scheduled_at
-                    ? formatDate(selectedApplication.water_meter_installation_scheduled_at)
+                    ? formatDateTime(selectedApplication.water_meter_installation_scheduled_at)
                     : "Not scheduled"}
               </p>
             </div>

@@ -1,9 +1,11 @@
 import Image from "next/image";
 import { RegisterForm } from "@/components/auth/register-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function RegisterPage() {
   return (
     <main className="flex min-h-dvh w-full flex-col bg-background md:h-screen md:flex-row">
+      <ThemeToggle className="fixed right-4 top-4 z-50" />
       {/* Left Column: Branding */}
       <div className="shrink-0 border-b border-border/50 bg-primary/5 px-4 py-6 text-center md:flex md:flex-1 md:flex-col md:items-center md:justify-center md:border-b-0 md:border-r md:p-8">
         <div className="mx-auto flex w-full max-w-md flex-col items-center space-y-3 md:space-y-4">
@@ -34,7 +36,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Column: Form */}
-      <div className="flex flex-1 items-start justify-center overflow-y-auto bg-white p-4 md:items-center md:p-6">
+      <div className="flex flex-1 items-start justify-center overflow-y-auto bg-background p-4 md:items-center md:p-6">
         <div className="w-full max-w-sm space-y-2 py-1 md:py-2">
           <div className="space-y-0.5">
             <h2 className="text-lg font-bold tracking-tight">Create your account</h2>

@@ -21,11 +21,10 @@ const themeInitScript = `
   (() => {
     try {
       const storedTheme = localStorage.getItem("theme");
-      const theme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
+      const theme = storedTheme === "light" || storedTheme === "dark"
         ? storedTheme
-        : "system";
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      const shouldUseDark = theme === "dark" || (theme === "system" && prefersDark);
+        : "light";
+      const shouldUseDark = theme === "dark";
 
       document.documentElement.classList.toggle("dark", shouldUseDark);
       document.documentElement.style.colorScheme = shouldUseDark ? "dark" : "light";

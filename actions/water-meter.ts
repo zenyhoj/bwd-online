@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { waterMeterScheduleSchema } from "@/schemas/water-meter";
-import { validateBusinessSchedule } from "@/lib/business-hours";
+import { toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
 
 export async function scheduleWaterMeterAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -32,7 +32,7 @@ export async function scheduleWaterMeterAction(_prevState: ActionState, formData
     const { error } = await supabase
       .from("applications")
       .update({
-        water_meter_installation_scheduled_at: new Date(parsed.data.scheduledAt).toISOString(),
+        water_meter_installation_scheduled_at: toManilaISOString(parsed.data.scheduledAt),
         water_meter_installation_scheduled_by: profile.id
       })
       .eq("id", parsed.data.applicationId);

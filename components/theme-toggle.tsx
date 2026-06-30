@@ -22,9 +22,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     const initialTheme =
       storedTheme === "light" || storedTheme === "dark"
         ? storedTheme
-        : window.matchMedia("(prefers-color-scheme: dark)").matches
-          ? "dark"
-          : "light";
+        : "light";
 
     setTheme(initialTheme);
     applyThemePreference(initialTheme);
@@ -39,7 +37,7 @@ export function ThemeToggle({ className }: { className?: string }) {
   };
 
   const isDark = theme === "dark";
-  const Icon = isDark ? Moon : Sun;
+  const Icon = isDark ? Sun : Moon;
 
   return (
     <button
@@ -53,7 +51,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       )}
     >
       <Icon className="h-[18px] w-[18px] text-primary" />
-      <span className="sr-only">{isDark ? "Dark theme" : "Light theme"}</span>
+      <span className="sr-only">Switch to {isDark ? "light" : "dark"} theme</span>
     </button>
   );
 }

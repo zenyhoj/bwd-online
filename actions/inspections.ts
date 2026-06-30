@@ -4,20 +4,11 @@ import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { inspectionRescheduleSchema, inspectionScheduleSchema, inspectionUpdateSchema } from "@/schemas";
-import { validateBusinessSchedule } from "@/lib/business-hours";
+import { toManilaDate, toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
 
 function isPastDateTime(value: string) {
   return toManilaDate(value).getTime() < Date.now();
-}
-
-function toManilaDate(value: string) {
-  const normalized = value.length === 16 ? `${value}:00+08:00` : `${value}+08:00`;
-  return new Date(normalized);
-}
-
-function toManilaISOString(value: string) {
-  return toManilaDate(value).toISOString();
 }
 
 // Helper function removed to allow flexible, deadlock-free inspection scheduling

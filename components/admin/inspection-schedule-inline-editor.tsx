@@ -5,8 +5,8 @@ import { Check } from "lucide-react";
 
 import { rescheduleInspectionAction } from "@/actions/inspections";
 import { initialActionState } from "@/actions/state";
+import { BusinessDateTimeInput } from "@/components/admin/business-datetime-input";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 type InspectionScheduleInlineEditorProps = {
   inspectionId: string;
@@ -58,13 +58,13 @@ export function InspectionScheduleInlineEditor({
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="inspectionId" value={inspectionId} />
       <div className="flex items-center gap-2">
-        <Input
+        <BusinessDateTimeInput
           name="scheduledAt"
-          type="datetime-local"
-          min={minSchedule || undefined}
+          id={`inline-scheduled-${inspectionId}`}
           value={value}
-          onChange={(event) => setValue(event.target.value)}
-          className="min-w-[180px] h-8 text-[11px] px-2"
+          onValueChange={setValue}
+          minDateTime={minSchedule || undefined}
+          compact
           required
         />
         {hasChanged ? (

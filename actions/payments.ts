@@ -5,11 +5,19 @@ import { revalidatePath } from "next/cache";
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { paymentScheduleSchema, paymentStatusSchema } from "@/schemas";
-import { validateBusinessSchedule } from "@/lib/business-hours";
+import { toManilaDate, toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
 
 function isPastOfficePaymentDate(value: string) {
-  return new Date(value).getTime() < Date.now();
+  return toManilaDate(value).getTime() < Date.now();
+}
+
+function isFuturePaymentDate(value: string) {
+  return toManilaDate(value).getTime() > Date.now();
+}
+
+function isValidDateTimeLocal(value: string) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value) && !Number.isNaN(toManilaDate(value).getTime());
 }
 
 function isMissingOfficePaymentAtColumn(message?: string | null) {
@@ -114,7 +122,7 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
       payment_type: parsed.data.paymentType,
       amount: 0,
       due_date: parsed.data.officePaymentAt.slice(0, 10),
-      office_payment_at: new Date(parsed.data.officePaymentAt).toISOString()
+      office_payment_at: toManilaISOString(parsed.data.officePaymentAt)
     });
 
     if (error) {
@@ -162,6 +170,28 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
       return { success: false, message: "Official receipt amount is required to confirm payment." };
     }
 
+    if (parsed.data.status === "paid" && parsed.data.paidAt) {
+      const paidAtTime = toManilaDate(parsed.data.paidAt).getTime();
+
+      if (Number.isNaN(paidAtTime)) {
+        return { success: false, message: "Date of payment is invalid." };
+      }
+
+      if (isFuturePaymentDate(parsed.data.paidAt)) {
+        return { success: false, message: "Date of payment cannot be later than the current date and time." };
+      }
+    }
+
+    if (parsed.data.status === "scheduled") {
+      if (!parsed.data.officePaymentAt) {
+        return { success: false, message: "Office payment date and time are required to reschedule payment." };
+      }
+
+      if (!isValidDateTimeLocal(parsed.data.officePaymentAt)) {
+        return { success: false, message: "Office payment date and time are invalid." };
+      }
+    }
+
     const { data: paymentRecord, error: paymentRecordError } = await supabase
       .from("payments")
       .select("application_id, office_payment_at")
@@ -173,14 +203,11 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
     }
 
     if (parsed.data.status === "paid" && parsed.data.paidAt && paymentRecord.office_payment_at) {
-      const paidAtTime = new Date(parsed.data.paidAt).getTime();
+      const paidAtTime = toManilaDate(parsed.data.paidAt).getTime();
       const officePaymentTime = new Date(paymentRecord.office_payment_at).getTime();
-      
-      if (paidAtTime < officePaymentTime) {
-        return {
-          success: false,
-          message: "Date of payment cannot be earlier than the scheduled office payment date."
-        };
+
+      if (!Number.isNaN(paidAtTime) && !Number.isNaN(officePaymentTime) && paidAtTime < officePaymentTime) {
+        return { success: false, message: "Date of payment cannot be earlier than the scheduled office payment date." };
       }
     }
 
@@ -201,13 +228,13 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
         amount: parsed.data.amount,
         official_receipt_number: parsed.data.officialReceiptNumber,
         paid_at: parsed.data.status === "paid"
-          ? (parsed.data.paidAt ? new Date(parsed.data.paidAt).toISOString() : new Date().toISOString())
+          ? (parsed.data.paidAt ? toManilaISOString(parsed.data.paidAt) : new Date().toISOString())
           : null,
         office_payment_at: parsed.data.status === "scheduled" && parsed.data.officePaymentAt
-          ? new Date(parsed.data.officePaymentAt).toISOString()
+          ? toManilaISOString(parsed.data.officePaymentAt)
           : undefined,
         due_date: parsed.data.status === "scheduled" && parsed.data.officePaymentAt
-          ? new Date(parsed.data.officePaymentAt).toISOString()
+          ? parsed.data.officePaymentAt.slice(0, 10)
           : undefined
       })
       .eq("id", parsed.data.paymentId);

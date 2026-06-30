@@ -2,6 +2,7 @@ import { AppShell } from "@/components/app-shell";
 import { getCurrentProfile, isSuperAdmin } from "@/lib/auth";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getApplicants, getApplicantSeminarState, getLatestApplicantApplication } from "@/lib/queries";
+import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const profile = await getCurrentProfile();
@@ -58,20 +59,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
     // Badge on Dashboard: total applications needing inhouse plumbing or inspection
     const { data: queue } = await supabase
       .from("applications")
-      .select("id, inhouse_installation_completed, inspections(id, status), payments(id), concessionaires(id)", { count: "exact" })
+      .select("id, document_submission_mode, document_review_note, inhouse_installation_completed, inspections(id, status), documents(id, status), payments(id, status), concessionaires(id)", { count: "exact" })
       .eq("organization_id", profile.organization_id)
       .neq("status", "converted");
 
     if (queue) {
       let actionNeeded = 0;
+      let paymentWorkflowItems = 0;
       for (const app of queue) {
         const inspections = (app.inspections as { id: string; status?: string }[] | undefined) ?? [];
-        const payments = (app.payments as { id: string }[] | undefined) ?? [];
+        const payments = (app.payments as { id: string; status?: string }[] | undefined) ?? [];
         const concessionaires = (app.concessionaires as { id: string }[] | undefined) ?? [];
         const hasApprovedInspection = inspections.some((i) => i.status === "approved");
+        const hasPaidPayment = payments.some((payment) => payment.status === "paid");
         const converted = concessionaires.length > 0;
         if (!converted && (!app.inhouse_installation_completed || !hasApprovedInspection || payments.length === 0)) {
           actionNeeded++;
+        }
+
+        if (!converted && hasApprovedInspection && areDocumentsReadyForPayment(app) && !hasPaidPayment) {
+          paymentWorkflowItems++;
         }
       }
       if (actionNeeded > 0) navBadges["/admin"] = actionNeeded;
@@ -93,13 +100,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         .eq("status", "scheduled");
       if ((pendingInspections ?? 0) > 0) navBadges["/admin/inspections"] = pendingInspections ?? 0;
 
-      // Badge on Payments: payments scheduled but not yet paid
-      const { count: unpaidPayments } = await supabase
-        .from("payments")
-        .select("id", { count: "exact", head: true })
-        .eq("organization_id", profile.organization_id)
-        .eq("status", "scheduled");
-      if ((unpaidPayments ?? 0) > 0) navBadges["/admin/payments"] = unpaidPayments ?? 0;
+      // Badge on Payments: applicants currently waiting in the payment workflow
+      if (paymentWorkflowItems > 0) navBadges["/admin/payments"] = paymentWorkflowItems;
 
       // Badge for Document Export (Quarterly)
       const { data: orgData } = await supabase

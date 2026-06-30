@@ -1,9 +1,11 @@
 import Image from "next/image";
 import { UpdatePasswordForm } from "@/components/auth/update-password-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function UpdatePasswordPage() {
   return (
     <main className="flex h-screen w-full flex-col md:flex-row bg-background overflow-hidden">
+      <ThemeToggle className="fixed right-4 top-4 z-50" />
       {/* Left Column: Branding */}
       <div className="flex flex-1 flex-col items-center justify-center bg-primary/5 p-6 text-center md:p-8 border-r border-border/50">
         <div className="max-w-md w-full flex flex-col items-center space-y-4">
@@ -34,7 +36,7 @@ export default function UpdatePasswordPage() {
       </div>
 
       {/* Right Column: Form */}
-      <div className="flex flex-1 items-center justify-center p-4 md:p-6 bg-white overflow-hidden">
+      <div className="flex flex-1 items-center justify-center p-4 md:p-6 bg-background overflow-hidden">
         <div className="w-full max-w-sm space-y-2 py-2">
           <div className="space-y-0.5">
             <h2 className="text-lg font-bold tracking-tight">Set new password</h2>

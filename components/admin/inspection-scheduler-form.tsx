@@ -6,12 +6,13 @@ import { useActionState, useEffect, useState } from "react";
 
 import { rescheduleInspectionAction, scheduleInspectionAction } from "@/actions/inspections";
 import { initialActionState } from "@/actions/state";
+import { BusinessDateTimeInput } from "@/components/admin/business-datetime-input";
 import { FormMessage } from "@/components/forms/form-message";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BUSINESS_SCHEDULE_LABEL } from "@/lib/business-hours";
 import { formatDateTime } from "@/lib/format";
 import type { InspectorRecord } from "@/types";
 
@@ -151,14 +152,12 @@ export function InspectionSchedulerForm({
                   <input type="hidden" name="inspectionId" value={existingInspection.id} />
                   <div className="space-y-2">
                     <Label htmlFor={`reschedule-${existingInspection.id}`}>New date and time</Label>
-                    <Input
+                    <BusinessDateTimeInput
                       id={`reschedule-${existingInspection.id}`}
                       name="scheduledAt"
-                      type="datetime-local"
-                      min={minSchedule || undefined}
+                      minDateTime={minSchedule || undefined}
                       defaultValue={toDateTimeLocalValue(existingInspection.scheduled_at)}
                       required
-                      className="h-11"
                     />
                   </div>
                   <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -208,14 +207,13 @@ export function InspectionSchedulerForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor={`scheduled-${applicationId}`}>Scheduled time</Label>
-            <Input
+            <BusinessDateTimeInput
               id={`scheduled-${applicationId}`}
               name="scheduledAt"
-              type="datetime-local"
-              min={minSchedule || undefined}
+              minDateTime={minSchedule || undefined}
               required
             />
-            <p className="text-xs text-muted-foreground">Monday - Friday, 8:00 AM - 5:00 PM only.</p>
+            <p className="text-xs text-muted-foreground">{BUSINESS_SCHEDULE_LABEL}</p>
           </div>
           <Button type="submit" disabled={schedulePending} className="mt-2 w-full sm:w-auto">
             {schedulePending ? "Saving..." : "Schedule"}

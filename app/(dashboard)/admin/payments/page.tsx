@@ -1,11 +1,27 @@
 import { PaymentSchedulerForm } from "@/components/admin/payment-scheduler-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
+import type { Payment } from "@/types";
+
+type PaymentWorkflowApplication = {
+  id: string;
+  full_name: string;
+  service_type: string;
+  status: string;
+  inspections?: { status?: string | null; plumbing_approved?: boolean | null }[] | null;
+  documents?: unknown[] | null;
+  payments?: Payment[] | null;
+  concessionaires?: { id: string }[] | null;
+};
+
+type PaymentWorkflowItem = {
+  application: PaymentWorkflowApplication;
+  payment: Payment | null;
+};
 
 function formatPaymentType(paymentType: string) {
   if (paymentType === "inspection_fee") {
@@ -23,37 +39,44 @@ function getOfficePaymentDisplay(payment: { office_payment_at?: string | null; d
   return payment.office_payment_at ? formatDateTime(payment.office_payment_at) : formatDate(payment.due_date);
 }
 
+function getLatestPayment(payments: Payment[]) {
+  return [...payments].sort((a, b) => {
+    const aTime = new Date(a.paid_at ?? a.office_payment_at ?? a.due_date ?? 0).getTime();
+    const bTime = new Date(b.paid_at ?? b.office_payment_at ?? b.due_date ?? 0).getTime();
+    return bTime - aTime;
+  })[0] ?? null;
+}
+
 export default async function AdminPaymentsPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseAdminClient();
   const profile = await getCurrentProfile();
-  const [{ data: payments }, { data: applications }] = await Promise.all([
-    supabase
-      .from("payments")
-      .select("*")
-      .eq("organization_id", profile.organization_id)
-      .order("due_date", { ascending: true }),
-    supabase
-      .from("applications")
-      .select("id, full_name, service_type, status, document_submission_mode, document_review_note, inspections(status, plumbing_approved, inspected_at), documents(*), payments(id)")
-      .eq("organization_id", profile.organization_id)
-      .order("created_at", { ascending: false })
-  ]);
+  const { data: applications, error: applicationsError } = await supabase
+    .from("applications")
+    .select("id, full_name, service_type, status, document_submission_mode, document_review_note, inspections(status, plumbing_approved, inspected_at), documents(*), payments(*), concessionaires(id)")
+    .eq("organization_id", profile.organization_id)
+    .order("created_at", { ascending: false });
 
-  const readyToSchedule = (applications ?? []).filter((application) => {
-    const inspections =
-      ((application.inspections as {
-        status?: string | null;
-        plumbing_approved?: boolean | null;
-      }[] | undefined) ?? []);
-    const documents = ((application.documents as typeof application.documents) ?? []) as never[];
-    const existingPayments = ((application.payments as { id: string }[] | undefined) ?? []).length;
+  if (applicationsError) {
+    throw applicationsError;
+  }
 
-    return (
-      existingPayments === 0 &&
-      inspections.some((inspection) => inspection.status === "approved") &&
-      areDocumentsReadyForPayment(application)
-    );
-  });
+  const paymentWorkflowItems = ((applications ?? []) as PaymentWorkflowApplication[])
+    .flatMap<PaymentWorkflowItem>((application) => {
+      const inspections =
+        ((application.inspections as { status?: string | null; plumbing_approved?: boolean | null }[] | undefined) ?? []);
+      const payments = ((application.payments as Payment[] | undefined) ?? []);
+      const concessionaires = ((application.concessionaires as { id: string }[] | undefined) ?? []);
+      const latestPayment = getLatestPayment(payments);
+      const hasApprovedInspection = inspections.some((inspection) => inspection.status === "approved");
+      const hasPaidPayment = payments.some((payment) => payment.status === "paid");
+      const isConverted = application.status === "converted" || concessionaires.length > 0;
+
+      if (isConverted || !hasApprovedInspection || !areDocumentsReadyForPayment(application as never) || hasPaidPayment) {
+        return [];
+      }
+
+      return [{ application, payment: latestPayment }];
+    });
 
   return (
     <div className="space-y-6">
@@ -65,16 +88,16 @@ export default async function AdminPaymentsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Ready to schedule</CardTitle>
+          <CardTitle>Payment workflow</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {readyToSchedule.length === 0 ? (
+          {paymentWorkflowItems.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No applications are waiting for payment scheduling right now.
+              No applicants are waiting for payment scheduling or payment confirmation right now.
             </p>
           ) : (
             <div className="grid gap-4">
-              {readyToSchedule.map((application) => (
+              {paymentWorkflowItems.map(({ application, payment }) => (
                 <div key={application.id} className="space-y-3 rounded-lg border border-border/80 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -83,51 +106,28 @@ export default async function AdminPaymentsPage() {
                         {application.service_type.replaceAll("_", " ")}
                       </p>
                     </div>
-                    <StatusBadge status={application.status} />
+                    <StatusBadge status={payment?.status ?? application.status} />
                   </div>
-                  <PaymentSchedulerForm applicationId={application.id} />
+                  {payment ? (
+                    <div className="grid gap-3 rounded-lg bg-muted/30 p-3 text-sm sm:grid-cols-3">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Payment</p>
+                        <p className="mt-1 font-semibold">{formatPaymentType(payment.payment_type)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Amount</p>
+                        <p className="mt-1 font-semibold">{formatScheduledAmount(payment.amount)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Schedule</p>
+                        <p className="mt-1 font-semibold">{getOfficePaymentDisplay(payment)}</p>
+                      </div>
+                    </div>
+                  ) : null}
+                  <PaymentSchedulerForm applicationId={application.id} payment={payment ?? undefined} />
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Scheduled payments</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {(payments ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">No payment schedules have been created yet.</p>
-          ) : (
-            <>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Payment type</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Office payment schedule</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {(payments ?? []).map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell>{formatPaymentType(payment.payment_type)}</TableCell>
-                      <TableCell>{formatScheduledAmount(payment.amount)}</TableCell>
-                      <TableCell>{getOfficePaymentDisplay(payment)}</TableCell>
-                      <TableCell><StatusBadge status={payment.status} /></TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              <div className="grid gap-4">
-                {(payments ?? []).map((payment) => (
-                  <PaymentSchedulerForm key={payment.id} applicationId={payment.application_id} payment={payment} />
-                ))}
-              </div>
-            </>
           )}
         </CardContent>
       </Card>

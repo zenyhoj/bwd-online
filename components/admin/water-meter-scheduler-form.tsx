@@ -4,9 +4,9 @@ import { useActionState, useEffect, useState } from "react";
 
 import { initialActionState } from "@/actions/state";
 import { scheduleWaterMeterAction } from "@/actions/water-meter";
+import { BusinessDateTimeInput } from "@/components/admin/business-datetime-input";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 type WaterMeterSchedulerFormProps = {
@@ -45,11 +45,10 @@ export function WaterMeterSchedulerForm({ applicationId, scheduledAt, canSchedul
 
         <div className="space-y-2 md:col-span-2">
           <Label htmlFor={`scheduledAt-${applicationId}`}>Installation date and time</Label>
-          <Input
+          <BusinessDateTimeInput
             id={`scheduledAt-${applicationId}`}
             name="scheduledAt"
-            type="datetime-local"
-            min={minDate || undefined}
+            minDateTime={minDate || undefined}
             defaultValue={
               scheduledAt
                 ? new Date(new Date(scheduledAt).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
@@ -57,7 +56,6 @@ export function WaterMeterSchedulerForm({ applicationId, scheduledAt, canSchedul
             }
             required
             disabled={!canSchedule}
-            className="h-11"
           />
         </div>
 

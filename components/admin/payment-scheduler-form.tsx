@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 
 import { schedulePaymentAction, updatePaymentStatusAction } from "@/actions/payments";
 import { initialActionState } from "@/actions/state";
+import { BusinessDateTimeInput } from "@/components/admin/business-datetime-input";
 import { FormMessage } from "@/components/forms/form-message";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,30 @@ type PaymentSchedulerFormProps = {
   classification?: string | null;
 };
 
+function toDateTimeLocal(value?: string | null) {
+  return value ? formatLocalDateTime(new Date(value)) : "";
+}
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function formatLocalDateTime(date: Date) {
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
+    pad(date.getDate())
+  ].join("-") + `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function getCurrentDateTimeLocal() {
+  return formatLocalDateTime(new Date());
+}
+
+function isCompleteDateTimeLocal(value: string) {
+  return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value);
+}
+
 export function PaymentSchedulerForm({
   applicationId,
   payment,
@@ -31,16 +56,36 @@ export function PaymentSchedulerForm({
   const action = payment ? updatePaymentStatusAction : schedulePaymentAction;
   const [state, formAction, pending] = useActionState(action, initialActionState);
   const [minOfficePaymentAt, setMinOfficePaymentAt] = useState("");
+  const [maxPaidAt, setMaxPaidAt] = useState("");
+  const [paidAtValue, setPaidAtValue] = useState(() => toDateTimeLocal(payment?.paid_at));
   const isPaidLocked = payment?.status === "paid";
   
   // Default to 'paid' when editing an existing scheduled payment, to prioritize confirmation.
   const [mode, setMode] = useState<"scheduled" | "paid">("paid");
+  const [rescheduleValue, setRescheduleValue] = useState(() => toDateTimeLocal(payment?.office_payment_at));
+  const [newScheduleValue, setNewScheduleValue] = useState("");
 
   useEffect(() => {
-    setMinOfficePaymentAt(
-      new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-    );
-  }, []);
+    const currentDateTime = getCurrentDateTimeLocal();
+
+    setMinOfficePaymentAt(currentDateTime);
+    setMaxPaidAt(currentDateTime);
+
+    if (!payment?.paid_at) {
+      setPaidAtValue(currentDateTime);
+    }
+  }, [payment?.paid_at]);
+
+  useEffect(() => {
+    if (state.success && payment && mode === "scheduled") {
+      setMode("paid");
+    }
+  }, [mode, payment, state.success]);
+
+  const canSubmitPaymentSchedule = payment
+    ? mode === "paid" || isCompleteDateTimeLocal(rescheduleValue)
+    : canSchedule && isCompleteDateTimeLocal(newScheduleValue);
+  const shouldShowStateMessage = !(payment && mode === "scheduled" && state.success);
 
   // ── Fee breakdown card ──────────────────────────────────────────────────────
   const fee = getFeeBreakdown(classification);
@@ -125,7 +170,10 @@ export function PaymentSchedulerForm({
                 name="status"
                 className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 value={mode}
-                onChange={(e) => setMode(e.target.value as "scheduled" | "paid")}
+                onChange={(e) => {
+                  setMode(e.target.value as "scheduled" | "paid");
+                  setRescheduleValue(toDateTimeLocal(payment.office_payment_at));
+                }}
               >
                 <option value="paid">Confirm payment</option>
                 <option value="scheduled">Reschedule payment date</option>
@@ -169,14 +217,10 @@ export function PaymentSchedulerForm({
                     id={`paidAt-${payment.id}`}
                     name="paidAt"
                     type="datetime-local"
-                    min={payment.office_payment_at ? new Date(new Date(payment.office_payment_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : undefined}
-                    defaultValue={
-                      payment.paid_at
-                        ? new Date(new Date(payment.paid_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-                        : payment.office_payment_at
-                        ? new Date(new Date(payment.office_payment_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-                        : minOfficePaymentAt
-                    }
+                    min={toDateTimeLocal(payment.office_payment_at) || undefined}
+                    max={maxPaidAt || undefined}
+                    value={paidAtValue}
+                    onChange={(event) => setPaidAtValue(event.target.value)}
                     className="h-11"
                   />
                 </div>
@@ -184,18 +228,13 @@ export function PaymentSchedulerForm({
             ) : (
               <div className="space-y-2">
                 <Label htmlFor={`officePaymentAt-${payment.id}`}>New office payment date and time</Label>
-                <Input
+                <BusinessDateTimeInput
                   id={`officePaymentAt-${payment.id}`}
                   name="officePaymentAt"
-                  type="datetime-local"
-                  min={minOfficePaymentAt || undefined}
-                  defaultValue={
-                    payment.office_payment_at
-                      ? new Date(new Date(payment.office_payment_at).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
-                      : minOfficePaymentAt
-                  }
+                  value={rescheduleValue}
+                  onValueChange={setRescheduleValue}
+                  unrestrictedDates
                   required
-                  className="h-11"
                 />
               </div>
             )}
@@ -215,14 +254,14 @@ export function PaymentSchedulerForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor={`officePaymentAt-${applicationId}`}>Office payment date and time</Label>
-              <Input
+              <BusinessDateTimeInput
                 id={`officePaymentAt-${applicationId}`}
                 name="officePaymentAt"
-                type="datetime-local"
-                min={minOfficePaymentAt || undefined}
+                minDateTime={minOfficePaymentAt || undefined}
+                value={newScheduleValue}
+                onValueChange={setNewScheduleValue}
                 required
                 disabled={!canSchedule}
-                className="h-11"
               />
             </div>
           </div>
@@ -235,8 +274,8 @@ export function PaymentSchedulerForm({
         ) : null}
 
         <div className="space-y-4 pt-2">
-          {state.message && <FormMessage state={state} />}
-          <Button type="submit" disabled={!payment && !canSchedule} loading={pending} className="w-full sm:w-auto px-6">
+          {state.message && shouldShowStateMessage ? <FormMessage state={state} autoHideSuccessMs={3000} /> : null}
+          <Button type="submit" disabled={!canSubmitPaymentSchedule} loading={pending} className="w-full sm:w-auto px-6">
             {payment ? (mode === "paid" ? "Confirm payment" : "Save new schedule") : "Set office payment date"}
           </Button>
         </div>
