@@ -114,7 +114,7 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
       {/* Investigation and Availability */}
       <section className="mb-4 grid grid-cols-2 gap-8 text-[9.5pt]">
         <div className="col-start-2 row-start-1">
-          <h3 className="mb-2 font-bold">Investigation of Application</h3>
+          <h3 className="mb-2 font-bold">Verification of Application</h3>
           <p className="mb-1">System is:</p>
           <div className="mb-4 flex items-center gap-4">
             <label className="flex items-center gap-1">
@@ -261,7 +261,7 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
               </div>
             </div>
             
-            <div className="mt-6 grid grid-cols-2 gap-3 text-center">
+            <div className="mt-6 space-y-3 text-center">
               <div>
                 <div className="h-5 border-b border-black px-1 text-[9pt] leading-5">
                   {toProperCase(inspection?.reference_account_name)}
