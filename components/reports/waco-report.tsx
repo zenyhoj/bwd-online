@@ -28,22 +28,30 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
             size: 8.5in 13in;
             margin: 0;
           }
+          html, body {
+            height: 100%;
+            overflow: hidden;
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         `}
       </style>
-      <div className="mx-auto flex h-[13in] w-[8.5in] flex-col bg-white p-[0.5in] font-sans text-[10pt] text-black shadow-sm leading-snug">
-        <header className="mb-4 text-center text-[10pt]">
+      <div className="mx-auto flex h-[12.8in] w-[8.5in] flex-col bg-white py-[0.35in] px-[0.5in] font-sans text-[10pt] text-black shadow-sm leading-snug">
+        <header className="mb-2 text-center text-[10pt]">
         <p>Republic of the Philippines</p>
         <p>BUENAVISTA WATER DISTRICT</p>
         <p>Rizal Ave., Brgy. 3, Buenavista, Agusan del Norte</p>
         <p>Telefax: (085-343-4037) Email: bwd_adn@yahoo.com</p>
       </header>
 
-      <h1 className="mb-3 text-center text-[11pt] font-bold tracking-wide">WATER APPLICATION AND CONSTRUCTION ORDER</h1>
+      <h1 className="mb-2 text-center text-[11pt] font-bold tracking-wide">WATER APPLICATION AND CONSTRUCTION ORDER</h1>
 
-      <div className="mb-4 border-b-[1px] border-dashed border-black"></div>
+      <div className="mb-2 border-b-[1px] border-dashed border-black"></div>
 
       {/* Account Information Section */}
-      <section className="mb-4">
+      <section className="mb-2">
         <h2 className="mb-1 font-bold text-[10pt]">Account Information</h2>
         <table className="w-full border-collapse border border-black text-left text-[9pt]">
           <thead>
@@ -72,16 +80,16 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
       </section>
 
       {/* Applicant Agreement */}
-      <section className="mb-4 text-[9.5pt] text-justify leading-relaxed">
+      <section className="mb-2 text-[9.5pt] text-justify leading-relaxed">
         <p className="mb-2">
           I hereby apply for a water service connection size <span className="inline-block w-16 border-b border-black"></span> to be located at the above-mentioned address.
         </p>
-        <p className="mb-3">
+        <p className="mb-2">
           I understand that the connection will not be made until it is approved and all basic charges are paid. I
           assume responsibility for METER and all water that passes through the connection. I'll conform to the Rules
           and Regulations of the District.
         </p>
-        <div className="mb-5 grid grid-cols-3 gap-4 text-center text-[9pt]">
+        <div className="mb-3 grid grid-cols-3 gap-4 text-center text-[9pt]">
           <div>
             <p className="text-[8pt] uppercase tracking-wide">Applicant contact no.</p>
             <div className="h-5 border-b border-black text-center font-medium leading-5">{application.cellphone_number ?? ""}</div>
@@ -109,10 +117,10 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
         </div>
       </section>
 
-      <div className="mb-4 border-b-[1px] border-dashed border-black"></div>
+      <div className="mb-2 border-b-[1px] border-dashed border-black"></div>
 
       {/* Investigation and Availability */}
-      <section className="mb-4 grid grid-cols-2 gap-8 text-[9.5pt]">
+      <section className="mb-2 grid grid-cols-2 gap-8 text-[9.5pt]">
         <div className="col-start-2 row-start-1">
           <h3 className="mb-2 font-bold">Verification of Application</h3>
           <p className="mb-1">System is:</p>
@@ -168,7 +176,7 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
         </div>
       </section>
 
-      <div className="mb-4 border-b-[1px] border-dashed border-black"></div>
+      <div className="mb-2 border-b-[1px] border-dashed border-black"></div>
 
       {/* Footer 3 Columns */}
       <section className="grid grid-cols-[1fr_0.8fr_1fr] gap-6 text-[9.5pt] flex-grow">
@@ -321,10 +329,10 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
         </div>
       </section>
 
-      <div className="mb-4 mt-4 border-b-[1px] border-dashed border-black"></div>
+      <div className="mb-2 mt-2 border-b-[1px] border-dashed border-black"></div>
 
       {/* Final Signatures */}
-      <section className="mt-4 flex justify-between gap-6 text-[9pt]">
+      <section className="mt-2 flex justify-between gap-6 text-[9pt]">
         <div className="flex-1">
           <p className="mb-8">Checked by:</p>
           <div className="border-t border-black pt-1 pr-4">

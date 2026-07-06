@@ -338,7 +338,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
           />
         </Card>
 
-        <main className="min-w-0 pb-20 lg:pb-12">{children}</main>
+        <main className="min-w-0 pb-20 lg:pb-12 print:pb-0 print:min-h-0">{children}</main>
       </div>
 
       <AppShellBottomNav

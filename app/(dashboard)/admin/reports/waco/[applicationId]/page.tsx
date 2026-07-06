@@ -84,7 +84,7 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
     null;
 
   return (
-    <div className="flex w-full flex-col items-center gap-8 p-4 print:gap-0 print:p-0 min-h-screen bg-muted/20 print:bg-white print:block relative">
+    <div className="flex w-full flex-col items-center gap-8 p-4 print:gap-0 print:p-0 min-h-screen print:min-h-0 bg-muted/20 print:bg-white print:block relative">
       <PrintButton />
       
       <div className="print:shadow-none">
