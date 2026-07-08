@@ -242,8 +242,6 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
             <InfoRow label="Age" value={applicant?.age} />
             <InfoRow label="Cellphone" value={applicant?.cellphone_number} />
             <InfoRow label="Address" value={applicant?.address} />
-            <InfoRow label="Purpose" value={applicant?.purpose_of_seminar ? PURPOSE_LABELS[applicant.purpose_of_seminar] : null} />
-            <InfoRow label="Number of users" value={applicant?.number_of_users} />
           </div>
 
           {isEditingApplicant ? (

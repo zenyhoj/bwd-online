@@ -46,8 +46,9 @@ export function ApplicantSwitcher({
           </div>
         ) : null}
         
-        {applicants.map((applicant) => {
+        {applicants.map((applicant, index) => {
           const isSelected = applicant.id === selectedApplicantId;
+          const letter = String.fromCharCode(65 + index); // 65 is 'A'
           const query = new URLSearchParams();
           Object.entries(queryParams ?? {}).forEach(([key, value]) => {
             if (value) {
@@ -71,7 +72,7 @@ export function ApplicantSwitcher({
                   <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{applicant.full_name}</p>
+                  <p className="font-medium truncate">{applicant.full_name} ({letter})</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {applicant.address || "No address provided"}
                   </p>

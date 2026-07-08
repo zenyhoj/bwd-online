@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
+import { sendWorkflowEmail, getAdminEmail } from "./email-server";
 import { waterMeterScheduleSchema } from "@/schemas/water-meter";
 import { toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
@@ -60,7 +61,7 @@ export async function markWaterMeterInstalledAction(_prevState: ActionState, for
     const { data: application, error: applicationError } = await supabase
       .from("applications")
       .select(
-        "id, applicant_id, organization_id, water_meter_installed_at, inspections(id, account_number, inspected_at, scheduled_at), concessionaires(id)"
+        "id, applicant_id, organization_id, water_meter_installed_at, inspections(id, account_number, inspected_at, scheduled_at), concessionaires(id), applicants(profile_id)"
       )
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id)
@@ -119,6 +120,21 @@ export async function markWaterMeterInstalledAction(_prevState: ActionState, for
 
     if (error) {
       throw error;
+    }
+
+    const applicantProfileId = (application?.applicants as any)?.profile_id;
+    if (applicantProfileId) {
+      const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+      const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+      if (userAuth?.user?.email) {
+        await sendWorkflowEmail(
+          userAuth.user.email,
+          "Water Connection Active - Welcome to BWD!",
+          `<h3>Water Connection Active</h3>
+           <p>Congratulations! Your water meter for application ID: <b>${applicationId}</b> has been successfully installed and activated.</p>
+           <p>You can now view your concessionaire details and water bills in your dashboard.</p>`
+        );
+      }
     }
 
     revalidatePath("/admin");

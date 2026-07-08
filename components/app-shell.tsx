@@ -36,6 +36,7 @@ import type { AppRole, Profile } from "@/types";
 
 type AppShellProps = {
   profile: Profile;
+  email?: string | null;
   applicantNavMode?: "preseminar" | "hasApplication" | "newApplication" | "converted";
   navBadges?: Record<string, number>;
   isSuperAdmin?: boolean;
@@ -130,6 +131,7 @@ function NavContent({
   pathname,
   navBadges,
   profile,
+  email,
   isSuperAdmin,
   onClose,
   onSignOut,
@@ -139,6 +141,7 @@ function NavContent({
   pathname: string;
   navBadges: Record<string, number>;
   profile: Profile;
+  email?: string | null;
   isSuperAdmin?: boolean;
   onClose?: () => void;
   onSignOut?: () => void;
@@ -240,6 +243,13 @@ function NavContent({
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/80 mb-2 px-1">Settings</p>
           <PushRegistration />
         </div>
+        {email && (
+          <div className="px-4 text-center">
+            <p className="text-xs text-muted-foreground truncate" title={email}>
+              {email}
+            </p>
+          </div>
+        )}
         <button
           type="button"
           onClick={onSignOut}
@@ -256,7 +266,7 @@ function NavContent({
   );
 }
 
-export function AppShell({ profile, applicantNavMode = "newApplication", navBadges = {}, isSuperAdmin = false, children }: AppShellProps) {
+export function AppShell({ profile, email, applicantNavMode = "newApplication", navBadges = {}, isSuperAdmin = false, children }: AppShellProps) {
   const pathname = usePathname() ?? "";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isSigningOut, startSignOutTransition] = useTransition();
@@ -314,6 +324,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
               pathname={pathname}
               navBadges={navBadges}
               profile={profile}
+              email={email}
               isSuperAdmin={isSuperAdmin}
               onClose={() => setMobileOpen(false)}
               onSignOut={handleSignOut}
@@ -332,6 +343,7 @@ export function AppShell({ profile, applicantNavMode = "newApplication", navBadg
             pathname={pathname}
             navBadges={navBadges}
             profile={profile}
+            email={email}
             isSuperAdmin={isSuperAdmin}
             onSignOut={handleSignOut}
             isSigningOut={isSigningOut}

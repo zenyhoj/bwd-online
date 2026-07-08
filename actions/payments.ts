@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
+import { getSessionUser } from "@/lib/auth";
+import { sendWorkflowEmail, getAdminEmail } from "./email-server";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { paymentScheduleSchema, paymentStatusSchema } from "@/schemas";
 import { toManilaDate, toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
@@ -138,6 +140,28 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
       .update({ status: "payment_scheduled" })
       .eq("id", parsed.data.applicationId);
 
+    const user = await getSessionUser();
+    
+    // Send email to Admin
+    await sendWorkflowEmail(
+      await getAdminEmail(),
+      "New Payment Scheduled",
+      `<h3>New Payment Scheduled</h3>
+       <p>A new payment has been scheduled for application ID: <b>${parsed.data.applicationId}</b>.</p>
+       <p>Please check the admin dashboard for details.</p>`
+    );
+
+    // Send email to User
+    if (user?.email) {
+      await sendWorkflowEmail(
+        user.email,
+        "Payment Scheduled",
+        `<h3>Payment Scheduled</h3>
+         <p>Your payment schedule has been saved for application ID: <b>${parsed.data.applicationId}</b>.</p>
+         <p>Please pay at the office on the scheduled date.</p>`
+      );
+    }
+
     revalidatePath("/admin");
     revalidatePath("/admin/payments");
     revalidatePath("/applicant");
@@ -205,7 +229,7 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
 
     const { data: applicationRecord, error: applicationRecordError } = await supabase
       .from("applications")
-      .select("id, status, inhouse_installation_completed")
+      .select("id, status, inhouse_installation_completed, applicants(profile_id)")
       .eq("id", paymentRecord.application_id)
       .maybeSingle();
 
@@ -248,6 +272,24 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
 
       if (applicationUpdateError) {
         return { success: false, message: applicationUpdateError.message };
+      }
+    }
+
+    // Send email to User if payment was marked as paid
+    if (parsed.data.status === "paid") {
+      const applicantProfileId = (applicationRecord.applicants as any)?.profile_id;
+      if (applicantProfileId) {
+        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+        const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+        if (userAuth?.user?.email) {
+          await sendWorkflowEmail(
+            userAuth.user.email,
+            "Payment Approved - BWD Online",
+            `<h3>Payment Approved</h3>
+             <p>Your payment for application ID: <b>${paymentRecord.application_id}</b> has been received and verified.</p>
+             <p>Thank you! You can view the receipt in your dashboard.</p>`
+          );
+        }
       }
     }
 

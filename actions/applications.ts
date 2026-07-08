@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
+import { getSessionUser } from "@/lib/auth";
 import { sendPushNotificationAction } from "./push-server";
+import { sendWorkflowEmail, getAdminEmail } from "./email-server";
 import { applicationStatusSchema } from "@/schemas";
 import type { ConcessionaireClassification } from "@/lib/fee-schedule";
 import type { ActionState } from "@/types";
@@ -11,6 +13,7 @@ import type { ActionState } from "@/types";
 export async function createApplicationAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   return withErrorHandling(async () => {
     const { supabase, profile } = await getActionContext();
+    const user = await getSessionUser();
 
     const applicantId = formData.get("applicantId")?.toString() ?? "";
     const numberOfUsersRaw = formData.get("numberOfUsers");
@@ -33,26 +36,6 @@ export async function createApplicationAction(_prevState: ActionState, formData:
 
     if (applicantError || !applicant) {
       return { success: false, message: "Applicant not found or you do not have permission." };
-    }
-
-    const { data: existingApplication, error: existingApplicationError } = await supabase
-      .from("applications")
-      .select("id")
-      .eq("applicant_id", applicantId)
-      .not("status", "in", "(rejected,converted)")
-      .limit(1)
-      .maybeSingle();
-
-    if (existingApplicationError) {
-      return { success: false, message: existingApplicationError.message };
-    }
-
-    if (existingApplication) {
-      return {
-        success: false,
-        message: "This applicant already has an active application. Open the dashboard to continue the existing record.",
-        redirectTo: `/applicant?applicant=${applicantId}&application=${existingApplication.id}`
-      };
     }
 
     const { data: seminarItems, error: seminarItemsError } = await supabase
@@ -110,6 +93,26 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: error.message };
     }
 
+    // Send email to Admin
+    await sendWorkflowEmail(
+      await getAdminEmail(),
+      "New Application Submitted",
+      `<h3>New Application Submitted</h3>
+       <p>A new application for <b>${applicant.full_name}</b> has been submitted.</p>
+       <p>Please check the admin dashboard for details.</p>`
+    );
+
+    // Send email to User
+    if (user?.email) {
+      await sendWorkflowEmail(
+        user.email,
+        "Application Submitted Successfully",
+        `<h3>Application Submitted</h3>
+         <p>Your water connection application for <b>${applicant.full_name}</b> has been successfully submitted.</p>
+         <p>Please check your dashboard for the next steps.</p>`
+      );
+    }
+
     revalidatePath("/applicant");
     revalidatePath("/applicant/applications/new");
     revalidatePath("/applicant/documents");
@@ -148,7 +151,7 @@ export async function updateApplicationStatusAction(_prevState: ActionState, for
       return { success: false, message: error.message };
     }
 
-    // Send push notification to applicant
+    // Send push notification & email to applicant
     try {
       const { data: appData } = await supabase
         .from("applications")
@@ -164,10 +167,22 @@ export async function updateApplicationStatusAction(_prevState: ActionState, for
           `Your application status has been updated to: ${parsed.data.status.replace("_", " ")}`,
           "/applicant"
         );
+
+        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+        const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+        if (userAuth?.user?.email) {
+          await sendWorkflowEmail(
+            userAuth.user.email,
+            "Application Update - BWD Online",
+            `<h3>Application Update</h3>
+             <p>Your application status has been updated to: <strong>${parsed.data.status.replace("_", " ")}</strong></p>
+             <p>Please log in to BWD Online to check for any pending tasks or requirements.</p>`
+          );
+        }
       }
     } catch (pushError) {
-      console.error("Failed to send push notification:", pushError);
-      // Don't fail the whole action if push fails
+      console.error("Failed to send push/email notification:", pushError);
+      // Don't fail the whole action if push/email fails
     }
 
     revalidatePath("/admin");

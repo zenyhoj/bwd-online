@@ -92,8 +92,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     }
   }
 
+  const { getSessionUser } = await import("@/lib/auth");
+  const user = await getSessionUser();
+  const email = user?.email ?? null;
+
   return (
-    <AppShell profile={profile} applicantNavMode={applicantNavMode} navBadges={navBadges} isSuperAdmin={superAdmin}>
+    <AppShell profile={profile} email={email} applicantNavMode={applicantNavMode} navBadges={navBadges} isSuperAdmin={superAdmin}>
       {children}
     </AppShell>
   );

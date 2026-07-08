@@ -12,7 +12,6 @@ const applicantSchema = z.object({
   middleInitial: z.string().trim().max(3).optional(),
   sex: z.enum(["Male", "Female"]),
   age: z.coerce.number().int().min(1).max(120),
-  numberOfUsers: z.coerce.number().int().min(1).max(100),
   address: z.string().min(10, "Address must be at least 10 characters"),
   cellphoneNumber: z.string().min(11).max(20),
   purposeOfSeminar: z.enum(["new_service", "reconnection", "change_name", "others"]).optional()
@@ -31,7 +30,6 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
       middleInitial: formData.get("middleInitial"),
       sex: formData.get("sex"),
       age: formData.get("age"),
-      numberOfUsers: formData.get("numberOfUsers"),
       address: formData.get("address"),
       cellphoneNumber: formData.get("cellphoneNumber"),
       purposeOfSeminar: formData.get("purposeOfSeminar")
@@ -52,7 +50,7 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
         full_name: fullName,
         gender: parsed.data.sex,
         age: parsed.data.age,
-        number_of_users: parsed.data.numberOfUsers,
+        number_of_users: 1, // Defaulting to 1; actual value is stored in applications
         address: parsed.data.address,
         cellphone_number: parsed.data.cellphoneNumber,
         purpose_of_seminar: parsed.data.purposeOfSeminar
@@ -84,7 +82,6 @@ export async function updateApplicantAction(_prevState: ActionState, formData: F
       middleInitial: formData.get("middleInitial"),
       sex: formData.get("sex"),
       age: formData.get("age"),
-      numberOfUsers: formData.get("numberOfUsers"),
       address: formData.get("address"),
       cellphoneNumber: formData.get("cellphoneNumber"),
       purposeOfSeminar: formData.get("purposeOfSeminar")
@@ -103,7 +100,7 @@ export async function updateApplicantAction(_prevState: ActionState, formData: F
         full_name: fullName,
         gender: parsed.data.sex,
         age: parsed.data.age,
-        number_of_users: parsed.data.numberOfUsers,
+        // number_of_users is omitted, leaving existing value
         address: parsed.data.address,
         cellphone_number: parsed.data.cellphoneNumber,
         purpose_of_seminar: parsed.data.purposeOfSeminar

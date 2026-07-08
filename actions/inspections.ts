@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
+import { getSessionUser } from "@/lib/auth";
+import { sendWorkflowEmail, getAdminEmail } from "./email-server";
 import { inspectionRescheduleSchema, inspectionScheduleSchema, inspectionUpdateSchema } from "@/schemas";
 import { toManilaDate, toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
@@ -100,6 +102,29 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
       .from("applications")
       .update({ status: "inspection_scheduled" })
       .eq("id", parsed.data.applicationId);
+
+    // Send email to User
+    const { data: applicationRecord } = await supabase
+      .from("applications")
+      .select("applicants(profile_id)")
+      .eq("id", parsed.data.applicationId)
+      .single();
+
+    const applicantProfileId = (applicationRecord?.applicants as any)?.profile_id;
+    if (applicantProfileId) {
+      const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+      const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+      if (userAuth?.user?.email) {
+        await sendWorkflowEmail(
+          userAuth.user.email,
+          "Inspection Scheduled - BWD Online",
+          `<h3>Inspection Scheduled</h3>
+           <p>An inspection for your application ID: <b>${parsed.data.applicationId}</b> has been scheduled.</p>
+           <p><strong>Scheduled Date:</strong> ${new Date(parsed.data.scheduledAt).toLocaleString()}</p>
+           <p>Please ensure someone is available at the premises during the inspection.</p>`
+        );
+      }
+    }
 
     revalidatePath("/admin/inspections");
     return { success: true, message: "Inspection scheduled." };
@@ -213,7 +238,7 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("accredited_plumber_id, accredited_plumbers(full_name)")
+      .select("accredited_plumber_id, accredited_plumbers(full_name), applicants(profile_id)")
       .eq("id", inspection.application_id)
       .single();
 
@@ -257,6 +282,23 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
         status: parsed.data.status === "approved" ? "inspection_completed" : "under_review"
       })
       .eq("id", inspection.application_id);
+
+    if (parsed.data.status === "approved") {
+      const applicantProfileId = (application?.applicants as any)?.profile_id;
+      if (applicantProfileId) {
+        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+        const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+        if (userAuth?.user?.email) {
+          await sendWorkflowEmail(
+            userAuth.user.email,
+            "Inspection Approved - BWD Online",
+            `<h3>Inspection Approved</h3>
+             <p>Your site inspection for application ID: <b>${inspection.application_id}</b> has been approved!</p>
+             <p>Please log in to your dashboard to proceed to the next steps.</p>`
+          );
+        }
+      }
+    }
 
     revalidatePath("/inspector");
     revalidatePath("/admin/inspections");

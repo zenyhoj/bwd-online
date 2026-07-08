@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
+import { sendWorkflowEmail, getAdminEmail } from "./email-server";
 import { buildSecureDocumentPath, validateDocumentFile } from "@/lib/security/documents";
 import {
   documentReviewSchema,
@@ -216,6 +217,15 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
         ...(anyRejected ? {} : { document_review_note: null })
       })
       .eq("id", parsed.data.applicationId);
+
+    // Notify admin
+    await sendWorkflowEmail(
+      await getAdminEmail(),
+      "New Document Uploaded",
+      `<h3>New Document Uploaded</h3>
+       <p>A new document (<strong>${documentTypeLabels[parsed.data.documentType as ApplicationDocumentType] ?? parsed.data.documentType}</strong>) has been uploaded for application ID: <b>${parsed.data.applicationId}</b>.</p>
+       <p>Please review it in the admin dashboard.</p>`
+    );
 
     revalidatePath("/applicant");
     revalidatePath("/applicant/documents");
@@ -445,11 +455,63 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
         status: "inspection_completed",
         document_review_note: `Please reupload ${documentTypeLabels[document.document_type as ApplicationDocumentType] ?? "the selected document"}: ${parsed.data.reviewNotes ?? ""}`
       };
+
+      // Send email to notify the user of the required action
+      try {
+        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+        const { data: applicationData } = await adminClient
+          .from("applications")
+          .select("applicants(profile_id)")
+          .eq("id", document.application_id)
+          .single();
+        
+        const applicantProfileId = (applicationData?.applicants as any)?.profile_id;
+        if (applicantProfileId) {
+          const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+          if (userAuth?.user?.email) {
+            await sendWorkflowEmail(
+              userAuth.user.email,
+              "Action Required: Document Update Needed - BWD Online",
+              `<h3>Action Required</h3>
+               <p>A document you submitted (<strong>${documentTypeLabels[document.document_type as ApplicationDocumentType] ?? "the selected document"}</strong>) requires your attention.</p>
+               <p><strong>Note from reviewer:</strong> ${parsed.data.reviewNotes}</p>
+               <p>Please log in to BWD Online to re-upload the required document.</p>`
+            );
+          }
+        }
+      } catch (emailError) {
+        console.error("Failed to send email notification:", emailError);
+      }
     } else if (allDocumentsVerified) {
       applicationUpdate = {
         status: "documents_verified",
         document_review_note: null
       };
+
+      try {
+        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+        const { data: applicationData } = await adminClient
+          .from("applications")
+          .select("applicants(profile_id)")
+          .eq("id", document.application_id)
+          .single();
+        
+        const applicantProfileId = (applicationData?.applicants as any)?.profile_id;
+        if (applicantProfileId) {
+          const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+          if (userAuth?.user?.email) {
+            await sendWorkflowEmail(
+              userAuth.user.email,
+              "Documents Verified - BWD Online",
+              `<h3>Documents Verified</h3>
+               <p>All of your required documents have been successfully verified!</p>
+               <p>Please log in to BWD Online to proceed with your payment or next steps.</p>`
+            );
+          }
+        }
+      } catch (emailError) {
+        console.error("Failed to send email notification:", emailError);
+      }
     } else if (!anyRejected) {
       applicationUpdate = {
         document_review_note: null

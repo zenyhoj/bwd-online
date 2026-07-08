@@ -60,8 +60,9 @@ export function ApplicationSwitcher({
         <p className="text-sm text-muted-foreground">{description}</p>
       </CardHeader>
       <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {applications.map((application) => {
+        {applications.map((application, index) => {
           const isSelected = application.id === selectedApplicationId;
+          const letter = String.fromCharCode(65 + index); // 65 is 'A'
           const query = new URLSearchParams();
           Object.entries(queryParams ?? {}).forEach(([key, value]) => {
             if (value) {
@@ -82,7 +83,7 @@ export function ApplicationSwitcher({
             >
               <div className="flex items-start justify-between gap-3 min-w-0">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium truncate">{application.full_name}</p>
+                  <p className="font-medium truncate">{application.full_name} ({letter})</p>
                   <p className="text-xs text-muted-foreground truncate">
                     {application.service_type.replaceAll("_", " ")}
                   </p>

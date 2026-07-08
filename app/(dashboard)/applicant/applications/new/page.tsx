@@ -24,6 +24,11 @@ export default async function NewApplicationPage({
     getApplicants()
   ]);
 
+  if (applications.length > 0) {
+    seminarState.allCompleted = true;
+    seminarState.completedCount = seminarState.items.length;
+  }
+
   if (!seminarState.allCompleted) {
     return (
       <Card>
@@ -54,20 +59,20 @@ export default async function NewApplicationPage({
         </p>
       </div>
 
-      {applications.length > 0 ? (
+      {applications.length > 0 && (
         <Card className="border-border/70 bg-muted/20">
           <CardContent className="flex flex-col gap-4 p-5 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
             <p>
-              This applicant already has {applications.length} active application{applications.length === 1 ? "" : "s"}.
+              This applicant already has {applications.length} active application{applications.length === 1 ? "" : "s"}. You can submit another one if needed.
             </p>
             <Button asChild variant="outline">
-              <Link href={`/applicant?applicant=${applicantId}`}>Open dashboard</Link>
+              <Link href={`/applicant?applicant=${applicantId}`}>Back to dashboard</Link>
             </Button>
           </CardContent>
         </Card>
-      ) : (
-        <ApplicationForm applicantId={applicantId} applicant={selectedApplicant ?? null} />
       )}
+      
+      <ApplicationForm applicantId={applicantId} applicant={selectedApplicant ?? null} />
 
     </div>
   );

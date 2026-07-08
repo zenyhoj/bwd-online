@@ -36,6 +36,11 @@ export default async function ApplicantSeminarPage({
     getApplicantSeminarState(applicantId),
     getApplicantApplications(applicantId)
   ]);
+  
+  if (applications.length > 0) {
+    seminarState.allCompleted = true;
+    seminarState.completedCount = seminarState.items.length;
+  }
 
   const selectedApplication = applications[0] ?? null;
   const latestPayment =

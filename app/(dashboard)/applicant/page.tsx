@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Droplets } from "lucide-react";
+import { ArrowRight, Droplets, Plus } from "lucide-react";
 
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
@@ -269,13 +269,18 @@ function getStringParam(
 
 export default async function ApplicantDashboardPage({ searchParams }: ApplicantDashboardPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  
   const applicants = await getApplicants();
   const selectedApplicantId = getStringParam(resolvedSearchParams, "applicant") ?? applicants[0]?.id ?? null;
   const selectedApplicant = applicants.find((a) => a.id === selectedApplicantId) ?? applicants[0];
 
   const applications = selectedApplicantId ? await getApplicantApplications(selectedApplicantId) : [];
   const seminarState = selectedApplicantId ? await getApplicantSeminarState(selectedApplicantId) : { items: [], progress: [], completedCount: 0, allCompleted: false };
+  
+  if (applications.length > 0) {
+    seminarState.allCompleted = true;
+    seminarState.completedCount = seminarState.items.length;
+  }
+
   const plumbers = await getAccreditedPlumbers();
 
   const supabase = createSupabaseAdminClient();
@@ -338,13 +343,24 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
 
       <div className="grid gap-6 md:grid-cols-12 min-w-0">
         <div className="md:col-span-12 space-y-6 min-w-0">
-          {applicants.length > 1 ? (
+          {applicants.length > 0 ? (
             <ApplicantSwitcher
               applicants={applicants}
               selectedApplicantId={selectedApplicant?.id}
               basePath="/applicant"
               title="Accounts"
               description="Switch accounts."
+            />
+          ) : null}
+
+          {applications.length > 1 && selectedApplicantId ? (
+            <ApplicationSwitcher
+              applications={applications}
+              selectedApplicationId={selectedApplication?.id}
+              basePath="/applicant"
+              queryParams={{ applicant: selectedApplicantId }}
+              title="Connections"
+              description="Switch between this applicant's connections."
             />
           ) : null}
 
@@ -373,15 +389,24 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           ) : null}
 
           <Card className="border-border/70 shadow-sm min-w-0">
-            <CardHeader className="pb-4 min-w-0 w-full">
-              <CardTitle className="text-2xl font-semibold tracking-tight break-words">Application Workflow: {selectedApplicantName}</CardTitle>
-              <CardDescription className="break-words">Track the status of your water connection application, schedule inspections, and view requirements.</CardDescription>
+            <CardHeader className="pb-4 min-w-0 w-full flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="min-w-0">
+                <CardTitle className="text-2xl font-semibold tracking-tight break-words">Application Workflow: {selectedApplicantName}</CardTitle>
+                <CardDescription className="break-words">Track the status of your water connection application, schedule inspections, and view requirements.</CardDescription>
+              </div>
+              {applications.length > 0 && selectedApplicantId ? (
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href={`/applicant/applications/new?applicant=${selectedApplicantId}`}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Application
+                  </Link>
+                </Button>
+              ) : null}
             </CardHeader>
             <CardContent className="space-y-4 min-w-0">
-
-          <div className="flex flex-wrap items-center gap-2">
-            {effectiveWorkflowStatus ? <StatusBadge status={effectiveWorkflowStatus} /> : null}
-            <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-2">
+                {effectiveWorkflowStatus ? <StatusBadge status={effectiveWorkflowStatus} /> : null}
+                <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs text-muted-foreground">
               {applications.length} application{applications.length === 1 ? "" : "s"}
             </span>
             <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs text-muted-foreground">

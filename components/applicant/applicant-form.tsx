@@ -129,21 +129,7 @@ export function ApplicantForm() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="numberOfUsers">Number of Users <span className="text-destructive">*</span></Label>
-                <Input
-                  id="numberOfUsers"
-                  name="numberOfUsers"
-                  type="number"
-                  min="1"
-                  max="100"
-                  required
-                  placeholder="e.g. 5"
-                  className="h-11"
-                />
-                <FieldHint>Enter how many people are expected to use the water connection.</FieldHint>
-              </div>
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="purposeOfSeminar">Purpose of Seminar <span className="text-destructive">*</span></Label>
                 <select
                   id="purposeOfSeminar"
