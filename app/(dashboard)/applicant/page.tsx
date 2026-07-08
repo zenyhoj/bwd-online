@@ -195,7 +195,7 @@ function getPrimaryAction({
   if (!selectedApplicantId) {
     return {
       href: "/applicant/new",
-      label: "Create new applicant"
+      label: "Add an Applicant"
     };
   }
 
@@ -209,7 +209,7 @@ function getPrimaryAction({
   if (!hasApplication) {
     return {
       href: `/applicant/applications/new?applicant=${selectedApplicantId}`,
-      label: "Start application"
+      label: "Start Water Service Application"
     };
   }
 
@@ -229,7 +229,7 @@ function getPrimaryAction({
       href: selectedApplicationId
         ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}#inhouse-installation`
         : "/applicant#inhouse-installation",
-      label: "Complete inhouse plumbing"
+      label: "Mark Plumbing as Complete"
     };
   }
 
@@ -398,14 +398,14 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </Card>
           ) : null}
 
-          <Card className="border-border/70 shadow-sm min-w-0">
-            <CardHeader className="pb-4 min-w-0 w-full flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <Card className="border-border shadow-sm min-w-0 bg-card rounded-xl">
+            <CardHeader className="pb-4 min-w-0 w-full border-b border-border/50 bg-muted/30 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="min-w-0">
-                <CardTitle className="text-2xl font-semibold tracking-tight break-words">Application Workflow: {selectedApplicantName}</CardTitle>
-                <CardDescription className="break-words">Track the status of your water connection application, schedule inspections, and view requirements.</CardDescription>
+                <CardTitle className="text-xl font-semibold tracking-tight break-words font-heading">Application Workflow: {selectedApplicantName}</CardTitle>
+                <CardDescription className="break-words mt-1 text-sm">Track the status of your water connection application, schedule inspections, and view requirements.</CardDescription>
               </div>
               {applications.length > 0 && selectedApplicantId ? (
-                <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Button asChild variant="outline" size="sm" className="shrink-0 bg-white dark:bg-slate-950 font-medium tracking-wide">
                   <Link href={`/applicant/applications/new?applicant=${selectedApplicantId}`}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Application
@@ -413,7 +413,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                 </Button>
               ) : null}
             </CardHeader>
-            <CardContent className="space-y-4 min-w-0">
+            <CardContent className="space-y-6 min-w-0 pt-6">
               <div className="flex flex-wrap items-center gap-2">
                 {effectiveWorkflowStatus ? <StatusBadge status={effectiveWorkflowStatus} /> : null}
                 <span className="rounded-full border border-border/70 bg-muted/20 px-3 py-1 text-xs text-muted-foreground">
@@ -557,100 +557,92 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           ) : null}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: "clamp(8px, 1.5vw, 12px)" }}>
-            <div className={`rounded-xl border p-3 transition-colors ${
-              isInhousePlumbingActive
-                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
-                : "border-border/60 bg-muted/5 hover:bg-muted/10"
-            }`}>
-              <div className="flex flex-col items-start gap-1">
-                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Plumbing</p>
-                {selectedApplication?.inhouse_installation_completed && (
-                  <StatusBadge status="completed" className="px-2 py-0.5 text-[9px] tracking-[0.1em]" />
-                )}
+          <div className="relative isolate flex flex-col md:flex-row gap-6 md:gap-2 mt-8 mb-4 pt-2">
+            {/* Horizontal Line for Desktop */}
+            <div className="absolute top-5 left-6 right-6 h-0.5 -translate-y-1/2 bg-border hidden md:block z-[-1]" />
+            <div 
+              className="absolute top-5 left-6 h-0.5 -translate-y-1/2 bg-primary transition-all duration-700 ease-in-out hidden md:block z-[-1]" 
+              style={{ 
+                width: selectedApplication?.water_meter_installed_at ? "calc(100% - 3rem)" : 
+                       (latestPayment?.status === "paid" ? "75%" : 
+                       (inspectionApproved ? "50%" : 
+                       (inhouseCompleted ? "25%" : "0%"))) 
+              }} 
+            />
+
+            {/* 1. Plumbing Node */}
+            <div className="flex-1 relative group">
+              <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-3 px-2">
+                <div className={`h-10 w-10 shrink-0 rounded-full border-2 flex items-center justify-center font-bold text-sm bg-card transition-all duration-300 ${selectedApplication?.inhouse_installation_completed ? "border-primary text-primary ring-4 ring-primary/10" : (isInhousePlumbingActive ? "border-primary bg-primary text-primary-foreground shadow-[0_0_15px_rgba(2,132,199,0.3)] ring-4 ring-primary/20 scale-110" : "border-border text-muted-foreground")}`}>
+                  1
+                </div>
+                <div className="flex flex-col">
+                  <p className={`font-heading font-semibold text-sm transition-colors ${isInhousePlumbingActive || selectedApplication?.inhouse_installation_completed ? "text-foreground" : "text-muted-foreground"}`}>In-House Plumbing</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">
+                    {selectedApplication?.inhouse_installation_completed_at
+                      ? formatDate(selectedApplication.inhouse_installation_completed_at)
+                      : "Pending"}
+                  </p>
+                </div>
               </div>
-              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
-                {selectedApplication?.inhouse_installation_completed_at
-                  ? formatDateTime(selectedApplication.inhouse_installation_completed_at)
-                  : "Pending"}
-              </p>
             </div>
 
-            <div className={`rounded-xl border p-3 transition-colors ${
-              isInspectionActive
-                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
-                : "border-border/60 bg-muted/5 hover:bg-muted/10"
-            }`}>
-              <div className="flex flex-col items-start gap-1">
-                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Inspection</p>
-                {latestInspection && (
-                  <StatusBadge
-                    status={latestInspection.status === "rejected" ? "disapproved" : (latestInspection.status ?? "pending")}
-                    className="px-2 py-0.5 text-[9px] tracking-[0.1em]"
-                  />
-                )}
+            {/* 2. Inspection Node */}
+            <div className="flex-1 relative group">
+              <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-3 px-2">
+                <div className={`h-10 w-10 shrink-0 rounded-full border-2 flex items-center justify-center font-bold text-sm bg-card transition-all duration-300 ${inspectionApproved ? "border-primary text-primary ring-4 ring-primary/10" : (isInspectionActive ? "border-primary bg-primary text-primary-foreground shadow-[0_0_15px_rgba(2,132,199,0.3)] ring-4 ring-primary/20 scale-110" : "border-border text-muted-foreground")}`}>
+                  2
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <p className={`font-heading font-semibold text-sm transition-colors ${isInspectionActive || inspectionApproved ? "text-foreground" : "text-muted-foreground"}`}>Inspection</p>
+                    {latestInspection?.status === "rejected" && <StatusBadge status="disapproved" className="px-1.5 py-0 text-[9px]" />}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">
+                    {latestInspectionSchedule ? formatDate(latestInspectionSchedule) : "Not scheduled"}
+                  </p>
+                </div>
               </div>
-              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
-                {latestInspectionSchedule ? formatDateTime(latestInspectionSchedule) : "Not scheduled"}
-              </p>
             </div>
 
-            <div className={`rounded-xl border p-3 transition-colors ${
-              isPaymentActive || isUploadDocsActive
-                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
-                : "border-border/60 bg-muted/5 hover:bg-muted/10"
-            }`}>
-              <div className="flex flex-col items-start gap-1">
-                <p className="font-bold uppercase tracking-[0.14em] text-muted-foreground text-[10px] xl:text-xs">Payment</p>
-                {latestPayment && (
-                  <StatusBadge status={latestPayment.status ?? "scheduled"} className="px-2 py-0.5 text-[9px] tracking-[0.1em]" />
-                )}
+            {/* 3. Payment Node */}
+            <div className="flex-1 relative group">
+              <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-3 px-2">
+                <div className={`h-10 w-10 shrink-0 rounded-full border-2 flex items-center justify-center font-bold text-sm bg-card transition-all duration-300 ${latestPayment?.status === "paid" ? "border-primary text-primary ring-4 ring-primary/10" : (isPaymentActive || isUploadDocsActive ? "border-primary bg-primary text-primary-foreground shadow-[0_0_15px_rgba(2,132,199,0.3)] ring-4 ring-primary/20 scale-110" : "border-border text-muted-foreground")}`}>
+                  3
+                </div>
+                <div className="flex flex-col">
+                  <p className={`font-heading font-semibold text-sm transition-colors ${isPaymentActive || isUploadDocsActive || latestPayment?.status === "paid" ? "text-foreground" : "text-muted-foreground"}`}>Office Payment</p>
+                  <p className="text-xs text-muted-foreground mt-1 font-medium">
+                    {latestPayment ? (
+                      latestPayment.status === "paid"
+                        ? formatDate(latestPayment.paid_at ?? latestPayment.office_payment_at ?? null)
+                        : latestPayment.office_payment_at
+                          ? formatDate(latestPayment.office_payment_at)
+                          : formatDate(latestPayment.due_date ?? null)
+                    ) : "Not scheduled"}
+                  </p>
+                </div>
               </div>
-              <p className="mt-2 font-medium tabular-nums leading-tight text-foreground/80 text-xs xl:text-sm">
-                {latestPayment ? (
-                  latestPayment.status === "paid"
-                    ? formatDateTime(latestPayment.paid_at ?? latestPayment.office_payment_at ?? null)
-                    : latestPayment.office_payment_at
-                      ? formatDateTime(latestPayment.office_payment_at)
-                      : formatDate(latestPayment.due_date ?? null)
-                ) : "Not scheduled"}
-              </p>
             </div>
 
-            <div className={`rounded-xl border p-3 transition-colors ${
-              isWaterMeterActive
-                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/30"
-                : selectedApplication?.water_meter_installed_at
-                  ? "border-emerald-500/30 bg-emerald-50/60 dark:border-emerald-400/35 dark:bg-emerald-400/10"
-                  : selectedApplication?.water_meter_installation_scheduled_at
-                    ? "border-primary/30 bg-primary/5"
-                    : "border-border/60 bg-muted/5 hover:bg-muted/10"
-            }`}>
-              <div className="flex flex-col items-start gap-1">
-                <p className={`uppercase tracking-[0.14em] font-bold text-[10px] xl:text-xs ${
-                  selectedApplication?.water_meter_installed_at 
-                    ? "text-emerald-700 dark:text-emerald-300"
-                    : selectedApplication?.water_meter_installation_scheduled_at 
-                      ? "text-primary" 
-                      : "text-muted-foreground"
-                }`}>Water Meter</p>
-                {selectedApplication?.water_meter_installed_at && (
-                  <StatusBadge status="completed" className="px-2 py-0.5 text-[9px] tracking-[0.1em]" />
-                )}
+            {/* 4. Water Meter Node */}
+            <div className="flex-1 relative group">
+              <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-3 px-2">
+                <div className={`h-10 w-10 shrink-0 rounded-full border-2 flex items-center justify-center font-bold text-sm bg-card transition-all duration-300 ${selectedApplication?.water_meter_installed_at ? "border-emerald-500 text-emerald-600 bg-emerald-50 ring-4 ring-emerald-500/10 dark:bg-emerald-500/10 dark:text-emerald-400" : (isWaterMeterActive ? "border-primary bg-primary text-primary-foreground shadow-[0_0_15px_rgba(2,132,199,0.3)] ring-4 ring-primary/20 scale-110" : "border-border text-muted-foreground")}`}>
+                  4
+                </div>
+                <div className="flex flex-col">
+                  <p className={`font-heading font-semibold text-sm transition-colors ${selectedApplication?.water_meter_installed_at ? "text-emerald-700 dark:text-emerald-300" : (isWaterMeterActive ? "text-foreground" : "text-muted-foreground")}`}>Meter Installation</p>
+                  <p className={`text-xs mt-1 font-medium ${selectedApplication?.water_meter_installed_at ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                    {selectedApplication?.water_meter_installed_at
+                      ? formatDate(selectedApplication.water_meter_installed_at)
+                      : selectedApplication?.water_meter_installation_scheduled_at
+                        ? formatDate(selectedApplication.water_meter_installation_scheduled_at)
+                        : "Not scheduled"}
+                  </p>
+                </div>
               </div>
-              <p className={`mt-2 font-medium tabular-nums leading-tight text-xs xl:text-sm ${
-                selectedApplication?.water_meter_installed_at 
-                  ? "text-emerald-700 dark:text-emerald-300"
-                  : selectedApplication?.water_meter_installation_scheduled_at 
-                    ? "text-primary" 
-                    : "text-foreground/80"
-              }`}>
-                {selectedApplication?.water_meter_installed_at
-                  ? formatDateTime(selectedApplication.water_meter_installed_at)
-                  : selectedApplication?.water_meter_installation_scheduled_at
-                    ? formatDateTime(selectedApplication.water_meter_installation_scheduled_at)
-                    : "Not scheduled"}
-              </p>
             </div>
           </div>
 

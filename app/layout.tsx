@@ -1,7 +1,7 @@
 import "./globals.css";
 
 import type { Metadata, Viewport } from "next";
-import { Geist, Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -11,7 +11,7 @@ const inter = Inter({
   variable: "--font-sans"
 });
 
-const geist = Geist({
+const outfit = Outfit({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-heading"
@@ -65,7 +65,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body suppressHydrationWarning className={`${inter.variable} ${geist.variable} font-sans`}>
+      <body suppressHydrationWarning className={`${inter.variable} ${outfit.variable} font-sans`}>
         <NavigationProgress />
         {children}
         <Toaster />

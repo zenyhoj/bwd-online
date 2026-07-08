@@ -3,75 +3,75 @@
 @tailwind utilities;
 
 :root {
-  --background: 1 0 0;
-  --foreground: 0.141 0.005 285.823;
-  --card: 1 0 0;
-  --card-foreground: 0.141 0.005 285.823;
+  --background: 0.977 0.013 236.62; /* Slate 50 */
+  --foreground: 0.278 0.033 256.848; /* Slate 900 */
+  --card: 1 0 0; /* White */
+  --card-foreground: 0.278 0.033 256.848;
   --popover: 1 0 0;
-  --popover-foreground: 0.141 0.005 285.823;
-  --primary: 0.488 0.243 264.376;
-  --primary-foreground: 0.97 0.014 254.604;
-  --secondary: 0.967 0.001 286.375;
-  --secondary-foreground: 0.21 0.006 285.885;
-  --muted: 0.967 0.001 286.375;
-  --muted-foreground: 0.552 0.016 285.938;
-  --accent: 0.967 0.001 286.375;
-  --accent-foreground: 0.21 0.006 285.885;
+  --popover-foreground: 0.278 0.033 256.848;
+  --primary: 0.588 0.158 241.666; /* Sky 600 Cerulean */
+  --primary-foreground: 1 0 0;
+  --secondary: 0.92 0.02 240; /* Slate 200 */
+  --secondary-foreground: 0.278 0.033 256.848;
+  --muted: 0.92 0.02 240; /* Slate 200 */
+  --muted-foreground: 0.45 0.04 256; /* Slate 600 */
+  --accent: 0.97 0.014 254.604; /* Blue 50 */
+  --accent-foreground: 0.278 0.033 256.848;
   --destructive: 0.577 0.245 27.325;
   --destructive-foreground: 0.985 0 0;
-  --border: 0.92 0.004 286.32;
-  --input: 0.92 0.004 286.32;
-  --ring: 0.705 0.015 286.067;
-  --chart-1: 0.871 0.15 154.449;
+  --border: 0.92 0.02 240; /* Slate 200 */
+  --input: 0.92 0.02 240;
+  --ring: 0.588 0.158 241.666;
+  --chart-1: 0.588 0.158 241.666;
   --chart-2: 0.723 0.219 149.579;
   --chart-3: 0.627 0.194 149.214;
   --chart-4: 0.527 0.154 150.069;
   --chart-5: 0.448 0.119 151.328;
-  --radius: 0.625rem;
+  --radius: 0.375rem; /* Reduced for blueprint feel */
   --button-radius: 9999px;
-  --sidebar: 0.985 0 0;
-  --sidebar-foreground: 0.141 0.005 285.823;
-  --sidebar-primary: 0.546 0.245 262.881;
-  --sidebar-primary-foreground: 0.97 0.014 254.604;
-  --sidebar-accent: 0.967 0.001 286.375;
-  --sidebar-accent-foreground: 0.21 0.006 285.885;
-  --sidebar-border: 0.92 0.004 286.32;
-  --sidebar-ring: 0.705 0.015 286.067;
+  --sidebar: 0.977 0.013 236.62;
+  --sidebar-foreground: 0.278 0.033 256.848;
+  --sidebar-primary: 0.588 0.158 241.666;
+  --sidebar-primary-foreground: 1 0 0;
+  --sidebar-accent: 0.92 0.02 240;
+  --sidebar-accent-foreground: 0.278 0.033 256.848;
+  --sidebar-border: 0.92 0.02 240;
+  --sidebar-ring: 0.588 0.158 241.666;
 }
 
 .dark {
-  --background: 0.141 0.005 285.823;
-  --foreground: 0.985 0 0;
-  --card: 0.21 0.006 285.885;
-  --card-foreground: 0.985 0 0;
-  --popover: 0.21 0.006 285.885;
-  --popover-foreground: 0.985 0 0;
-  --primary: 0.424 0.199 265.638;
-  --primary-foreground: 0.97 0.014 254.604;
-  --secondary: 0.274 0.006 286.033;
-  --secondary-foreground: 0.985 0 0;
-  --muted: 0.274 0.006 286.033;
-  --muted-foreground: 0.705 0.015 286.067;
-  --accent: 0.274 0.006 286.033;
-  --accent-foreground: 0.985 0 0;
+  --background: 0.278 0.033 256.848; /* Slate 900 */
+  --foreground: 0.977 0.013 236.62; /* Slate 50 */
+  --card: 0.35 0.04 256; /* Slate 800 */
+  --card-foreground: 0.977 0.013 236.62;
+  --popover: 0.35 0.04 256;
+  --popover-foreground: 0.977 0.013 236.62;
+  --primary: 0.588 0.158 241.666; /* Sky 600 */
+  --primary-foreground: 1 0 0;
+  --secondary: 0.45 0.04 256; /* Slate 600 */
+  --secondary-foreground: 0.977 0.013 236.62;
+  --muted: 0.45 0.04 256;
+  --muted-foreground: 0.7 0.03 256; /* Slate 400 */
+  --accent: 0.45 0.04 256;
+  --accent-foreground: 0.977 0.013 236.62;
   --destructive: 0.704 0.191 22.216;
   --destructive-foreground: 0.985 0 0;
-  --border: 0.274 0.006 286.033;
-  --input: 0.274 0.006 286.033;
-  --ring: 0.552 0.016 285.938;
-  --chart-1: 0.871 0.15 154.449;
+  --border: 0.45 0.04 256;
+  --input: 0.45 0.04 256;
+  --ring: 0.588 0.158 241.666;
+  --chart-1: 0.588 0.158 241.666;
   --chart-2: 0.723 0.219 149.579;
   --chart-3: 0.627 0.194 149.214;
   --chart-4: 0.527 0.154 150.069;
   --chart-5: 0.448 0.119 151.328;
-  --sidebar: 0.21 0.006 285.885;
-  --sidebar-foreground: 0.985 0 0;
-  --sidebar-primary: 0.623 0.214 259.815;
-  --sidebar-primary-foreground: 0.97 0.014 254.604;
-  --sidebar-accent: 0.274 0.006 286.033;
-  --sidebar-accent-foreground: 0.985 0 0;
-  --sidebar-border: 0.274 0.006 286.033;
-  --sidebar-ring: 0.552 0.016 285.938;
+  --sidebar: 0.278 0.033 256.848;
+  --sidebar-foreground: 0.977 0.013 236.62;
+  --sidebar-primary: 0.588 0.158 241.666;
+  --sidebar-primary-foreground: 1 0 0;
+  --sidebar-accent: 0.45 0.04 256;
+  --sidebar-accent-foreground: 0.977 0.013 236.62;
+  --sidebar-border: 0.45 0.04 256;
+  --sidebar-ring: 0.588 0.158 241.666;
 }
 
 * {
