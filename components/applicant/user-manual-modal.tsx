@@ -5,7 +5,6 @@ import ReactMarkdown from "react-markdown";
 import { BookOpen } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 type UserManualModalProps = {
   markdownContent: string;
@@ -46,11 +45,11 @@ export function UserManualModal({ markdownContent }: UserManualModalProps) {
           </div>
         </DialogHeader>
         
-        <ScrollArea className="flex-1 px-6 py-4">
+        <div className="flex-1 px-6 py-4 overflow-y-auto">
           <div className="prose prose-sm dark:prose-invert max-w-none pb-6">
             <ReactMarkdown>{markdownContent}</ReactMarkdown>
           </div>
-        </ScrollArea>
+        </div>
         
         <div className="px-6 py-4 border-t border-border/60 bg-muted/[0.02] flex justify-end">
           <Button onClick={handleClose}>
