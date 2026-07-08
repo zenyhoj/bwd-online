@@ -1,8 +1,11 @@
+import fs from "fs";
+import path from "path";
 import Link from "next/link";
 import { ArrowRight, Droplets, Plus } from "lucide-react";
 
 import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
+import { UserManualModal } from "@/components/applicant/user-manual-modal";
 import { ApplicantDocumentPanel } from "@/components/applicant/applicant-document-panel";
 import { QuickSubmitOfficeButton } from "@/components/applicant/quick-submit-office-button";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
@@ -263,6 +266,201 @@ type ApplicantDashboardPageProps = {
 function getStringParam(
   searchParams: Record<string, string | string[] | undefined> | undefined,
   key: string
+} | {
+    concessionaire_number?: string | null;
+    meter_number?: string | null;
+    connection_date?: string | null;
+  }[];
+}) {
+  const concessionairesList = application.concessionaires;
+  const concessionaire = Array.isArray(concessionairesList) ? concessionairesList[0] : concessionairesList;
+  const latestInspectionWithAccount =
+    [...(application.inspections ?? [])]
+      .filter((inspection) => Boolean(inspection.account_number))
+      .sort((a, b) => {
+        const aTime = new Date(a.inspected_at ?? a.scheduled_at ?? 0).getTime();
+        const bTime = new Date(b.inspected_at ?? b.scheduled_at ?? 0).getTime();
+        return bTime - aTime;
+      })[0] ?? null;
+
+  return {
+    accountNumber: concessionaire?.concessionaire_number ?? latestInspectionWithAccount?.account_number ?? null,
+    connectionDate: concessionaire?.connection_date ?? application.water_meter_installed_at ?? null,
+    meterNumber: concessionaire?.meter_number ?? null,
+    isConverted: Boolean(concessionaire) || Boolean(application.water_meter_installed_at)
+  };
+}
+
+function getEffectiveWorkflowStatus(application: {
+  status?: string | null;
+  inhouse_installation_completed?: boolean | null;
+  water_meter_installation_scheduled_at?: string | null;
+  water_meter_installed_at?: string | null;
+  payments?: {
+    due_date?: string | null;
+    paid_at?: string | null;
+    status?: string | null;
+  }[];
+  inspections?: { status?: string | null; scheduled_at?: string | null }[];
+}) {
+  const latestPayment = getLatestPayment(application);
+  const hasInspectionApproved = hasApprovedInspection(application);
+  const hasScheduled = (application.inspections ?? []).length > 0;
+
+  if (application.status === "converted") {
+    return "converted";
+  }
+
+  if (application.water_meter_installed_at) {
+    return "ready for conversion";
+  }
+
+  if (application.water_meter_installation_scheduled_at) {
+    return "installation scheduled";
+  }
+
+  if (latestPayment?.status === "paid") {
+    return "ready for installation";
+  }
+
+  if (hasInspectionApproved) {
+    return "inspection approved";
+  }
+
+  if (hasScheduled) {
+    const latest = [...(application.inspections ?? [])].sort(
+      (a, b) => new Date(b.scheduled_at ?? 0).getTime() - new Date(a.scheduled_at ?? 0).getTime()
+    )[0];
+    if (latest?.status === "rejected") {
+      return "inspection disapproved";
+    }
+    return "inspection scheduled";
+  }
+
+  if (application.inhouse_installation_completed) {
+    return "plumbing completed";
+  }
+
+  return application.status ?? "submitted";
+}
+
+function formatPaymentType(value: string | null | undefined) {
+  if (!value) {
+    return "Not scheduled";
+  }
+
+  if (value === "inspection_fee") {
+    return "Application fee";
+  }
+
+  return value.replaceAll("_", " ");
+}
+
+function formatServiceType(value: string | null | undefined) {
+  if (!value) {
+    return "Service type not set";
+  }
+
+  return value.replaceAll("_", " ");
+}
+
+function getPrimaryAction({
+  allCompleted,
+  hasApplication,
+  hasPayment,
+  isCompleted,
+  inhouseCompleted,
+  inspectionApproved,
+  documentsReady,
+  documentSubmissionMode,
+  selectedApplicantId,
+  selectedApplicationId
+}: {
+  allCompleted: boolean;
+  hasApplication: boolean;
+  hasPayment: boolean;
+  isCompleted: boolean;
+  inhouseCompleted: boolean;
+  inspectionApproved: boolean;
+  documentsReady: boolean;
+  documentSubmissionMode?: string | null;
+  selectedApplicantId?: string | null;
+  selectedApplicationId?: string | null;
+}) {
+  if (!selectedApplicantId) {
+    return {
+      href: "/applicant/new",
+      label: "Create new applicant"
+    };
+  }
+
+  if (!allCompleted) {
+    return {
+      href: `/applicant/seminar?applicant=${selectedApplicantId}`,
+      label: "Continue seminar"
+    };
+  }
+
+  if (!hasApplication) {
+    return {
+      href: `/applicant/applications/new?applicant=${selectedApplicantId}`,
+      label: "Start application"
+    };
+  }
+
+  if (isCompleted) {
+    return null;
+  }
+
+  if (hasPayment) {
+    return {
+      href: selectedApplicationId ? `/applicant/payments?application=${selectedApplicationId}` : "/applicant/payments",
+      label: "Open payments"
+    };
+  }
+
+  if (!inhouseCompleted) {
+    return {
+      href: selectedApplicationId
+        ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}#inhouse-installation`
+        : "/applicant#inhouse-installation",
+      label: "Complete inhouse plumbing"
+    };
+  }
+
+  if (!inspectionApproved) {
+    return {
+      href: selectedApplicationId ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}` : "/applicant",
+      label: "View inspection status"
+    };
+  }
+
+  if (!documentsReady) {
+    if (documentSubmissionMode === "office") {
+      return {
+        href: selectedApplicationId ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}#documents` : "/applicant#documents",
+        label: "Wait for office verification"
+      };
+    }
+    return {
+      href: selectedApplicationId ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}#documents` : "/applicant#documents",
+      label: "Upload documents"
+    };
+  }
+
+  return {
+    href: selectedApplicationId ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}` : "/applicant",
+    label: "Wait for payment schedule"
+  };
+}
+
+type ApplicantDashboardPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function getStringParam(
+  searchParams: Record<string, string | string[] | undefined> | undefined,
+  key: string
 ) {
   return typeof searchParams?.[key] === "string" ? searchParams[key] : undefined;
 }
@@ -270,6 +468,10 @@ function getStringParam(
 export default async function ApplicantDashboardPage({ searchParams }: ApplicantDashboardPageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const applicants = await getApplicants();
+  
+  const userManualPath = path.join(process.cwd(), "USER.md");
+  const userManualContent = fs.existsSync(userManualPath) ? fs.readFileSync(userManualPath, "utf-8") : "";
+
   const selectedApplicantId = getStringParam(resolvedSearchParams, "applicant") ?? applicants[0]?.id ?? null;
   const selectedApplicant = applicants.find((a) => a.id === selectedApplicantId) ?? applicants[0];
 
@@ -340,6 +542,9 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   return (
     <div className="space-y-6">
       <PushPromptCard />
+      {applicants.length === 0 && userManualContent && (
+        <UserManualModal markdownContent={userManualContent} />
+      )}
 
       <div className="grid gap-6 md:grid-cols-12 min-w-0">
         <div className="md:col-span-12 space-y-6 min-w-0">
