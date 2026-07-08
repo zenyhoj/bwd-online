@@ -20,7 +20,9 @@ If you created an account only to monitor an existing water account, open **Wate
 ### Stage 2: Submission and In-House Plumbing
 1. **New Application**:
    - **Prerequisite**: Complete the Online Seminar.
-   - **Action**: Fill out the service type, personal details, and exact location.
+   - **Action**: Fill out the service type, connection classification, and number of users for this specific connection.
+   - **Multiple Connections**: You can create multiple applications under a single applicant profile. Use the **Connections** switcher to toggle between them (labeled A, B, C, etc.).
+   - **Notification**: BWD administration will receive an automated email when you submit a new application.
 2. **In-House Plumbing**:
    - **Prerequisite**: Submit a new application.
    - **Action**: Hire a BWD accredited plumber from the **Plumbers** page.
@@ -30,16 +32,17 @@ If you created an account only to monitor an existing water account, open **Wate
 - **Prerequisite**: In-house plumbing must be marked complete.
 - **Action**: BWD schedules a site inspection.
 - **Approval**: The inspection must be approved before document upload or verification can continue. If disapproved, follow the inspector's remarks and wait for the next instruction or reschedule.
+- **Notification**: You will receive an email notification when an inspection is scheduled and when the plumbing is officially approved.
 
 ### Stage 4: Supporting Documents
 - **Prerequisite**: The BWD inspection must be approved.
-- **Action**: Upload required documents in the **Documents** area, or choose office submission if you will bring them to BWD.
+- **Action**: Upload required documents in the **Documents** area, or choose office submission if you will bring them to BWD. BWD administration will receive an automated email for every document you upload.
 - **Verification**: BWD staff review your requirements. If a document is rejected or missing, follow the note and submit the corrected requirement.
 
 ### Stage 5: Payment Scheduling
 - **Prerequisite**: Required documents must be verified by BWD staff.
 - **Action**: BWD schedules an office payment date.
-- **Next step**: Visit the BWD office on your scheduled date and settle the required fees.
+- **Next step**: Visit the BWD office on your scheduled date and settle the required fees. You will receive an automated email outlining your payment schedule.
 
 ### Stage 6: Water Meter Installation and Conversion
 - **Prerequisite**: Payment must be settled and confirmed.

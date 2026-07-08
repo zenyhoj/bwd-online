@@ -20,11 +20,12 @@ The dashboard organizes applications into workflow stages. The summary cards, si
 - **Completed**: The application is converted and water meter installation is marked complete.
 
 ### 2. Processing Applications
-1. **Use the Stage column**: In the application queue, check the **Stage** column to see why an applicant is counted in a dashboard card.
-2. **Schedule inspection**: After in-house plumbing is complete, assign an inspector and schedule the site inspection.
-3. **Review inspection findings**: Inspection status and plumbing result should stay aligned. If the inspection status is not approved, the plumbing result should not be approved.
-4. **Review documents**: Review uploaded requirements in the document verification panel. If the applicant chose office submission, verify the requirements when they bring them to BWD.
-5. **Set payment dates**: Once documents are verified, schedule the official office payment date.
+1. **Multiple Applications per Applicant**: A single applicant profile can have multiple water connection applications simultaneously. When processing, ensure you check the specific application details (like service classification and number of users) as these are now tied to the application rather than the applicant.
+2. **Use the Stage column**: In the application queue, check the **Stage** column to see why an applicant is counted in a dashboard card.
+2. **Schedule inspection**: After in-house plumbing is complete, assign an inspector and schedule the site inspection. This automatically emails the applicant.
+3. **Review inspection findings**: Inspection status and plumbing result should stay aligned. If the inspection status is not approved, the plumbing result should not be approved. Approving the inspection automatically emails the applicant.
+4. **Review documents**: Review uploaded requirements in the document verification panel. You will receive automated emails whenever an applicant uploads a new document. If the applicant chose office submission, verify the requirements when they bring them to BWD.
+5. **Set payment dates**: Once documents are verified, schedule the official office payment date. This sends an automated payment schedule email to the applicant.
 6. **Confirm payment**: Mark payment complete only after the applicant settles fees at the office.
 7. **Schedule and complete water meter installation**: After payment is confirmed, schedule the water meter installation. Mark installation complete only after the work is finished; this finalizes conversion.
 8. **Print reports**: **Print WACO** and **Print Inspection** are disabled until the system confirms the needed workflow milestones.
