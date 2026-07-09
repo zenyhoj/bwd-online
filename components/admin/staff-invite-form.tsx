@@ -23,7 +23,7 @@ export function StaffInviteForm() {
         <CardDescription>Create protected back-office access for additional administrators.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="grid gap-4 md:grid-cols-3 md:items-end">
+        <form action={formAction} className="grid gap-4 md:grid-cols-3 items-start">
           <div className="space-y-2 md:col-span-1">
             <Label htmlFor="staffFullName">Full name</Label>
             <Input

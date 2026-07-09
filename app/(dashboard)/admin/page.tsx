@@ -14,6 +14,7 @@ import { DeleteApplicantButton } from "@/components/admin/delete-applicant-butto
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ApplicantSelectionButton } from "@/components/admin/applicant-selection-button";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -581,9 +582,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button asChild variant={isSelected ? "secondary" : "outline"} size="sm">
-                            <Link href={`/admin?${query.toString()}` as never}>{isSelected ? "Selected" : "Open"}</Link>
-                          </Button>
+                          <ApplicantSelectionButton 
+                            href={`/admin?${query.toString()}`} 
+                            isSelected={isSelected} 
+                          />
                         </TableCell>
                       </TableRow>
                     );

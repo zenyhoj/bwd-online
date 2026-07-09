@@ -74,16 +74,54 @@ export async function inviteStaffAction(_prevState: ActionState, formData: FormD
       }
     });
 
-    if (inviteResult.error || !inviteResult.data.user) {
+    let userId = inviteResult.data?.user?.id;
+
+    if (inviteResult.error) {
+      if (
+        inviteResult.error.message.includes("already been registered") ||
+        inviteResult.error.message.includes("already exists")
+      ) {
+        let foundUser = null;
+        let page = 1;
+        
+        while (!foundUser) {
+          const { data: usersData, error: usersError } = await adminClient.auth.admin.listUsers({ page, perPage: 100 });
+          if (usersError || !usersData.users || usersData.users.length === 0) {
+            break;
+          }
+          foundUser = usersData.users.find((u) => u.email?.toLowerCase() === parsed.data.email.toLowerCase());
+          if (foundUser || usersData.users.length < 100) {
+            break;
+          }
+          page++;
+        }
+
+        if (foundUser) {
+          userId = foundUser.id;
+        } else {
+          return {
+            success: false,
+            message: "User exists but couldn't be located to upgrade."
+          };
+        }
+      } else {
+        return {
+          success: false,
+          message: inviteResult.error.message ?? "Unable to send the staff invitation."
+        };
+      }
+    }
+
+    if (!userId) {
       return {
         success: false,
-        message: inviteResult.error?.message ?? "Unable to send the staff invitation."
+        message: "Unable to retrieve the user account."
       };
     }
 
     const { error: profileError } = await adminClient.from("profiles").upsert(
       {
-        id: inviteResult.data.user.id,
+        id: userId,
         organization_id: profile.organization_id,
         role: parsed.data.role,
         full_name: parsed.data.fullName,
@@ -100,9 +138,12 @@ export async function inviteStaffAction(_prevState: ActionState, formData: FormD
     revalidatePath("/admin");
     revalidatePath("/admin/access");
 
+    const isExistingUser = inviteResult.error != null;
     return {
       success: true,
-      message: `Admin invitation sent to ${parsed.data.email}.`
+      message: isExistingUser 
+        ? `Existing user account was successfully upgraded to ${parsed.data.role}.`
+        : `Admin invitation sent to ${parsed.data.email}.`
     };
   });
 }
