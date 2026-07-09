@@ -1,8 +1,12 @@
 import { StaffInviteForm } from "@/components/admin/staff-invite-form";
+import { RevokeAccessButton } from "@/components/admin/revoke-access-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOrganizationStaff } from "@/lib/queries";
+import { getCurrentProfile, isSuperAdmin } from "@/lib/auth";
 
 export default async function AdminAccessPage() {
+  const profile = await getCurrentProfile();
+  const isSuper = await isSuperAdmin();
   const staff = await getOrganizationStaff();
   const admins = staff.filter((member) => member.role === "admin");
 
@@ -68,6 +72,9 @@ export default async function AdminAccessPage() {
                     >
                       {member.is_active ? "Active" : "Inactive"}
                     </span>
+                    {isSuper && member.id !== profile.id && (
+                      <RevokeAccessButton userId={member.id} />
+                    )}
                   </div>
                 </div>
               ))}

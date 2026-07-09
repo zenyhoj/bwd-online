@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 
 import { parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { getCurrentProfile } from "@/lib/auth";
+import { getCurrentProfile, isSuperAdmin } from "@/lib/auth";
 import { staffInviteSchema } from "@/schemas";
 import type { ActionState } from "@/types";
 
@@ -145,5 +145,39 @@ export async function inviteStaffAction(_prevState: ActionState, formData: FormD
         ? `Existing user account was successfully upgraded to ${parsed.data.role}.`
         : `Admin invitation sent to ${parsed.data.email}.`
     };
+  });
+}
+
+export async function revokeAccessAction(targetUserId: string): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const isSuper = await isSuperAdmin();
+
+    if (!isSuper) {
+      return { success: false, message: "Only super administrators can revoke access." };
+    }
+
+    const profile = await getCurrentProfile();
+
+    if (profile.id === targetUserId) {
+      return { success: false, message: "You cannot revoke your own access." };
+    }
+
+    const adminClient = createSupabaseAdminClient();
+    const { error } = await adminClient
+      .from("profiles")
+      .update({
+        role: "customer",
+        is_active: false
+      })
+      .eq("id", targetUserId)
+      .eq("organization_id", profile.organization_id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin/access");
+
+    return { success: true, message: "Access successfully revoked." };
   });
 }
