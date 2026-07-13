@@ -73,6 +73,30 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: "Connection classification is required.", fieldErrors: { classification: ["Please select a classification."] } as Record<string, string[]> };
     }
 
+    const { data: existingApps, error: existingAppsError } = await supabase
+      .from("applications")
+      .select("id, status, payments(status)")
+      .eq("organization_id", profile.organization_id)
+      .eq("full_name", applicant.full_name)
+      .neq("status", "rejected")
+      .neq("status", "converted");
+
+    if (existingAppsError) {
+      return { success: false, message: "Failed to check for existing applications." };
+    }
+
+    if (existingApps && existingApps.length > 0) {
+      const hasActiveUnpaidApp = existingApps.some(app => {
+        const payments = app.payments as any[];
+        const isPaid = payments && payments.some(p => p.status === "paid");
+        return !isPaid;
+      });
+
+      if (hasActiveUnpaidApp) {
+        return { success: false, message: "An active application for this name already exists. Please wait for it to be processed." };
+      }
+    }
+
     const { error } = await supabase.from("applications").insert({
       organization_id: profile.organization_id,
       applicant_id: applicantId,
