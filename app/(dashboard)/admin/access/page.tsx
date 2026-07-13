@@ -3,12 +3,20 @@ import { RevokeAccessButton } from "@/components/admin/revoke-access-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getOrganizationStaff } from "@/lib/queries";
 import { getCurrentProfile, isSuperAdmin } from "@/lib/auth";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 export default async function AdminAccessPage() {
   const profile = await getCurrentProfile();
   const isSuper = await isSuperAdmin();
   const staff = await getOrganizationStaff();
   const admins = staff.filter((member) => member.role === "admin");
+  const adminClient = createSupabaseAdminClient();
+  const adminsWithEmail = await Promise.all(
+    admins.map(async (admin) => {
+      const { data } = await adminClient.auth.admin.getUserById(admin.id);
+      return { ...admin, email: data?.user?.email ?? admin.id };
+    })
+  );
 
   return (
     <div className="space-y-6">
@@ -50,14 +58,14 @@ export default async function AdminAccessPage() {
             <p className="text-sm text-muted-foreground">No additional admin accounts exist yet.</p>
           ) : (
             <div className="grid gap-3">
-              {admins.map((member) => (
+              {adminsWithEmail.map((member) => (
                 <div
                   key={member.id}
                   className="flex flex-col gap-2 rounded-lg border border-border/70 p-4 md:flex-row md:items-center md:justify-between"
                 >
                   <div>
                     <p className="font-medium">{member.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{member.id}</p>
+                    <p className="text-sm text-muted-foreground">{member.email}</p>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <span className="rounded-full bg-secondary px-3 py-1 capitalize text-secondary-foreground">
