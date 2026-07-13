@@ -797,6 +797,25 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                   </div>
                 </div>
 
+                {inhousePlumbingCompleted && (
+                  <div className="border-t border-border/50 p-6 bg-muted/5">
+                    <div className="mb-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Inhouse Plumbing Record</p>
+                    </div>
+                    <InhouseInstallationForm
+                      applicationId={String(selectedApplication.id)}
+                      plumbers={plumbers}
+                      currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
+                      currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
+                      currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
+                      currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
+                      isCompleted={true}
+                      isLocked={true}
+                      variant="admin"
+                    />
+                  </div>
+                )}
+
                 {activeAction ? (
                   <div className="border-t border-border/50 p-6 bg-primary/[0.02]">
                     <div className="rounded-xl border-2 border-primary/20 bg-background p-6 shadow-sm">

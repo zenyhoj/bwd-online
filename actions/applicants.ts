@@ -6,10 +6,15 @@ import { z } from "zod";
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import type { ActionState } from "@/types";
 
+function toProperCase(str: string): string {
+  if (!str) return "";
+  return str.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase());
+}
+
 const applicantSchema = z.object({
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  middleInitial: z.string().trim().max(3).optional(),
+  lastName: z.string().min(2, "Last name must be at least 2 characters").transform(toProperCase),
+  firstName: z.string().min(2, "First name must be at least 2 characters").transform(toProperCase),
+  middleInitial: z.string().trim().max(3).optional().transform((val) => (val ? toProperCase(val) : val)),
   sex: z.enum(["Male", "Female"]),
   age: z.coerce.number().int().min(1).max(120),
   address: z.string().min(10, "Address must be at least 10 characters"),
