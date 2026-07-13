@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
-import { sendWorkflowEmail, getAdminEmail } from "./email-server";
+import { sendWorkflowEmail, getAdminEmails } from "./email-server";
 import { buildSecureDocumentPath, validateDocumentFile } from "@/lib/security/documents";
 import {
   documentReviewSchema,
@@ -220,7 +220,7 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
 
     // Notify admin
     await sendWorkflowEmail(
-      await getAdminEmail(),
+      await getAdminEmails(),
       "New Document Uploaded",
       `<h3>New Document Uploaded</h3>
        <p>A new document (<strong>${documentTypeLabels[parsed.data.documentType as ApplicationDocumentType] ?? parsed.data.documentType}</strong>) has been uploaded for application ID: <b>${parsed.data.applicationId}</b>.</p>

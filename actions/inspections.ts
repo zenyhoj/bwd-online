@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { getSessionUser } from "@/lib/auth";
-import { sendWorkflowEmail, getAdminEmail } from "./email-server";
+import { sendWorkflowEmail, getAdminEmails } from "./email-server";
 import { inspectionRescheduleSchema, inspectionScheduleSchema, inspectionUpdateSchema } from "@/schemas";
 import { toManilaDate, toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";

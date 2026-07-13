@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { getSessionUser } from "@/lib/auth";
-import { sendWorkflowEmail, getAdminEmail } from "./email-server";
+import { sendWorkflowEmail, getAdminEmails } from "./email-server";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
 import { paymentScheduleSchema, paymentStatusSchema } from "@/schemas";
 import { toManilaDate, toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
@@ -144,7 +144,7 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
     
     // Send email to Admin
     await sendWorkflowEmail(
-      await getAdminEmail(),
+      await getAdminEmails(),
       "New Payment Scheduled",
       `<h3>New Payment Scheduled</h3>
        <p>A new payment has been scheduled for application ID: <b>${parsed.data.applicationId}</b>.</p>

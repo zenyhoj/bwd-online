@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
 import { getSessionUser } from "@/lib/auth";
 import { sendPushNotificationAction } from "./push-server";
-import { sendWorkflowEmail, getAdminEmail } from "./email-server";
+import { sendWorkflowEmail, getAdminEmails } from "./email-server";
 import { applicationStatusSchema } from "@/schemas";
 import type { ConcessionaireClassification } from "@/lib/fee-schedule";
 import type { ActionState } from "@/types";
@@ -119,7 +119,7 @@ export async function createApplicationAction(_prevState: ActionState, formData:
 
     // Send email to Admin
     await sendWorkflowEmail(
-      await getAdminEmail(),
+      await getAdminEmails(),
       "New Application Submitted",
       `<h3>New Application Submitted</h3>
        <p>A new application for <b>${applicant.full_name}</b> has been submitted.</p>

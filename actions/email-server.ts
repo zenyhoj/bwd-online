@@ -2,7 +2,7 @@
 
 import nodemailer from "nodemailer";
 import { serverEnv } from "@/lib/env";
-
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 const isEmailConfigured = Boolean(serverEnv.SMTP_USER && serverEnv.SMTP_PASS);
 
 let transporter: nodemailer.Transporter | null = null;
@@ -46,8 +46,48 @@ export async function sendEmailAction(
   }
 }
 
-export async function getAdminEmail(): Promise<string> {
-  return serverEnv.ADMIN_EMAIL || "buenawater@gmail.com";
+export async function getAdminEmails(): Promise<string[]> {
+  const adminClient = createSupabaseAdminClient();
+  
+  const { data: adminProfiles } = await adminClient
+    .from("profiles")
+    .select("id")
+    .eq("role", "admin")
+    .eq("is_active", true);
+
+  const fallback = serverEnv.ADMIN_EMAIL || "buenawater@gmail.com";
+
+  if (!adminProfiles || adminProfiles.length === 0) {
+    return [fallback];
+  }
+
+  const adminIds = new Set(adminProfiles.map((p) => p.id));
+  const emails: string[] = [];
+  let page = 1;
+
+  while (true) {
+    const { data: usersData, error } = await adminClient.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !usersData.users || usersData.users.length === 0) {
+      break;
+    }
+    
+    for (const u of usersData.users) {
+      if (adminIds.has(u.id) && u.email) {
+        emails.push(u.email);
+      }
+    }
+    
+    if (usersData.users.length < 1000) {
+      break;
+    }
+    page++;
+  }
+  
+  if (emails.length === 0) {
+    return [fallback];
+  }
+
+  return emails;
 }
 
 export async function sendWorkflowEmail(to: string | string[], subject: string, messageHtml: string) {

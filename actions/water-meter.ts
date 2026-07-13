@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
-import { sendWorkflowEmail, getAdminEmail } from "./email-server";
+import { sendWorkflowEmail, getAdminEmails } from "./email-server";
 import { waterMeterScheduleSchema } from "@/schemas/water-meter";
 import { toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
