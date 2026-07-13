@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PencilLine } from "lucide-react";
 
 import { updateApplicantAction } from "@/actions/applicants";
+import { BARANGAYS } from "@/lib/constants";
 import { createApplicationAction } from "@/actions/applications";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
@@ -68,6 +69,17 @@ function ApplicantEditForm({
   const [state, formAction, pending] = useActionState(updateApplicantAction, initialActionState);
   const { firstName, lastName, middleInitial } = parseApplicantName(applicant?.full_name);
 
+  const addressStr = applicant?.address ?? "";
+  let defaultSpecificAddress = addressStr;
+  let defaultBarangay = "";
+  if (addressStr.endsWith(", Buenavista, Agusan del Norte")) {
+    const parts = addressStr.replace(", Buenavista, Agusan del Norte", "").split(", ");
+    if (parts.length >= 2) {
+      defaultBarangay = parts.pop() || "";
+      defaultSpecificAddress = parts.join(", ");
+    }
+  }
+
   useEffect(() => {
     if (state.success) {
       onDone();
@@ -126,11 +138,32 @@ function ApplicantEditForm({
             <Label htmlFor="editCellphoneNumber">Cellphone</Label>
             <Input id="editCellphoneNumber" name="cellphoneNumber" defaultValue={applicant?.cellphone_number ?? ""} required />
           </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="editEmailAddress">Email Address</Label>
+            <Input id="editEmailAddress" name="emailAddress" type="email" defaultValue={applicant?.email_address ?? ""} />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="editAddress">Address</Label>
-          <Input id="editAddress" name="address" defaultValue={applicant?.address ?? ""} required />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="editSpecificAddress">Specific Address</Label>
+            <Input id="editSpecificAddress" name="specificAddress" defaultValue={defaultSpecificAddress} required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="editBarangay">Barangay</Label>
+            <select
+              id="editBarangay"
+              name="barangay"
+              required
+              defaultValue={defaultBarangay}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            >
+              <option value="" disabled>Select Barangay</option>
+              {BARANGAYS.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -241,7 +274,10 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
             <InfoRow label="Sex" value={applicant?.gender} />
             <InfoRow label="Age" value={applicant?.age} />
             <InfoRow label="Cellphone" value={applicant?.cellphone_number} />
-            <InfoRow label="Address" value={applicant?.address} />
+            <InfoRow label="Email" value={applicant?.email_address} />
+            <div className="md:col-span-2">
+              <InfoRow label="Address" value={applicant?.address} />
+            </div>
           </div>
 
           {isEditingApplicant ? (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Save, User } from "lucide-react";
 
 import { createApplicantAction } from "@/actions/applicants";
+import { BARANGAYS } from "@/lib/constants";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
@@ -111,6 +112,17 @@ export function ApplicantForm() {
                 />
                 <FieldHint>Use an active number for updates and scheduling notices.</FieldHint>
               </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="emailAddress">Email Address</Label>
+                <Input
+                  id="emailAddress"
+                  name="emailAddress"
+                  type="email"
+                  placeholder="e.g. juan@example.com"
+                  className="h-11"
+                />
+                <FieldHint>Optional. Provide an email for additional updates.</FieldHint>
+              </div>
             </div>
           </section>
 
@@ -122,10 +134,28 @@ export function ApplicantForm() {
               </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Address <span className="text-destructive">*</span></Label>
-              <Input id="address" name="address" required placeholder="Enter full address" className="h-11" />
-              <FieldHint>Include sitio, barangay, or other identifying address details when needed.</FieldHint>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="specificAddress">Specific Address <span className="text-destructive">*</span></Label>
+                <Input id="specificAddress" name="specificAddress" required placeholder="St./Purok/Sitio" className="h-11" />
+                <FieldHint>Include street, purok, or sitio.</FieldHint>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="barangay">Barangay <span className="text-destructive">*</span></Label>
+                <select
+                  id="barangay"
+                  name="barangay"
+                  required
+                  defaultValue=""
+                  className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="" disabled>Select Barangay</option>
+                  {BARANGAYS.map((b) => (
+                    <option key={b} value={b}>{b}</option>
+                  ))}
+                </select>
+                <FieldHint>Must be within Buenavista, Agusan del Norte.</FieldHint>
+              </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

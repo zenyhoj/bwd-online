@@ -104,6 +104,7 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       gender: applicant.gender,
       age: applicant.age,
       address: applicant.address,
+      email_address: applicant.email_address,
       cellphone_number: applicant.cellphone_number,
       number_of_users: numberOfUsers,
       service_type: "new_connection",

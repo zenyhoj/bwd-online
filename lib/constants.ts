@@ -34,3 +34,10 @@ export const documentTypeLabels: Record<ApplicationDocumentType, string> = {
   lot_owner_valid_id: "ID of Lot Owner",
   water_permit_receipt: "Official Receipt of Water Permit"
 };
+
+export const BARANGAYS = [
+  "Abilan", "Agong-ong", "Alubijid", "Guinabsan", "Macalang", "Malapong", 
+  "Malpoc", "Manapa", "Matabao", "Poblacion 1", "Poblacion 2", "Poblacion 3", 
+  "Poblacion 4", "Poblacion 5", "Poblacion 6", "Poblacion 7", "Poblacion 8", 
+  "Poblacion 9", "Poblacion 10", "Rizal", "Sacol", "Talo-ao"
+] as const;

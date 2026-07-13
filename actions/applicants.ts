@@ -11,13 +11,16 @@ function toProperCase(str: string): string {
   return str.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase());
 }
 
+import { BARANGAYS } from "@/lib/constants";
 const applicantSchema = z.object({
   lastName: z.string().min(2, "Last name must be at least 2 characters").transform(toProperCase),
   firstName: z.string().min(2, "First name must be at least 2 characters").transform(toProperCase),
   middleInitial: z.string().trim().max(3).optional().transform((val) => (val ? toProperCase(val) : val)),
   sex: z.enum(["Male", "Female"]),
   age: z.coerce.number().int().min(1).max(120),
-  address: z.string().min(10, "Address must be at least 10 characters"),
+  specificAddress: z.string().min(2, "Specific address is required"),
+  barangay: z.enum(BARANGAYS, { required_error: "Barangay is required" }),
+  emailAddress: z.union([z.string().email("Invalid email address"), z.literal("")]).optional(),
   cellphoneNumber: z.string().min(11).max(20),
   purposeOfSeminar: z.enum(["new_service", "reconnection", "change_name", "others"]).optional()
 });
@@ -35,7 +38,9 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
       middleInitial: formData.get("middleInitial"),
       sex: formData.get("sex"),
       age: formData.get("age"),
-      address: formData.get("address"),
+      specificAddress: formData.get("specificAddress"),
+      barangay: formData.get("barangay"),
+      emailAddress: formData.get("emailAddress"),
       cellphoneNumber: formData.get("cellphoneNumber"),
       purposeOfSeminar: formData.get("purposeOfSeminar")
     });
@@ -46,6 +51,7 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
 
     const middleInitial = parsed.data.middleInitial?.trim();
     const fullName = `${parsed.data.lastName}, ${parsed.data.firstName}${middleInitial ? ` ${middleInitial}` : ""}`.trim();
+    const fullAddress = `${parsed.data.specificAddress}, ${parsed.data.barangay}, Buenavista, Agusan del Norte`;
 
     const { data: applicant, error } = await supabase
       .from("applicants")
@@ -56,7 +62,8 @@ export async function createApplicantAction(_prevState: ActionState, formData: F
         gender: parsed.data.sex,
         age: parsed.data.age,
         number_of_users: 1, // Defaulting to 1; actual value is stored in applications
-        address: parsed.data.address,
+        address: fullAddress,
+        email_address: parsed.data.emailAddress || null,
         cellphone_number: parsed.data.cellphoneNumber,
         purpose_of_seminar: parsed.data.purposeOfSeminar
       })
@@ -87,7 +94,9 @@ export async function updateApplicantAction(_prevState: ActionState, formData: F
       middleInitial: formData.get("middleInitial"),
       sex: formData.get("sex"),
       age: formData.get("age"),
-      address: formData.get("address"),
+      specificAddress: formData.get("specificAddress"),
+      barangay: formData.get("barangay"),
+      emailAddress: formData.get("emailAddress"),
       cellphoneNumber: formData.get("cellphoneNumber"),
       purposeOfSeminar: formData.get("purposeOfSeminar")
     });
@@ -98,6 +107,7 @@ export async function updateApplicantAction(_prevState: ActionState, formData: F
 
     const middleInitial = parsed.data.middleInitial?.trim();
     const fullName = `${parsed.data.lastName}, ${parsed.data.firstName}${middleInitial ? ` ${middleInitial}` : ""}`.trim();
+    const fullAddress = `${parsed.data.specificAddress}, ${parsed.data.barangay}, Buenavista, Agusan del Norte`;
 
     const { error } = await supabase
       .from("applicants")
@@ -106,7 +116,8 @@ export async function updateApplicantAction(_prevState: ActionState, formData: F
         gender: parsed.data.sex,
         age: parsed.data.age,
         // number_of_users is omitted, leaving existing value
-        address: parsed.data.address,
+        address: fullAddress,
+        email_address: parsed.data.emailAddress || null,
         cellphone_number: parsed.data.cellphoneNumber,
         purpose_of_seminar: parsed.data.purposeOfSeminar
       })

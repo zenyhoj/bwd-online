@@ -48,6 +48,7 @@ export type Database = {
           gender: string | null;
           age: number | null;
           address: string | null;
+          email_address: string | null;
           cellphone_number: string | null;
           purpose_of_seminar: Database["public"]["Enums"]["seminar_purpose"] | null;
           number_of_users: number | null;
@@ -62,6 +63,7 @@ export type Database = {
           gender?: string | null;
           age?: number | null;
           address?: string | null;
+          email_address?: string | null;
           cellphone_number?: string | null;
           purpose_of_seminar?: Database["public"]["Enums"]["seminar_purpose"] | null;
           number_of_users?: number | null;
@@ -76,6 +78,7 @@ export type Database = {
           gender?: string | null;
           age?: number | null;
           address?: string | null;
+          email_address?: string | null;
           cellphone_number?: string | null;
           purpose_of_seminar?: Database["public"]["Enums"]["seminar_purpose"] | null;
           number_of_users?: number | null;
@@ -274,6 +277,7 @@ export type Database = {
           applicant_id: string;
           accredited_plumber_id: string | null;
           cellphone_number: string | null;
+          email_address: string | null;
           service_type: Database["public"]["Enums"]["application_service_type"];
           status: Database["public"]["Enums"]["application_status"];
           full_name: string;
@@ -304,6 +308,7 @@ export type Database = {
           applicant_id: string;
           accredited_plumber_id?: string | null;
           cellphone_number?: string | null;
+          email_address?: string | null;
           service_type: Database["public"]["Enums"]["application_service_type"];
           status?: Database["public"]["Enums"]["application_status"];
           full_name: string;
@@ -334,6 +339,7 @@ export type Database = {
           applicant_id?: string;
           accredited_plumber_id?: string | null;
           cellphone_number?: string | null;
+          email_address?: string | null;
           service_type?: Database["public"]["Enums"]["application_service_type"];
           status?: Database["public"]["Enums"]["application_status"];
           full_name?: string;
