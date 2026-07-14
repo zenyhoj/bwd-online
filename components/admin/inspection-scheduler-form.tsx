@@ -51,12 +51,7 @@ export function InspectionSchedulerForm({
 }: InspectionSchedulerFormProps) {
   const [scheduleState, scheduleAction, schedulePending] = useActionState(scheduleInspectionAction, initialActionState);
   const [rescheduleState, rescheduleAction, reschedulePending] = useActionState(rescheduleInspectionAction, initialActionState);
-  const [minSchedule, setMinSchedule] = useState("");
   const [showReschedule, setShowReschedule] = useState(false);
-
-  useEffect(() => {
-    setMinSchedule(new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-  }, []);
 
   useEffect(() => {
     if (rescheduleState.success) {
@@ -155,7 +150,6 @@ export function InspectionSchedulerForm({
                     <BusinessDateTimeInput
                       id={`reschedule-${existingInspection.id}`}
                       name="scheduledAt"
-                      minDateTime={minSchedule || undefined}
                       defaultValue={toDateTimeLocalValue(existingInspection.scheduled_at)}
                       required
                     />
@@ -210,7 +204,6 @@ export function InspectionSchedulerForm({
             <BusinessDateTimeInput
               id={`scheduled-${applicationId}`}
               name="scheduledAt"
-              minDateTime={minSchedule || undefined}
               required
             />
             <p className="text-xs text-muted-foreground">{BUSINESS_SCHEDULE_LABEL}</p>

@@ -9,10 +9,6 @@ import { inspectionRescheduleSchema, inspectionScheduleSchema, inspectionUpdateS
 import { toManilaDate, toManilaISOString, validateBusinessSchedule } from "@/lib/business-hours";
 import type { ActionState } from "@/types";
 
-function isPastDateTime(value: string) {
-  return toManilaDate(value).getTime() < Date.now();
-}
-
 // Helper function removed to allow flexible, deadlock-free inspection scheduling
 
 function getSchemaMismatchMessage(message: string) {
@@ -34,13 +30,6 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
 
     if (parsed.error) {
       return parsed.error;
-    }
-
-    if (isPastDateTime(parsed.data.scheduledAt)) {
-      return {
-        success: false,
-        message: "Inspection schedule must be today or later than the current date and time."
-      };
     }
 
     const scheduleValidation = validateBusinessSchedule(parsed.data.scheduledAt);
@@ -141,13 +130,6 @@ export async function rescheduleInspectionAction(_prevState: ActionState, formDa
 
     if (parsed.error) {
       return parsed.error;
-    }
-
-    if (isPastDateTime(parsed.data.scheduledAt)) {
-      return {
-        success: false,
-        message: "Rescheduled inspection time must be today or later than the current date and time."
-      };
     }
 
     const scheduleValidation = validateBusinessSchedule(parsed.data.scheduledAt);

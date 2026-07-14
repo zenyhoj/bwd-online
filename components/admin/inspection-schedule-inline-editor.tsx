@@ -32,12 +32,7 @@ export function InspectionScheduleInlineEditor({
   const [state, formAction, pending] = useActionState(rescheduleInspectionAction, initialActionState);
   const [visibleMessage, setVisibleMessage] = useState<string | null>(null);
   const [messageIsSuccess, setMessageIsSuccess] = useState(false);
-  const [minSchedule, setMinSchedule] = useState("");
   const hasChanged = value !== initialValue;
-
-  useEffect(() => {
-    setMinSchedule(new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-  }, []);
 
   useEffect(() => {
     if (!state.message) {
@@ -63,7 +58,6 @@ export function InspectionScheduleInlineEditor({
           id={`inline-scheduled-${inspectionId}`}
           value={value}
           onValueChange={setValue}
-          minDateTime={minSchedule || undefined}
           compact
           required
         />
