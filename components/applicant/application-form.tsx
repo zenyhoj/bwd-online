@@ -140,7 +140,7 @@ function ApplicantEditForm({
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="editEmailAddress">Email Address</Label>
-            <Input id="editEmailAddress" name="emailAddress" type="email" defaultValue={applicant?.email_address ?? ""} />
+            <Input id="editEmailAddress" name="emailAddress" type="email" defaultValue={applicant?.email_address ?? ""} required />
           </div>
         </div>
 

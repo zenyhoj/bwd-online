@@ -30,12 +30,17 @@ export function ApplicantSwitcher({
           <CardTitle>{title}</CardTitle>
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
-        <Button asChild size="sm" className="w-full sm:w-auto shrink-0">
-          <Link href="/applicant/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Applicant
-          </Link>
-        </Button>
+        <div className="flex w-full shrink-0 flex-col gap-1 sm:w-auto sm:items-end">
+          <Button asChild size="sm" className="w-full sm:w-auto">
+            <Link href="/applicant/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Applicant
+            </Link>
+          </Button>
+          <p className="text-[10px] leading-tight text-muted-foreground text-center sm:text-right sm:max-w-[250px]">
+            (Online Seminar for New Service Connection, Reconnection, Change Meter, etc.)
+          </p>
+        </div>
       </CardHeader>
       <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {applicants.length === 0 ? (

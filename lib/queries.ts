@@ -202,6 +202,35 @@ export async function getAllAccreditedPlumbers() {
   return (data ?? []) as AccreditedPlumber[];
 }
 
+export async function getAllApplicantsPaginated(pagination: PaginationParams, search?: string): Promise<PaginatedResult<Record<string, unknown>>> {
+  const supabase = createSupabaseAdminClient();
+  const profile = await getCurrentProfile();
+  const from = (pagination.page - 1) * pagination.pageSize;
+  const to = from + pagination.pageSize - 1;
+
+  let query = supabase
+    .from("applicants")
+    .select(
+      "*",
+      { count: "exact" }
+    )
+    .eq("organization_id", profile.organization_id);
+
+  if (search) {
+    query = query.or(`full_name.ilike.%${search}%,address.ilike.%${search}%`);
+  }
+
+  const { data, count, error } = await query
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error) {
+    throw error;
+  }
+
+  return buildPaginatedResult((data ?? []) as Record<string, unknown>[], count ?? 0, pagination);
+}
+
 export async function getAdminApplications(pagination: PaginationParams): Promise<PaginatedResult<Record<string, unknown>>> {
   const supabase = createSupabaseAdminClient();
   const profile = await getCurrentProfile();
@@ -211,7 +240,7 @@ export async function getAdminApplications(pagination: PaginationParams): Promis
   const { data, count, error } = await supabase
     .from("applications")
     .select(
-      "id, applicant_id, full_name, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
+      "id, applicant_id, full_name, address, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
       { count: "exact" }
     )
     .eq("organization_id", profile.organization_id)
@@ -304,7 +333,7 @@ async function getAdminApplicationsQueueLegacy(
   let query = supabase
     .from("applications")
     .select(
-      "id, applicant_id, full_name, cellphone_number, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, water_meter_installed_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
+      "id, applicant_id, full_name, address, cellphone_number, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, water_meter_installed_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
       { count: "exact" }
     )
     .eq("organization_id", profile.organization_id)

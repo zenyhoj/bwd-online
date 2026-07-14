@@ -20,13 +20,18 @@ const applicantSchema = z.object({
   age: z.coerce.number().int().min(1).max(120),
   specificAddress: z.string().min(2, "Specific address is required"),
   barangay: z.enum(BARANGAYS, { required_error: "Barangay is required" }),
-  emailAddress: z.union([z.string().email("Invalid email address"), z.literal("")]).optional(),
+  emailAddress: z.string().email("Invalid email address"),
   cellphoneNumber: z.string().min(11).max(20),
-  purposeOfSeminar: z.enum(["new_service", "reconnection", "change_name", "others"]).optional()
+  purposeOfSeminar: z.enum(["new_service", "reconnection", "change_name", "others"], { required_error: "Purpose of seminar is required" })
 });
 
 const applicantUpdateSchema = applicantSchema.extend({
   applicantId: z.string().uuid("Applicant ID is invalid")
+});
+
+const adminAddressUpdateSchema = z.object({
+  applicantId: z.string().uuid("Invalid applicant ID"),
+  address: z.string().min(5, "Address must be at least 5 characters long")
 });
 
 export async function createApplicantAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -136,5 +141,85 @@ export async function updateApplicantAction(_prevState: ActionState, formData: F
       success: true,
       message: "Applicant information updated."
     };
+  });
+}
+
+export async function updateApplicantFullByAdminAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+    const parsed = await parseFormData(applicantUpdateSchema, {
+      applicantId: formData.get("applicantId"),
+      lastName: formData.get("lastName"),
+      firstName: formData.get("firstName"),
+      middleInitial: formData.get("middleInitial"),
+      sex: formData.get("sex"),
+      age: formData.get("age"),
+      specificAddress: formData.get("specificAddress"),
+      barangay: formData.get("barangay"),
+      emailAddress: formData.get("emailAddress"),
+      cellphoneNumber: formData.get("cellphoneNumber"),
+      purposeOfSeminar: formData.get("purposeOfSeminar")
+    });
+
+    if (parsed.error) {
+      return parsed.error;
+    }
+
+    const middleInitial = parsed.data.middleInitial?.trim();
+    const fullName = `${parsed.data.lastName}, ${parsed.data.firstName}${middleInitial ? ` ${middleInitial}` : ""}`.trim();
+    const fullAddress = `${parsed.data.specificAddress}, ${parsed.data.barangay}, Buenavista, Agusan del Norte`;
+
+    const { error } = await supabase
+      .from("applicants")
+      .update({
+        full_name: fullName,
+        gender: parsed.data.sex,
+        age: parsed.data.age,
+        address: fullAddress,
+        email_address: parsed.data.emailAddress || null,
+        cellphone_number: parsed.data.cellphoneNumber,
+        purpose_of_seminar: parsed.data.purposeOfSeminar
+      })
+      .eq("id", parsed.data.applicantId)
+      .eq("organization_id", profile.organization_id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin/applicants");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      message: "Applicant information updated successfully."
+    };
+  });
+}
+
+export async function updateApplicantAddressByAdminAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+    const parsed = await parseFormData(adminAddressUpdateSchema, {
+      applicantId: formData.get("applicantId"),
+      address: formData.get("address")
+    });
+
+    if (parsed.error) {
+      return parsed.error;
+    }
+
+    const { error } = await supabase
+      .from("applicants")
+      .update({ address: parsed.data.address })
+      .eq("id", parsed.data.applicantId)
+      .eq("organization_id", profile.organization_id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin");
+    return { success: true, message: "Address updated successfully." };
   });
 }

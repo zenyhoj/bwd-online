@@ -14,6 +14,7 @@ import { DeleteApplicantButton } from "@/components/admin/delete-applicant-butto
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { ApplicantAddressInlineEditor } from "@/components/admin/applicant-address-inline-editor";
 import { ApplicantSelectionButton } from "@/components/admin/applicant-selection-button";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Badge } from "@/components/ui/badge";
@@ -544,6 +545,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                 <TableHeader>
                   <TableRow>
                     <TableHead>Applicant</TableHead>
+                    <TableHead>Address</TableHead>
                     <TableHead>Contact number</TableHead>
                     <TableHead>Stage</TableHead>
                     <TableHead></TableHead>
@@ -572,6 +574,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                               {String(record.service_type).replaceAll("_", " ")}
                             </p>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground line-clamp-2 max-w-[200px]" title={record.address ? String(record.address) : ""}>{record.address ? String(record.address) : "No address"}</span>
                         </TableCell>
                         <TableCell>
                           <span className="text-sm text-muted-foreground">{record.cellphone_number ? String(record.cellphone_number) : "No contact number"}</span>
@@ -643,6 +648,12 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       {String(selectedApplication.service_type).replaceAll("_", " ")} • Submitted{" "}
                       {formatDateTime((selectedApplication.submitted_at as string | null | undefined) ?? null)}
                     </p>
+                    <div className="mt-1">
+                      <ApplicantAddressInlineEditor
+                        applicantId={String(selectedApplication.applicant_id)}
+                        address={String(selectedApplication.address ?? "")}
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <StatusBadge status={getEffectiveApplicationStatus(selectedApplication as Record<string, unknown>)} />

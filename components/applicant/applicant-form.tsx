@@ -43,7 +43,7 @@ export function ApplicantForm() {
               Enter the applicant's personal information exactly as it should appear in the seminar and application records.
             </p>
           </div>
-          <div className="rounded-full border border-border/70 bg-background px-3 py-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
+          <div className="whitespace-nowrap rounded-full border border-border/70 bg-background px-3 py-1 text-xs uppercase tracking-[0.16em] text-muted-foreground">
             Required fields first
           </div>
         </div>
@@ -113,15 +113,16 @@ export function ApplicantForm() {
                 <FieldHint>Use an active number for updates and scheduling notices.</FieldHint>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="emailAddress">Email Address</Label>
+                <Label htmlFor="emailAddress">Email Address <span className="text-destructive">*</span></Label>
                 <Input
                   id="emailAddress"
                   name="emailAddress"
                   type="email"
+                  required
                   placeholder="e.g. juan@example.com"
                   className="h-11"
                 />
-                <FieldHint>Optional. Provide an email for additional updates.</FieldHint>
+                <FieldHint>Provide a valid email address.</FieldHint>
               </div>
             </div>
           </section>
@@ -186,12 +187,10 @@ export function ApplicantForm() {
             Save this record first so the applicant can continue directly into the seminar modules, then finish the application after completing the seminar.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:mt-0 sm:flex-row sm:items-center sm:justify-end">
-            <Button type="button" variant="outline" size="lg" onClick={() => router.back()} className="w-full text-xs font-bold sm:w-auto sm:text-sm">
-              <ArrowLeft className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Button type="button" variant="outline" size="lg" onClick={() => router.back()} className="w-full whitespace-nowrap text-xs font-bold sm:w-auto sm:text-sm">
               Cancel
             </Button>
-            <Button type="submit" size="lg" loading={pending} className="w-full text-xs font-bold sm:w-auto sm:text-sm">
-              <Save className="mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Button type="submit" size="lg" loading={pending} className="w-full whitespace-nowrap text-xs font-bold sm:w-auto sm:text-sm">
               Save and Continue
             </Button>
           </div>
