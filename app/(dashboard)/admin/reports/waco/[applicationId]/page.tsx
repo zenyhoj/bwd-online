@@ -1,11 +1,15 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { FileClock } from "lucide-react";
 
 import { WacoReport } from "@/components/reports/waco-report";
-import { InspectionReport } from "@/components/reports/inspection-report";
 import { PrintButton } from "@/components/reports/print-button";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getWacoPrintEligibility } from "@/lib/document-workflow";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { getAdminApplicationDetail } from "@/lib/queries";
-import type { Payment } from "@/types";
+import type { Document, Payment } from "@/types";
 
 type WacoReportPageProps = {
   params: Promise<{
@@ -36,6 +40,37 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
   // 3. Extract latest payment
   const payments = ((application.payments as Payment[] | undefined) ?? []);
   const latestPayment = [...payments].sort((a, b) => new Date(b.paid_at ?? 0).getTime() - new Date(a.paid_at ?? 0).getTime())[0] ?? null;
+  const wacoPrintEligibility = getWacoPrintEligibility({
+    application: application as never,
+    documents: ((application.documents as Document[] | undefined) ?? []),
+    payments
+  });
+
+  if (!wacoPrintEligibility.allowed) {
+    const message =
+      wacoPrintEligibility.reason === "office_documents_unverified"
+        ? "WACO printing becomes available after office document verification is completed."
+        : "WACO printing becomes available after all required documents have been uploaded.";
+
+    return (
+      <main className="flex min-h-[70vh] items-center justify-center p-4 sm:p-8">
+        <Card className="w-full max-w-lg border-border/80 shadow-sm">
+          <CardHeader className="items-center text-center">
+            <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <FileClock className="h-6 w-6" aria-hidden="true" />
+            </span>
+            <CardTitle>WACO is not available yet</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5 text-center">
+            <p className="text-sm leading-6 text-muted-foreground">{message}</p>
+            <Button asChild>
+              <Link href={`/admin?selected=${applicationId}`}>Return to application</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
+    );
+  }
 
   // 4. Fetch Plumber if assigned
   let plumberName: string | null = null;

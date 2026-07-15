@@ -13,7 +13,7 @@ import {
 } from "@/schemas";
 import type { ActionState, Document } from "@/types";
 import { getDocumentRequirementRows, requiredDocumentTypes } from "@/lib/document-workflow";
-import { documentTypeLabels, type ApplicationDocumentType } from "@/lib/constants";
+import { applicationDocumentTypes, documentTypeLabels, type ApplicationDocumentType } from "@/lib/constants";
 
 const DOCUMENT_SUBMISSION_LOCKED_STATUSES = new Set([
   "documents_verified",
@@ -32,16 +32,21 @@ function isMissingDocumentEnumValue(message?: string | null) {
 
 function buildVerifiedDocumentAuditList({
   documents,
-  submissionMode
+  submissionMode,
+  optionalDocumentTypes
 }: {
   documents: Document[];
   submissionMode: string;
+  optionalDocumentTypes: ApplicationDocumentType[];
 }) {
+  const optionalTypes = new Set(optionalDocumentTypes);
+
   if (submissionMode === "office") {
-    return requiredDocumentTypes.map((type) => ({
+    return requiredDocumentTypes.filter((type) => !optionalTypes.has(type)).map((type) => ({
       document_id: null,
       document_type: type,
       label: documentTypeLabels[type],
+      is_required: true,
       file_name: null,
       status: "verified",
       reviewed_at: null,
@@ -50,12 +55,13 @@ function buildVerifiedDocumentAuditList({
     }));
   }
 
-  return getDocumentRequirementRows(documents)
+  return getDocumentRequirementRows(documents, optionalDocumentTypes)
     .filter((row) => row.status === "verified")
     .map((row) => ({
       document_id: row.document?.id ?? null,
       document_type: row.type,
       label: row.label,
+      is_required: row.isRequired,
       file_name: row.document?.file_name ?? null,
       status: row.status,
       reviewed_at: row.document?.reviewed_at ?? null,
@@ -84,7 +90,7 @@ async function getManagedApplication({
 
   const { data: application } = await supabase
     .from("applications")
-    .select("id, applicant_id, status")
+    .select("id, applicant_id, status, optional_document_types")
     .eq("id", applicationId)
     .in("applicant_id", applicants.map((applicant) => applicant.id))
     .maybeSingle();
@@ -222,8 +228,11 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
       .select("*")
       .eq("application_id", parsed.data.applicationId);
 
-    const requirementRows = getDocumentRequirementRows(allDocs ?? []);
-    const anyRejected = requirementRows.some((row) => row.status === "rejected");
+    const requirementRows = getDocumentRequirementRows(
+      allDocs ?? [],
+      application.optional_document_types ?? []
+    );
+    const anyRejected = requirementRows.some((row) => row.isRequired && row.status === "rejected");
 
     await supabase
       .from("applications")
@@ -402,6 +411,81 @@ export async function reenableDocumentValidationAction(
   });
 }
 
+export async function updateDocumentRequirementAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Only administrators can change document requirements." };
+    }
+
+    const applicationId = formData.get("applicationId");
+    const documentType = formData.get("documentType");
+    const isRequired = formData.get("isRequired") === "true";
+
+    if (typeof applicationId !== "string" || !applicationId) {
+      return { success: false, message: "Invalid application ID." };
+    }
+
+    if (
+      typeof documentType !== "string" ||
+      !applicationDocumentTypes.includes(documentType as ApplicationDocumentType)
+    ) {
+      return { success: false, message: "Invalid document requirement." };
+    }
+
+    const { data: application, error: applicationError } = await supabase
+      .from("applications")
+      .select("id, status, optional_document_types")
+      .eq("id", applicationId)
+      .eq("organization_id", profile.organization_id)
+      .maybeSingle();
+
+    if (applicationError || !application) {
+      return { success: false, message: applicationError?.message ?? "Application not found." };
+    }
+
+    if (isDocumentSubmissionLocked(application.status)) {
+      return { success: false, message: "Document requirements cannot be changed after verification is complete." };
+    }
+
+    const optionalTypes = new Set<ApplicationDocumentType>(
+      (application.optional_document_types ?? []) as ApplicationDocumentType[]
+    );
+    const typedDocumentType = documentType as ApplicationDocumentType;
+
+    if (isRequired) {
+      optionalTypes.delete(typedDocumentType);
+    } else {
+      optionalTypes.add(typedDocumentType);
+    }
+
+    const { error } = await supabase
+      .from("applications")
+      .update({ optional_document_types: Array.from(optionalTypes) })
+      .eq("id", applicationId)
+      .eq("organization_id", profile.organization_id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/payments");
+    revalidatePath("/applicant");
+    revalidatePath("/applicant/documents");
+    revalidatePath("/applicant/payments");
+
+    return {
+      success: true,
+      message: `${documentTypeLabels[typedDocumentType]} is now ${isRequired ? "required" : "optional"}.`
+    };
+  });
+}
+
 export async function reviewDocumentAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   return withErrorHandling(async () => {
     const { supabase, profile } = await getActionContext();
@@ -429,6 +513,17 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
 
     if (documentError || !document) {
       return { success: false, message: documentError?.message ?? "Document not found." };
+    }
+
+    const { data: application, error: applicationError } = await supabase
+      .from("applications")
+      .select("id, optional_document_types")
+      .eq("id", document.application_id)
+      .eq("organization_id", profile.organization_id)
+      .maybeSingle();
+
+    if (applicationError || !application) {
+      return { success: false, message: applicationError?.message ?? "Application not found." };
     }
 
     const { error } = await supabase
@@ -466,13 +561,18 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
       return { success: false, message: documentsError.message };
     }
 
-    const requirementRows = getDocumentRequirementRows(documents ?? []);
-    const allDocumentsVerified = requirementRows.every((row) => row.status === "verified");
-    const anyRejected = requirementRows.some((row) => row.status === "rejected");
+    const requirementRows = getDocumentRequirementRows(
+      documents ?? [],
+      (application.optional_document_types ?? []) as ApplicationDocumentType[]
+    );
+    const reviewedRequirement = requirementRows.find((row) => row.type === document.document_type);
+    const requiredRows = requirementRows.filter((row) => row.isRequired);
+    const allDocumentsVerified = requiredRows.every((row) => row.status === "verified");
+    const anyRejected = requiredRows.some((row) => row.status === "rejected");
 
     let applicationUpdate: Record<string, unknown> | null = null;
 
-    if (parsed.data.status === "rejected") {
+    if (parsed.data.status === "rejected" && reviewedRequirement?.isRequired !== false) {
       applicationUpdate = {
         status: "inspection_completed",
         document_review_note: `Please reupload ${documentTypeLabels[document.document_type as ApplicationDocumentType] ?? "the selected document"}: ${parsed.data.reviewNotes ?? ""}`
@@ -576,7 +676,7 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
     // Verify application exists and belongs to the admin's organization
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, organization_id, applicant_id, status, full_name, document_submission_mode")
+      .select("id, organization_id, applicant_id, status, full_name, document_submission_mode, optional_document_types")
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -596,8 +696,13 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
     }
 
     if (application.document_submission_mode !== "office") {
-      if (documents?.some((doc) => doc.status === "rejected")) {
-        return { success: false, message: "Cannot complete verification while there are rejected documents." };
+      const requiredRows = getDocumentRequirementRows(
+        documents ?? [],
+        (application.optional_document_types ?? []) as ApplicationDocumentType[]
+      ).filter((row) => row.isRequired);
+
+      if (requiredRows.some((row) => !row.document || row.status !== "verified")) {
+        return { success: false, message: "Verify every required document before completing verification." };
       }
     }
 
@@ -628,7 +733,8 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
         date_verified: verifiedAt,
         list_of_verified_documents: buildVerifiedDocumentAuditList({
           documents: documents ?? [],
-          submissionMode: application.document_submission_mode
+          submissionMode: application.document_submission_mode,
+          optionalDocumentTypes: (application.optional_document_types ?? []) as ApplicationDocumentType[]
         })
       });
 

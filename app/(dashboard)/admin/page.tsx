@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/format";
-import { areDocumentsReadyForPayment, getDocumentRequirementRows } from "@/lib/document-workflow";
+import { areDocumentsReadyForPayment, getDocumentRequirementRows, getWacoPrintEligibility } from "@/lib/document-workflow";
 import { parsePagination } from "@/lib/pagination";
 import {
   getAccreditedPlumbers,
@@ -337,9 +337,21 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
 
   const selectedDocuments = ((selectedApplication?.documents as Document[] | undefined) ?? []);
-  const selectedDocumentRequirements = getDocumentRequirementRows(selectedDocuments);
+  const selectedDocumentRequirements = getDocumentRequirementRows(
+    selectedDocuments,
+    ((selectedApplication?.optional_document_types as Document["document_type"][] | undefined) ?? [])
+  );
   const selectedPayments = ((selectedApplication?.payments as Payment[] | undefined) ?? []);
   const latestSelectedPayment = selectedPayments[0] ?? null;
+  const wacoPrintEligibility = getWacoPrintEligibility({
+    application: selectedApplication as never,
+    documents: selectedDocuments,
+    payments: selectedPayments
+  });
+  const wacoPrintHint =
+    wacoPrintEligibility.reason === "office_documents_unverified"
+      ? "WACO printing becomes available after office document verification is completed."
+      : "WACO printing becomes available after all required documents have been uploaded.";
   const canScheduleInstallation = latestSelectedPayment?.status === "paid";
   const selectedApplicationStatus = String(selectedApplication?.status ?? "");
   const selectedInspections =
@@ -670,14 +682,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                         </Button>
                       )}
 
-                      {latestSelectedPayment?.status === "paid" ? (
+                      {wacoPrintEligibility.allowed ? (
                         <Button variant="default" asChild className="font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
                           <Link href={`/admin/reports/waco/${selectedApplication.id}`} target="_blank">
                             Print WACO
                           </Link>
                         </Button>
                       ) : (
-                        <Button variant="default" disabled className="font-medium shadow-sm">
+                        <Button variant="default" disabled title={wacoPrintHint} className="font-medium shadow-sm">
                           Print WACO
                         </Button>
                       )}

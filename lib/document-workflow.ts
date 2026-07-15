@@ -1,22 +1,38 @@
 import { applicationDocumentTypes, documentTypeLabels } from "@/lib/constants";
-import type { Application, Document, DocumentStatus } from "@/types";
+import type { Application, Document, DocumentStatus, Payment } from "@/types";
 import type { ApplicationDocumentType } from "@/lib/constants";
 
 export const requiredDocumentTypes = applicationDocumentTypes;
 
 type ApplicationDocumentWorkflowInput = Partial<
-  Pick<Application, "document_submission_mode" | "document_review_note" | "status">
+  Pick<Application, "document_submission_mode" | "optional_document_types" | "document_review_note" | "status">
 > | null | undefined;
 
 export type DocumentRequirementRow = {
   type: ApplicationDocumentType;
   label: string;
   document: Document | null;
+  isRequired: boolean;
   status: DocumentStatus | "missing";
   reviewNote: string | null;
 };
 
-export function getDocumentRequirementRows(documents: Document[]): DocumentRequirementRow[] {
+export type WacoPrintEligibilityReason =
+  | "online_documents_incomplete"
+  | "office_documents_unverified"
+  | null;
+
+export type WacoPrintEligibility = {
+  allowed: boolean;
+  reason: WacoPrintEligibilityReason;
+};
+
+export function getDocumentRequirementRows(
+  documents: Document[],
+  optionalDocumentTypes: readonly string[] = []
+): DocumentRequirementRow[] {
+  const optionalTypes = new Set(optionalDocumentTypes);
+
   return requiredDocumentTypes.map((type) => {
     const latestDocument =
       [...documents]
@@ -28,6 +44,7 @@ export function getDocumentRequirementRows(documents: Document[]): DocumentRequi
       type,
       label: documentTypeLabels[type],
       document: latestDocument,
+      isRequired: !optionalTypes.has(type),
       status: latestDocument?.status ?? "missing",
       reviewNote: latestDocument?.review_notes ?? null
     } satisfies DocumentRequirementRow;
@@ -49,4 +66,35 @@ export function areDocumentsReadyForPayment(application: ApplicationDocumentWork
   ];
 
   return application?.status ? readyStatuses.includes(application.status) : false;
+}
+
+export function getWacoPrintEligibility({
+  application,
+  documents,
+  payments = []
+}: {
+  application: ApplicationDocumentWorkflowInput;
+  documents: Document[];
+  payments?: Array<Pick<Payment, "status">>;
+}): WacoPrintEligibility {
+  if (payments.some((payment) => payment.status === "paid")) {
+    return { allowed: true, reason: null };
+  }
+
+  if (isOfficeDocumentSubmission(application)) {
+    return areDocumentsReadyForPayment(application)
+      ? { allowed: true, reason: null }
+      : { allowed: false, reason: "office_documents_unverified" };
+  }
+
+  const allRequiredDocumentsUploaded = getDocumentRequirementRows(
+    documents,
+    application?.optional_document_types ?? []
+  )
+    .filter((row) => row.isRequired)
+    .every((row) => Boolean(row.document));
+
+  return allRequiredDocumentsUploaded
+    ? { allowed: true, reason: null }
+    : { allowed: false, reason: "online_documents_incomplete" };
 }

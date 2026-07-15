@@ -101,7 +101,9 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
     : { data: [] };
   const inspectionApproved =
     application?.inspections?.some((inspection) => inspection.status === "approved") ?? false;
-  const documentRows = application ? getDocumentRequirementRows(application.documents ?? []) : [];
+  const documentRows = application
+    ? getDocumentRequirementRows(application.documents ?? [], application.optional_document_types ?? [])
+    : [];
   const documentsReady =
     application && inspectionApproved
       ? areDocumentsReadyForPayment(application)
@@ -184,7 +186,7 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
               </p>
               <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                 {documentRows
-                  .filter((row) => row.status !== "verified")
+                  .filter((row) => row.isRequired && row.status !== "verified")
                   .map((row) => (
                     <li key={row.type}>
                       {row.label}

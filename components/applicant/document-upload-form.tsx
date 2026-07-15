@@ -88,7 +88,7 @@ export function DocumentUploadForm({ applicationId, allowedDocumentTypes, isActi
         </span>
       )}
       <CardHeader className="bg-primary/[0.02] border-b border-primary/10">
-        <CardTitle className="text-xl">Upload required documents</CardTitle>
+        <CardTitle className="text-xl">Upload documents</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-6">

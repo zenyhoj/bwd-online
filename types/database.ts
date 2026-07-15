@@ -291,6 +291,7 @@ export type Database = {
           inhouse_installation_completed: boolean;
           inhouse_installation_completed_at: string | null;
           document_submission_mode: string;
+          optional_document_types: Database["public"]["Enums"]["document_type"][];
           document_review_note: string | null;
           inhouse_installation_proof_image_url: string | null;
           inhouse_installation_signed_at: string | null;
@@ -322,6 +323,7 @@ export type Database = {
           inhouse_installation_completed?: boolean;
           inhouse_installation_completed_at?: string | null;
           document_submission_mode?: string;
+          optional_document_types?: Database["public"]["Enums"]["document_type"][];
           document_review_note?: string | null;
           inhouse_installation_proof_image_url?: string | null;
           inhouse_installation_signed_at?: string | null;
@@ -353,6 +355,7 @@ export type Database = {
           inhouse_installation_completed?: boolean;
           inhouse_installation_completed_at?: string | null;
           document_submission_mode?: string;
+          optional_document_types?: Database["public"]["Enums"]["document_type"][];
           document_review_note?: string | null;
           inhouse_installation_proof_image_url?: string | null;
           inhouse_installation_signed_at?: string | null;

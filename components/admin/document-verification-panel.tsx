@@ -3,12 +3,13 @@
 import { useActionState, useId, useMemo, useState, type ReactNode } from "react";
 import { CheckCircle2, ChevronDown, Download, Files } from "lucide-react";
 
-import { completeDocumentVerificationAction } from "@/actions/documents";
+import { completeDocumentVerificationAction, updateDocumentRequirementAction } from "@/actions/documents";
 import { initialActionState } from "@/actions/state";
 import { DocumentReviewForm } from "@/components/admin/document-review-form";
 import { DocumentPreview } from "@/components/shared/document-preview";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormMessage } from "@/components/forms/form-message";
@@ -37,9 +38,11 @@ function VerificationDisclosure({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const contentId = useId();
-  const uploadedCount = requirements.filter((row) => Boolean(row.document)).length;
-  const verifiedCount = requirements.filter((row) => row.status === "verified").length;
-  const rejectedCount = requirements.filter((row) => row.status === "rejected").length;
+  const requiredRows = requirements.filter((row) => row.isRequired);
+  const optionalCount = requirements.length - requiredRows.length;
+  const uploadedCount = requiredRows.filter((row) => Boolean(row.document)).length;
+  const verifiedCount = requiredRows.filter((row) => row.status === "verified").length;
+  const rejectedCount = requiredRows.filter((row) => row.status === "rejected").length;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm">
@@ -60,16 +63,21 @@ function VerificationDisclosure({
               {isVerificationComplete
                 ? "Document verification is complete."
                 : isOfficeSubmission
-                  ? `${requirements.length} physical document requirements to verify at the office.`
-                  : `${uploadedCount} of ${requirements.length} required files uploaded.`}
+                  ? `${requiredRows.length} required physical documents to verify at the office.`
+                  : `${uploadedCount} of ${requiredRows.length} required files uploaded.`}
             </span>
           </span>
         </span>
 
         <span className="flex flex-wrap items-center gap-2 sm:justify-end">
           <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-            {requirements.length} requirement{requirements.length === 1 ? "" : "s"}
+            {requiredRows.length} required
           </span>
+          {optionalCount > 0 ? (
+            <span className="rounded-full border border-sky-300/70 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
+              {optionalCount} optional
+            </span>
+          ) : null}
           {isOfficeSubmission ? (
             <span className="rounded-full border border-amber-300/70 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
               Office submission
@@ -109,6 +117,10 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
   const [selectedType, setSelectedType] = useState<string>(NO_DOCUMENT_VALUE);
   const [previewDocumentId, setPreviewDocumentId] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState(completeDocumentVerificationAction, initialActionState);
+  const [requirementState, requirementAction, requirementPending] = useActionState(
+    updateDocumentRequirementAction,
+    initialActionState
+  );
 
   const previewDocument = useMemo(() => requirements.find(r => r.document?.id === previewDocumentId)?.document ?? null, [requirements, previewDocumentId]);
 
@@ -121,13 +133,17 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
   const closeDialog = () => setSelectedType(NO_DOCUMENT_VALUE);
 
   const isOfficeSubmission = documentSubmissionMode === "office";
-  const hasRejected = requirements.some((row) => row.status === "rejected");
-  const hasUnreviewed = requirements.some((row) => row.document && row.status === "pending");
-  const canComplete = isOfficeSubmission || (!hasRejected && !hasUnreviewed);
+  const requiredRows = requirements.filter((row) => row.isRequired);
+  const hasRejected = requiredRows.some((row) => row.status === "rejected");
+  const hasUnreviewed = requiredRows.some((row) => row.document && row.status === "pending");
+  const hasMissingRequired = requiredRows.some((row) => !row.document);
+  const canComplete =
+    isOfficeSubmission ||
+    requiredRows.every((row) => Boolean(row.document) && row.status === "verified");
   
   // If the application is already past the document verification stage, hide the complete button
   const showCompleteForm = applicationStatus === "inspection_completed" || applicationStatus === "under_review";
-  const isVerificationComplete = !showCompleteForm && canComplete && (isOfficeSubmission || requirements.some((row) => row.document));
+  const isVerificationComplete = !showCompleteForm && canComplete;
 
   if (requirements.length === 0) {
     return (
@@ -150,11 +166,31 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
             <p className="text-sm text-muted-foreground mb-4">
               The applicant chose to submit and verify their physical documents at the office. Please verify the following requirements manually:
             </p>
-            <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mb-6">
+            <ul className="space-y-2 mb-6">
               {requirements.map((req) => (
-                <li key={req.type}><span className="font-medium text-foreground">{req.label}</span></li>
+                <li key={req.type} className="flex flex-col gap-2 rounded-lg border border-border/60 bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="font-medium text-foreground">{req.label}</span>
+                  <form action={requirementAction} className="shrink-0">
+                    <input type="hidden" name="applicationId" value={applicationId} />
+                    <input type="hidden" name="documentType" value={req.type} />
+                    <label className="sr-only" htmlFor={`office-requirement-${req.type}`}>Requirement level for {req.label}</label>
+                    <select
+                      id={`office-requirement-${req.type}`}
+                      name="isRequired"
+                      key={`${req.type}-${req.isRequired}`}
+                      defaultValue={String(req.isRequired)}
+                      disabled={!showCompleteForm || requirementPending}
+                      onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                      className="h-9 rounded-md border border-input bg-background px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                    >
+                      <option value="true">Required</option>
+                      <option value="false">Optional</option>
+                    </select>
+                  </form>
+                </li>
               ))}
             </ul>
+            <FormMessage state={requirementState} />
 
             {showCompleteForm && (
               <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -217,6 +253,9 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
         </div>
       )}
       <div className="rounded-2xl border border-border bg-background overflow-hidden shadow-none">
+        <div className="border-b border-border/70 px-4 py-3">
+          <FormMessage state={requirementState} />
+        </div>
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
@@ -229,7 +268,33 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
           <TableBody>
             {requirements.map((row) => (
               <TableRow key={row.type}>
-                <TableCell className="font-medium">{row.label}</TableCell>
+                <TableCell>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{row.label}</span>
+                      <Badge variant={row.isRequired ? "default" : "outline"}>
+                        {row.isRequired ? "Required" : "Optional"}
+                      </Badge>
+                    </div>
+                    <form action={requirementAction}>
+                      <input type="hidden" name="applicationId" value={applicationId} />
+                      <input type="hidden" name="documentType" value={row.type} />
+                      <label className="sr-only" htmlFor={`requirement-${row.type}`}>Requirement level for {row.label}</label>
+                      <select
+                        id={`requirement-${row.type}`}
+                        name="isRequired"
+                        key={`${row.type}-${row.isRequired}`}
+                        defaultValue={String(row.isRequired)}
+                        disabled={!showCompleteForm || requirementPending}
+                        onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                        className="h-8 rounded-md border border-input bg-background px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                      >
+                        <option value="true">Required</option>
+                        <option value="false">Optional</option>
+                      </select>
+                    </form>
+                  </div>
+                </TableCell>
                 <TableCell className="max-w-[150px] sm:max-w-[250px]">
                   {row.document ? (
                     <button 
@@ -276,6 +341,9 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
             )}
             {hasUnreviewed && !hasRejected && (
               <p className="text-xs font-medium text-amber-600 dark:text-amber-500">Please review all uploaded documents first.</p>
+            )}
+            {hasMissingRequired && !hasRejected && !hasUnreviewed && (
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-500">Required documents are still missing.</p>
             )}
           </div>
           

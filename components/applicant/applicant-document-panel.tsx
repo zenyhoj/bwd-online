@@ -1,6 +1,7 @@
 import { DocumentUploadForm } from "@/components/applicant/document-upload-form";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getDocumentDownloadHref } from "@/lib/document-links";
 import type { Application, Document } from "@/types";
@@ -15,7 +16,7 @@ type ApplicantDocumentPanelProps = {
 };
 
 export function ApplicantDocumentPanel({ application, documents, isUploadUnlocked, isActive }: ApplicantDocumentPanelProps) {
-  const requirementRows = getDocumentRequirementRows(documents);
+  const requirementRows = getDocumentRequirementRows(documents, application.optional_document_types ?? []);
   const documentsReady = isUploadUnlocked ? areDocumentsReadyForPayment(application) : false;
   const isOfficeSubmission = application.document_submission_mode === "office";
   
@@ -40,7 +41,7 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>
-                Bring the physical documents listed below for staff verification. Online upload is not required for your selected method.
+                Bring the required physical documents listed below for staff verification. Optional documents may be included when available.
               </p>
               <p className="font-medium text-foreground">
                 Keep this application available on your phone so staff can match the documents to your record.
@@ -84,8 +85,8 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
               {documentsReady
                 ? "Documents are complete for payment scheduling."
                 : isOfficeSubmission
-                  ? "Bring all listed requirements to the BWD office for verification."
-                  : "Upload or replace every required document for online verification."}
+                  ? "Bring every item marked Required to the BWD office for verification."
+                  : "Upload every item marked Required. Optional documents do not block verification."}
             </span>
           </div>
 
@@ -115,7 +116,14 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
               ) : (
                 displayRows.map((row) => (
                   <TableRow key={row.type}>
-                    <TableCell>{row.label}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span>{row.label}</span>
+                        <Badge variant={row.isRequired ? "default" : "outline"}>
+                          {row.isRequired ? "Required" : "Optional"}
+                        </Badge>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {row.document ? (
                         <a href={getDocumentDownloadHref(row.document.id)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
@@ -128,10 +136,18 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
                       )}
                     </TableCell>
                     <TableCell>
-                      <StatusBadge status={row.status === "missing" ? "pending" : row.status} />
+                      {row.status === "missing" && !row.isRequired ? (
+                        <span className="text-sm text-muted-foreground">Not submitted</span>
+                      ) : (
+                        <StatusBadge status={row.status === "missing" ? "pending" : row.status} />
+                      )}
                     </TableCell>
                     <TableCell>
-                      {row.reviewNote ?? (row.status === "missing" ? (isOfficeSubmission ? "Bring to office" : "Awaiting upload") : "-")}
+                      {row.reviewNote ?? (row.status === "missing"
+                        ? row.isRequired
+                          ? isOfficeSubmission ? "Bring to office" : "Awaiting upload"
+                          : "No upload required"
+                        : "-")}
                     </TableCell>
                   </TableRow>
                 ))
