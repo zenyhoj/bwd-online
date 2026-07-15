@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -24,9 +24,13 @@ type BusinessDateTimeInputProps = {
   required?: boolean;
   compact?: boolean;
   unrestrictedDates?: boolean;
+  allowDateJump?: boolean;
 };
 
 const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const MONTH_LABELS = Array.from({ length: 12 }, (_, month) =>
+  new Intl.DateTimeFormat("en-US", { month: "short" }).format(new Date(2020, month, 1))
+);
 const MONTH_FORMATTER = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" });
 const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
@@ -113,6 +117,18 @@ function getDateLabel(dateKey: string) {
   return DATE_FORMATTER.format(new Date(`${dateKey}T00:00:00`));
 }
 
+function formatTimeSlot(time: string) {
+  if (!time) {
+    return "Not selected";
+  }
+
+  const [hourValue, minute] = time.split(":").map(Number);
+  const period = hourValue >= 12 ? "PM" : "AM";
+  const hour = hourValue % 12 || 12;
+
+  return `${hour}:${pad(minute)} ${period}`;
+}
+
 export function BusinessDateTimeInput({
   id,
   name,
@@ -124,7 +140,8 @@ export function BusinessDateTimeInput({
   disabled = false,
   required = false,
   compact = false,
-  unrestrictedDates = false
+  unrestrictedDates = false,
+  allowDateJump = false
 }: BusinessDateTimeInputProps) {
   const parsedDefault = parseDateTimeLocal(controlledValue ?? defaultValue);
   const [selectedDate, setSelectedDate] = useState(parsedDefault?.dateKey ?? "");
@@ -143,6 +160,12 @@ export function BusinessDateTimeInput({
       ? validateBusinessSchedule(value)
       : { valid: !required };
   const isMissingRequiredTime = required && Boolean(activeDate) && !activeTime;
+  const isComplete = Boolean(activeDate && activeTime && validation.valid);
+  const todayKey = toDateKey(new Date());
+  const yearOptions = useMemo(
+    () => Array.from({ length: 21 }, (_, index) => visibleMonth.getFullYear() - 10 + index),
+    [visibleMonth]
+  );
   const timeSlots = useMemo(() => getTimeSlots(), []);
   const availableTimeSlots = useMemo(() => {
     if (!activeDate) {
@@ -186,8 +209,16 @@ export function BusinessDateTimeInput({
     onValueChange?.(nextValue);
   }
 
+  function changeVisibleMonth(month: number) {
+    setVisibleMonth(new Date(visibleMonth.getFullYear(), month, 1));
+  }
+
+  function changeVisibleYear(year: number) {
+    setVisibleMonth(new Date(year, visibleMonth.getMonth(), 1));
+  }
+
   return (
-    <div className={cn("w-full space-y-3", compact ? "max-w-[24rem]" : "max-w-[31rem]", disabled && "opacity-60")}>
+    <div className={cn("w-full", compact ? "max-w-[24rem]" : "max-w-[33rem]", disabled && "opacity-60")}>
       <input
         id={id}
         name={name}
@@ -198,8 +229,13 @@ export function BusinessDateTimeInput({
         aria-hidden="true"
         className="pointer-events-none absolute h-px w-px opacity-0"
       />
-      <div className={cn("grid gap-3", compact ? "sm:grid-cols-[15rem_8rem]" : "sm:grid-cols-[18rem_10rem]")}>
-        <div className="rounded-lg border border-input bg-background p-3">
+      <div
+        className={cn(
+          "grid overflow-hidden rounded-xl border border-border/80 bg-background shadow-sm",
+          compact ? "sm:grid-cols-[15rem_9rem]" : "sm:grid-cols-[18rem_15rem]"
+        )}
+      >
+        <div className="border-b border-border/70 bg-muted/20 p-3 sm:border-b-0 sm:border-r">
           <div className="mb-3 flex items-center justify-between gap-2">
             <Button
               type="button"
@@ -212,7 +248,38 @@ export function BusinessDateTimeInput({
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <p className="text-sm font-semibold">{MONTH_FORMATTER.format(visibleMonth)}</p>
+            {allowDateJump && !compact ? (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={visibleMonth.getMonth()}
+                  disabled={disabled}
+                  onChange={(event) => changeVisibleMonth(Number(event.target.value))}
+                  aria-label="Calendar month"
+                  className="h-8 rounded-md border border-input bg-background px-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {MONTH_LABELS.map((month, index) => (
+                    <option key={month} value={index}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={visibleMonth.getFullYear()}
+                  disabled={disabled}
+                  onChange={(event) => changeVisibleYear(Number(event.target.value))}
+                  aria-label="Calendar year"
+                  className="h-8 rounded-md border border-input bg-background px-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <p className="text-sm font-semibold">{MONTH_FORMATTER.format(visibleMonth)}</p>
+            )}
             <Button
               type="button"
               variant="ghost"
@@ -235,6 +302,7 @@ export function BusinessDateTimeInput({
               const dateKey = toDateKey(date);
               const isCurrentMonth = date.getMonth() === visibleMonth.getMonth();
               const isSelected = activeDate === dateKey;
+              const isToday = dateKey === todayKey;
               const isDisabled =
                 disabled ||
                 !isCurrentMonth ||
@@ -254,41 +322,93 @@ export function BusinessDateTimeInput({
                     isSelected
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground hover:bg-secondary",
+                    isToday && !isSelected && "ring-1 ring-primary/50",
                     !isCurrentMonth && "text-muted-foreground/40",
                     isDisabled && "cursor-not-allowed text-muted-foreground/35 hover:bg-transparent",
                     !isCurrentMonth && isDisabled && "opacity-0"
                   )}
                   aria-label={getDateLabel(dateKey)}
+                  aria-pressed={isSelected}
+                  aria-current={isToday ? "date" : undefined}
                 >
                   {date.getDate()}
                 </button>
               );
             })}
           </div>
+          {allowDateJump && !compact ? (
+            <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+              <p className="text-[11px] text-muted-foreground">Select an available weekday</p>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={disabled}
+                onClick={() => setVisibleMonth(new Date())}
+              >
+                Today
+              </Button>
+            </div>
+          ) : null}
         </div>
-        <div className="space-y-2">
-          <div className="rounded-lg border border-input bg-background p-3">
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Time</p>
-            <select
-              value={activeTime}
-              disabled={disabled || !activeDate}
-              required={required}
-              aria-invalid={isMissingRequiredTime || (!validation.valid && Boolean(value))}
-              onChange={(event) => selectTime(event.target.value)}
-              className="mt-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed"
-            >
-              <option value="">Select time</option>
-              {availableTimeSlots.map((slot) => (
-                <option key={slot} value={slot}>
-                  {slot}
-                </option>
-              ))}
-            </select>
+        <div className="flex min-h-full flex-col bg-background">
+          <div className="border-b border-border/70 p-4">
+            <div className="flex items-start gap-2.5">
+              <span
+                className={cn(
+                  "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                  isComplete ? "bg-emerald-100 text-emerald-700" : "bg-primary/10 text-primary"
+                )}
+              >
+                {isComplete ? <CheckCircle2 className="h-4 w-4" /> : <CalendarDays className="h-4 w-4" />}
+              </span>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">Appointment</p>
+                <p className="mt-1 text-sm font-semibold leading-5">
+                  {isComplete ? "Ready to schedule" : activeDate ? "Choose a time" : "Choose a date"}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="rounded-lg border border-border/70 bg-muted/30 p-3 text-xs leading-5 text-muted-foreground">
-            <p className="font-medium text-foreground">{activeDate ? getDateLabel(activeDate) : "No date selected"}</p>
-            {unrestrictedDates ? null : <p>{BUSINESS_SCHEDULE_LABEL}</p>}
-            {isMissingRequiredTime ? <p className="mt-1 text-destructive">Select a time to complete the schedule.</p> : null}
+          <div className="space-y-4 p-4">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">Date</p>
+              <p className="mt-1 text-sm font-medium leading-5">{activeDate ? getDateLabel(activeDate) : "Not selected"}</p>
+            </div>
+            <div>
+              <label htmlFor={`${id}-time`} className="text-xs font-medium text-muted-foreground">
+                Time
+              </label>
+              <select
+                id={`${id}-time`}
+                value={activeTime}
+                disabled={disabled || !activeDate}
+                required={required}
+                aria-invalid={isMissingRequiredTime || (!validation.valid && Boolean(value))}
+                onChange={(event) => selectTime(event.target.value)}
+                className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted/40"
+              >
+                <option value="">Select time</option>
+                {availableTimeSlots.map((slot) => (
+                  <option key={slot} value={slot}>
+                    {formatTimeSlot(slot)}
+                  </option>
+                ))}
+              </select>
+              {isMissingRequiredTime ? <p className="mt-1.5 text-xs text-destructive">Select a time to continue.</p> : null}
+            </div>
+          </div>
+          <div className="mt-auto border-t border-border/70 bg-muted/20 p-4 text-xs leading-5 text-muted-foreground">
+            {unrestrictedDates ? null : (
+              <div className="flex gap-2">
+                <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                <div>
+                  <p className="font-medium text-foreground">Available schedule</p>
+                  <p>{BUSINESS_SCHEDULE_LABEL}</p>
+                </div>
+              </div>
+            )}
             {!validation.valid && value ? <p className="mt-1 text-destructive">{validation.message}</p> : null}
           </div>
         </div>

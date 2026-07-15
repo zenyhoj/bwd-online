@@ -12,7 +12,6 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { BUSINESS_SCHEDULE_LABEL } from "@/lib/business-hours";
 import { formatDateTime } from "@/lib/format";
 import type { InspectorRecord } from "@/types";
 
@@ -151,6 +150,7 @@ export function InspectionSchedulerForm({
                       id={`reschedule-${existingInspection.id}`}
                       name="scheduledAt"
                       defaultValue={toDateTimeLocalValue(existingInspection.scheduled_at)}
+                      allowDateJump
                       required
                     />
                   </div>
@@ -184,7 +184,7 @@ export function InspectionSchedulerForm({
         <form action={scheduleAction} className="flex flex-col gap-4">
           <input type="hidden" name="applicationId" value={applicationId} />
           <div className="space-y-2">
-            <Label htmlFor={`inspector-${applicationId}`}>Inspector</Label>
+            <Label htmlFor={`inspector-${applicationId}`}>Assigned inspector</Label>
             <select
               id={`inspector-${applicationId}`}
               name="inspectorId"
@@ -200,16 +200,17 @@ export function InspectionSchedulerForm({
             </select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`scheduled-${applicationId}`}>Scheduled time</Label>
+            <Label htmlFor={`scheduled-${applicationId}`}>Inspection appointment</Label>
             <BusinessDateTimeInput
               id={`scheduled-${applicationId}`}
               name="scheduledAt"
+              allowDateJump
               required
             />
-            <p className="text-xs text-muted-foreground">{BUSINESS_SCHEDULE_LABEL}</p>
           </div>
           <Button type="submit" disabled={schedulePending} className="mt-2 w-full sm:w-auto">
-            {schedulePending ? "Saving..." : "Schedule"}
+            <CalendarClock className="h-4 w-4" />
+            {schedulePending ? "Scheduling..." : "Schedule inspection"}
           </Button>
           <FormMessage state={scheduleState} />
         </form>
