@@ -1,7 +1,7 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
-import { CheckCircle2, Download } from "lucide-react";
+import { useActionState, useId, useMemo, useState, type ReactNode } from "react";
+import { CheckCircle2, ChevronDown, Download, Files } from "lucide-react";
 
 import { completeDocumentVerificationAction } from "@/actions/documents";
 import { initialActionState } from "@/actions/state";
@@ -23,6 +23,87 @@ type DocumentVerificationPanelProps = {
 };
 
 const NO_DOCUMENT_VALUE = "__no_document__";
+
+function VerificationDisclosure({
+  requirements,
+  isOfficeSubmission,
+  isVerificationComplete,
+  children
+}: {
+  requirements: DocumentRequirementRow[];
+  isOfficeSubmission: boolean;
+  isVerificationComplete: boolean;
+  children: ReactNode;
+}) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const contentId = useId();
+  const uploadedCount = requirements.filter((row) => Boolean(row.document)).length;
+  const verifiedCount = requirements.filter((row) => row.status === "verified").length;
+  const rejectedCount = requirements.filter((row) => row.status === "rejected").length;
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm">
+      <button
+        type="button"
+        onClick={() => setIsExpanded((current) => !current)}
+        aria-expanded={isExpanded}
+        aria-controls={contentId}
+        className="flex w-full flex-col gap-4 p-4 text-left transition-colors hover:bg-muted/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between sm:p-5"
+      >
+        <span className="flex min-w-0 items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            {isVerificationComplete ? <CheckCircle2 className="h-5 w-5" /> : <Files className="h-5 w-5" />}
+          </span>
+          <span className="min-w-0">
+            <span className="block font-heading text-base font-semibold text-foreground">Requirements checklist</span>
+            <span className="mt-1 block text-sm text-muted-foreground">
+              {isVerificationComplete
+                ? "Document verification is complete."
+                : isOfficeSubmission
+                  ? `${requirements.length} physical document requirements to verify at the office.`
+                  : `${uploadedCount} of ${requirements.length} required files uploaded.`}
+            </span>
+          </span>
+        </span>
+
+        <span className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+            {requirements.length} requirement{requirements.length === 1 ? "" : "s"}
+          </span>
+          {isOfficeSubmission ? (
+            <span className="rounded-full border border-amber-300/70 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+              Office submission
+            </span>
+          ) : (
+            <>
+              <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                {uploadedCount} uploaded
+              </span>
+              <span className="rounded-full border border-emerald-300/70 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+                {verifiedCount} verified
+              </span>
+              {rejectedCount > 0 ? (
+                <span className="rounded-full border border-red-300/70 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">
+                  {rejectedCount} rejected
+                </span>
+              ) : null}
+            </>
+          )}
+          <span className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-border/70 bg-background px-3 py-1.5 text-xs font-semibold text-foreground sm:ml-1">
+            {isExpanded ? "Hide requirements" : "Show requirements"}
+            <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+          </span>
+        </span>
+      </button>
+
+      {isExpanded ? (
+        <div id={contentId} className="border-t border-border/70 p-4 sm:p-5">
+          {children}
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
 export function DocumentVerificationPanel({ applicationId, applicationStatus, documentSubmissionMode, requirements }: DocumentVerificationPanelProps) {
   const [selectedType, setSelectedType] = useState<string>(NO_DOCUMENT_VALUE);
@@ -58,53 +139,64 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
 
   if (isOfficeSubmission && !isVerificationComplete) {
     return (
-      <div className="space-y-8">
-        <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 p-6">
-          <p className="text-sm font-semibold text-foreground mb-2">Office Document Verification</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            The applicant chose to submit and verify their physical documents at the office. Please verify the following requirements manually:
-          </p>
-          <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mb-6">
-            {requirements.map((req) => (
-              <li key={req.type}><span className="font-medium text-foreground">{req.label}</span></li>
-            ))}
-          </ul>
-          
-          {showCompleteForm && (
-            <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1.5">
-                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  Manual verification completion
-                </p>
-                <p className="text-sm text-muted-foreground max-w-2xl">
-                  By clicking this button, you certify that you have physically inspected and verified all the required documents at the office.
-                </p>
-              </div>
-              
-              <form action={formAction} className="shrink-0">
-                <input type="hidden" name="applicationId" value={applicationId} />
-                <Button 
-                  type="submit" 
-                  loading={pending} 
-                  disabled={!canComplete}
-                  className="w-full sm:w-auto"
-                >
-                  Verify Documents
-                </Button>
-                <div className="mt-2 text-right">
-                  <FormMessage state={state} />
+      <VerificationDisclosure
+        requirements={requirements}
+        isOfficeSubmission={isOfficeSubmission}
+        isVerificationComplete={isVerificationComplete}
+      >
+        <div className="space-y-8">
+          <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 p-6">
+            <p className="text-sm font-semibold text-foreground mb-2">Office Document Verification</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              The applicant chose to submit and verify their physical documents at the office. Please verify the following requirements manually:
+            </p>
+            <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mb-6">
+              {requirements.map((req) => (
+                <li key={req.type}><span className="font-medium text-foreground">{req.label}</span></li>
+              ))}
+            </ul>
+
+            {showCompleteForm && (
+              <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1.5">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    Manual verification completion
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-2xl">
+                    By clicking this button, you certify that you have physically inspected and verified all the required documents at the office.
+                  </p>
                 </div>
-              </form>
-            </div>
-          )}
+
+                <form action={formAction} className="shrink-0">
+                  <input type="hidden" name="applicationId" value={applicationId} />
+                  <Button
+                    type="submit"
+                    loading={pending}
+                    disabled={!canComplete}
+                    className="w-full sm:w-auto"
+                  >
+                    Verify Documents
+                  </Button>
+                  <div className="mt-2 text-right">
+                    <FormMessage state={state} />
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </VerificationDisclosure>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <VerificationDisclosure
+      requirements={requirements}
+      isOfficeSubmission={isOfficeSubmission}
+      isVerificationComplete={isVerificationComplete}
+    >
+      <div className="space-y-8">
       {isVerificationComplete && (
         <div className="flex flex-col gap-6 rounded-2xl bg-primary/5 p-8 sm:flex-row sm:items-center sm:justify-between border border-primary/10">
           <div className="space-y-2">
@@ -262,6 +354,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </VerificationDisclosure>
   );
 }
