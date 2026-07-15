@@ -4,6 +4,7 @@ import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3 } from "l
 import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   BUSINESS_END_HOUR,
   BUSINESS_SCHEDULE_LABEL,
@@ -218,7 +219,7 @@ export function BusinessDateTimeInput({
   }
 
   return (
-    <div className={cn("w-full", compact ? "max-w-[24rem]" : "max-w-[33rem]", disabled && "opacity-60")}>
+    <div className={cn("w-full min-w-0 max-w-full", compact ? "sm:max-w-[24rem]" : "sm:max-w-[33rem]", disabled && "opacity-60")}>
       <input
         id={id}
         name={name}
@@ -231,17 +232,17 @@ export function BusinessDateTimeInput({
       />
       <div
         className={cn(
-          "grid overflow-hidden rounded-xl border border-border/80 bg-background shadow-sm",
+          "grid min-w-0 overflow-hidden rounded-xl border border-border/80 bg-background shadow-sm",
           compact ? "sm:grid-cols-[15rem_9rem]" : "sm:grid-cols-[18rem_15rem]"
         )}
       >
-        <div className="border-b border-border/70 bg-muted/20 p-3 sm:border-b-0 sm:border-r">
-          <div className="mb-3 flex items-center justify-between gap-2">
+        <div className="min-w-0 border-b border-border/70 bg-muted/20 p-2 min-[360px]:p-3 sm:border-b-0 sm:border-r">
+          <div className="mb-3 flex items-center justify-between gap-1 min-[360px]:gap-2">
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-6 shrink-0 min-[360px]:w-8"
               disabled={disabled}
               onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))}
               aria-label="Previous month"
@@ -249,34 +250,39 @@ export function BusinessDateTimeInput({
               <ChevronLeft className="h-4 w-4" />
             </Button>
             {allowDateJump && !compact ? (
-              <div className="flex items-center gap-1.5">
-                <select
-                  value={visibleMonth.getMonth()}
-                  disabled={disabled}
-                  onChange={(event) => changeVisibleMonth(Number(event.target.value))}
-                  aria-label="Calendar month"
-                  className="h-8 rounded-md border border-input bg-background px-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {MONTH_LABELS.map((month, index) => (
-                    <option key={month} value={index}>
-                      {month}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={visibleMonth.getFullYear()}
-                  disabled={disabled}
-                  onChange={(event) => changeVisibleYear(Number(event.target.value))}
-                  aria-label="Calendar year"
-                  className="h-8 rounded-md border border-input bg-background px-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {yearOptions.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <>
+                <p className="min-w-0 flex-1 truncate whitespace-nowrap text-center text-sm font-semibold sm:hidden">
+                  {MONTH_FORMATTER.format(visibleMonth)}
+                </p>
+                <div className="hidden min-w-0 flex-1 grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-1 sm:grid">
+                  <select
+                    value={visibleMonth.getMonth()}
+                    disabled={disabled}
+                    onChange={(event) => changeVisibleMonth(Number(event.target.value))}
+                    aria-label="Calendar month"
+                    className="h-8 min-w-0 w-full rounded-md border border-input bg-background px-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {MONTH_LABELS.map((month, index) => (
+                      <option key={month} value={index}>
+                        {month}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={visibleMonth.getFullYear()}
+                    disabled={disabled}
+                    onChange={(event) => changeVisibleYear(Number(event.target.value))}
+                    aria-label="Calendar year"
+                    className="h-8 min-w-0 w-full rounded-md border border-input bg-background px-1.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {yearOptions.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
             ) : (
               <p className="text-sm font-semibold">{MONTH_FORMATTER.format(visibleMonth)}</p>
             )}
@@ -284,7 +290,7 @@ export function BusinessDateTimeInput({
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-6 shrink-0 min-[360px]:w-8"
               disabled={disabled}
               onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))}
               aria-label="Next month"
@@ -292,12 +298,12 @@ export function BusinessDateTimeInput({
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-7 justify-items-center gap-1 text-center text-[11px] font-medium text-muted-foreground">
+          <div className="grid min-w-0 grid-cols-7 justify-items-center gap-0.5 text-center text-[11px] font-medium text-muted-foreground min-[360px]:gap-1">
             {DAY_LABELS.map((label) => (
               <span key={label}>{label}</span>
             ))}
           </div>
-          <div className="mt-1 grid grid-cols-7 justify-items-center gap-1">
+          <div className="mt-1 grid min-w-0 grid-cols-7 justify-items-center gap-0.5 min-[360px]:gap-1">
             {calendarDays.map((date) => {
               const dateKey = toDateKey(date);
               const isCurrentMonth = date.getMonth() === visibleMonth.getMonth();
@@ -318,7 +324,7 @@ export function BusinessDateTimeInput({
                   disabled={isDisabled}
                   onClick={() => selectDate(date)}
                   className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors",
+                    "flex h-8 w-full max-w-8 min-w-0 items-center justify-center rounded-md text-sm font-medium transition-colors",
                     isSelected
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground hover:bg-secondary",
@@ -352,7 +358,7 @@ export function BusinessDateTimeInput({
             </div>
           ) : null}
         </div>
-        <div className="flex min-h-full flex-col bg-background">
+        <div className="flex min-h-full min-w-0 flex-col bg-background">
           <div className="border-b border-border/70 p-4">
             <div className="flex items-start gap-2.5">
               <span
@@ -380,22 +386,22 @@ export function BusinessDateTimeInput({
               <label htmlFor={`${id}-time`} className="text-xs font-medium text-muted-foreground">
                 Time
               </label>
-              <select
-                id={`${id}-time`}
-                value={activeTime}
-                disabled={disabled || !activeDate}
-                required={required}
-                aria-invalid={isMissingRequiredTime || (!validation.valid && Boolean(value))}
-                onChange={(event) => selectTime(event.target.value)}
-                className="mt-1.5 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-muted/40"
-              >
-                <option value="">Select time</option>
-                {availableTimeSlots.map((slot) => (
-                  <option key={slot} value={slot}>
-                    {formatTimeSlot(slot)}
-                  </option>
-                ))}
-              </select>
+              <Select value={activeTime} disabled={disabled || !activeDate} onValueChange={selectTime}>
+                <SelectTrigger
+                  id={`${id}-time`}
+                  aria-invalid={isMissingRequiredTime || (!validation.valid && Boolean(value))}
+                  className="mt-1.5 h-11 min-w-0 touch-manipulation disabled:bg-muted/40"
+                >
+                  <SelectValue placeholder={activeDate ? "Select time" : "Choose a date first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTimeSlots.map((slot) => (
+                    <SelectItem key={slot} value={slot}>
+                      {formatTimeSlot(slot)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               {isMissingRequiredTime ? <p className="mt-1.5 text-xs text-destructive">Select a time to continue.</p> : null}
             </div>
           </div>
