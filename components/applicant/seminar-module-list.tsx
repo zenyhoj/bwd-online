@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RichTextContent } from "@/components/ui/rich-text-content";
 import { AccreditedPlumbersTable } from "./accredited-plumbers-table";
+import { DocumentSubmissionChoice } from "./document-submission-choice";
 import { getSeminarImageUrls } from "@/lib/seminar-media";
 import { cn } from "@/lib/utils";
 import type { ApplicantSeminarProgress, SeminarItem } from "@/types";
@@ -22,6 +23,10 @@ type SeminarModuleListProps = {
     href: string;
     label: string;
     description: string;
+  } | null;
+  documentChoiceHrefs?: {
+    online: string;
+    office: string;
   } | null;
 };
 
@@ -38,6 +43,10 @@ type SeminarItemCardProps = {
     href: string;
     label: string;
     description: string;
+  } | null;
+  documentChoiceHrefs?: {
+    online: string;
+    office: string;
   } | null;
   onCompleted: (itemId: string) => void;
 };
@@ -104,7 +113,13 @@ function SeminarMedia({ item }: { item: SeminarItem }) {
   return null;
 }
 
-export function SeminarModuleList({ items, progress, applicantId, completionCta }: SeminarModuleListProps) {
+export function SeminarModuleList({
+  items,
+  progress,
+  applicantId,
+  completionCta,
+  documentChoiceHrefs
+}: SeminarModuleListProps) {
   const completedIds = new Set(progress.filter((entry) => entry.completed).map((entry) => entry.seminar_item_id));
 
   // Use optimistic state for completed IDs to respond instantly to clicks
@@ -238,6 +253,7 @@ export function SeminarModuleList({ items, progress, applicantId, completionCta 
           allCompleted={allCompleted}
           applicantId={applicantId}
           completionCta={completionCta}
+          documentChoiceHrefs={documentChoiceHrefs}
           onCompleted={addOptimisticCompletedId}
         />
       </div>
@@ -282,6 +298,7 @@ function SeminarItemCard({
   allCompleted,
   applicantId,
   completionCta,
+  documentChoiceHrefs,
   onCompleted
 }: SeminarItemCardProps) {
   const [state, formAction, pending] = useActionState(updateSeminarProgressAction, initialActionState);
@@ -353,19 +370,28 @@ function SeminarItemCard({
         ) : null}
         {showSeriesCompletionCTA ? (
           <div className="rounded-2xl border border-primary/25 bg-[linear-gradient(135deg,rgba(47,160,183,0.10),rgba(251,188,3,0.18))] p-4 shadow-sm">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="space-y-1">
-                <p className="text-base font-semibold text-foreground">Seminar finished</p>
-                <p className="text-sm text-foreground/80">
-                  {completionCta?.description ?? "Your next step is to proceed with the application form."}
-                </p>
+            {documentChoiceHrefs ? (
+              <DocumentSubmissionChoice
+                variant="links"
+                onlineHref={documentChoiceHrefs.online}
+                officeHref={documentChoiceHrefs.office}
+                title="Seminar finished — choose your document path"
+              />
+            ) : (
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-1">
+                  <p className="text-base font-semibold text-foreground">Seminar finished</p>
+                  <p className="text-sm text-foreground/80">
+                    {completionCta?.description ?? "Your next step is to proceed with the application form."}
+                  </p>
+                </div>
+                <Button asChild className="min-w-[220px]">
+                  <a href={completionCta?.href ?? `/applicant/applications/new?applicant=${applicantId}`}>
+                    {completionCta?.label ?? "Proceed to application"}
+                  </a>
+                </Button>
               </div>
-              <Button asChild className="min-w-[220px]">
-                <a href={completionCta?.href ?? `/applicant/applications/new?applicant=${applicantId}`}>
-                  {completionCta?.label ?? "Proceed to application"}
-                </a>
-              </Button>
-            </div>
+            )}
           </div>
         ) : null}
       </CardContent>

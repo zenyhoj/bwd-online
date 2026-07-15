@@ -15,6 +15,17 @@ import type { ActionState, Document } from "@/types";
 import { getDocumentRequirementRows, requiredDocumentTypes } from "@/lib/document-workflow";
 import { documentTypeLabels, type ApplicationDocumentType } from "@/lib/constants";
 
+const DOCUMENT_SUBMISSION_LOCKED_STATUSES = new Set([
+  "documents_verified",
+  "payment_scheduled",
+  "approved",
+  "converted"
+]);
+
+function isDocumentSubmissionLocked(status: string) {
+  return DOCUMENT_SUBMISSION_LOCKED_STATUSES.has(status);
+}
+
 function isMissingDocumentEnumValue(message?: string | null) {
   return message?.includes("invalid input value for enum document_type") ?? false;
 }
@@ -73,7 +84,7 @@ async function getManagedApplication({
 
   const { data: application } = await supabase
     .from("applications")
-    .select("id, applicant_id")
+    .select("id, applicant_id, status")
     .eq("id", applicationId)
     .in("applicant_id", applicants.map((applicant) => applicant.id))
     .maybeSingle();
@@ -106,6 +117,10 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
 
     if (!application) {
       return { success: false, message: "You are not allowed to upload documents for this application." };
+    }
+
+    if (isDocumentSubmissionLocked(application.status)) {
+      return { success: false, message: "Documents cannot be uploaded after verification is complete." };
     }
 
     const { data: approvedInspection, error: inspectionError } = await supabase
@@ -258,6 +273,13 @@ export async function setDocumentSubmissionModeAction(
 
     if (!application) {
       return { success: false, message: "You are not allowed to update this document preference." };
+    }
+
+    if (isDocumentSubmissionLocked(application.status)) {
+      return {
+        success: false,
+        message: "The document submission method cannot be changed after verification is complete."
+      };
     }
 
     const { error } = await supabase

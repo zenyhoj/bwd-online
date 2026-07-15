@@ -6,7 +6,7 @@ import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_h
 import { getSessionUser } from "@/lib/auth";
 import { sendPushNotificationAction } from "./push-server";
 import { sendWorkflowEmail, getAdminEmails } from "./email-server";
-import { applicationStatusSchema } from "@/schemas";
+import { applicationStatusSchema, documentSubmissionModeValueSchema } from "@/schemas";
 import type { ConcessionaireClassification } from "@/lib/fee-schedule";
 import type { ActionState } from "@/types";
 
@@ -73,6 +73,20 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: "Connection classification is required.", fieldErrors: { classification: ["Please select a classification."] } as Record<string, string[]> };
     }
 
+    const documentSubmissionMode = documentSubmissionModeValueSchema.safeParse(
+      formData.get("documentSubmissionMode")
+    );
+
+    if (!documentSubmissionMode.success) {
+      return {
+        success: false,
+        message: "Choose how you will submit the required documents.",
+        fieldErrors: {
+          documentSubmissionMode: ["Select online upload or submission at the BWD office."]
+        }
+      };
+    }
+
     const { data: existingApps, error: existingAppsError } = await supabase
       .from("applications")
       .select("id, status, payments(status)")
@@ -109,6 +123,7 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       number_of_users: numberOfUsers,
       service_type: "new_connection",
       seminar_completed: true,
+      document_submission_mode: documentSubmissionMode.data,
       status: "submitted",
       submitted_at: new Date().toISOString(),
       concessionaire_classification: classification as ConcessionaireClassification
@@ -118,12 +133,16 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: error.message };
     }
 
+    const documentSubmissionLabel =
+      documentSubmissionMode.data === "office" ? "Physical documents at the BWD office" : "Online document upload";
+
     // Send email to Admin
     await sendWorkflowEmail(
       await getAdminEmails(),
       "New Application Submitted",
       `<h3>New Application Submitted</h3>
        <p>A new application for <b>${applicant.full_name}</b> has been submitted.</p>
+       <p><strong>Document submission:</strong> ${documentSubmissionLabel}</p>
        <p>Please check the admin dashboard for details.</p>`
     );
 
@@ -134,6 +153,8 @@ export async function createApplicationAction(_prevState: ActionState, formData:
         "Application Submitted Successfully",
         `<h3>Application Submitted</h3>
          <p>Your water connection application for <b>${applicant.full_name}</b> has been successfully submitted.</p>
+         <p><strong>Your document submission choice:</strong> ${documentSubmissionLabel}</p>
+         <p>Document submission opens after your inspection is approved. You can change this choice before document verification is completed.</p>
          <p>Please check your dashboard for the next steps.</p>`
       );
     }

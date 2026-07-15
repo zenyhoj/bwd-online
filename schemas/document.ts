@@ -35,9 +35,11 @@ export const documentReviewSchema = z.object({
   }
 });
 
+export const documentSubmissionModeValueSchema = z.enum(["online", "office"]);
+
 export const documentSubmissionModeSchema = z.object({
   applicationId: z.string().uuid(),
-  submissionMode: z.enum(["online", "office"])
+  submissionMode: documentSubmissionModeValueSchema
 });
 
 export const documentWorkflowNoteSchema = z.object({

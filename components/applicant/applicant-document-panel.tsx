@@ -17,6 +17,7 @@ type ApplicantDocumentPanelProps = {
 export function ApplicantDocumentPanel({ application, documents, isUploadUnlocked, isActive }: ApplicantDocumentPanelProps) {
   const requirementRows = getDocumentRequirementRows(documents);
   const documentsReady = isUploadUnlocked ? areDocumentsReadyForPayment(application) : false;
+  const isOfficeSubmission = application.document_submission_mode === "office";
   
   const actionableTypes = documentsReady ? [] : requirementRows
     .filter((row) => row.status === "missing" || row.status === "rejected")
@@ -29,7 +30,24 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
   return (
     <div id="documents" className="space-y-6 scroll-mt-24">
       <div className="space-y-4">
-        {actionableTypes.length > 0 ? (
+        {isOfficeSubmission && !documentsReady ? (
+          <Card className={cn(
+            "border-[#FBBC03]/40 bg-[#FBBC03]/10 shadow-sm transition-all duration-300",
+            isActive && "ring-2 ring-[#FBBC03]/70 shadow-lg"
+          )}>
+            <CardHeader>
+              <CardTitle>Bring documents to the BWD office</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-muted-foreground">
+              <p>
+                Bring the physical documents listed below for staff verification. Online upload is not required for your selected method.
+              </p>
+              <p className="font-medium text-foreground">
+                Keep this application available on your phone so staff can match the documents to your record.
+              </p>
+            </CardContent>
+          </Card>
+        ) : actionableTypes.length > 0 ? (
           <>
             <DocumentUploadForm applicationId={application.id} allowedDocumentTypes={actionableTypes} isActive={isActive} />
           </>
@@ -65,7 +83,9 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
             <span className="text-sm text-muted-foreground">
               {documentsReady
                 ? "Documents are complete for payment scheduling."
-                : "Complete or replace all required documents, or inform BWD that you will bring them to the office."}
+                : isOfficeSubmission
+                  ? "Bring all listed requirements to the BWD office for verification."
+                  : "Upload or replace every required document for online verification."}
             </span>
           </div>
 
@@ -102,13 +122,17 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
                           {row.document.file_name}
                         </a>
                       ) : (
-                        <span className="text-muted-foreground">Not uploaded</span>
+                        <span className="text-muted-foreground">
+                          {isOfficeSubmission ? "Physical document" : "Not uploaded"}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={row.status === "missing" ? "pending" : row.status} />
                     </TableCell>
-                    <TableCell>{row.reviewNote ?? (row.status === "missing" ? "Awaiting upload" : "-")}</TableCell>
+                    <TableCell>
+                      {row.reviewNote ?? (row.status === "missing" ? (isOfficeSubmission ? "Bring to office" : "Awaiting upload") : "-")}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

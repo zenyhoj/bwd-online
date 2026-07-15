@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SeminarModuleList } from "@/components/applicant/seminar-module-list";
+import { DocumentSubmissionChoice } from "@/components/applicant/document-submission-choice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { areDocumentsReadyForPayment } from "@/lib/document-workflow";
@@ -88,6 +89,12 @@ export default async function ApplicantSeminarPage({
             label: "Open dashboard",
             description: "Your seminar is complete. Check the dashboard for the current application status."
           };
+  const documentChoiceHrefs = !hasApplication
+    ? {
+        online: `/applicant/applications/new?applicant=${applicantId}&documentMode=online`,
+        office: `/applicant/applications/new?applicant=${applicantId}&documentMode=office`
+      }
+    : null;
 
   if (seminarState.items.length === 0) {
     return (
@@ -112,7 +119,9 @@ export default async function ApplicantSeminarPage({
               <div>
                 <CardTitle className="text-2xl">Seminar completed</CardTitle>
                 <p className="max-w-2xl text-sm text-foreground/80 mt-2">
-                  {completionCta.description}
+                  {documentChoiceHrefs
+                    ? "Your next step is to choose how you will submit the required documents, then complete your application."
+                    : completionCta.description}
                 </p>
               </div>
               <Link
@@ -123,6 +132,15 @@ export default async function ApplicantSeminarPage({
                 View Certificate
               </Link>
             </div>
+            {documentChoiceHrefs ? (
+              <div className="mt-5 border-t border-emerald-700/10 pt-5">
+                <DocumentSubmissionChoice
+                  variant="links"
+                  onlineHref={documentChoiceHrefs.online}
+                  officeHref={documentChoiceHrefs.office}
+                />
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       ) : null}
@@ -145,7 +163,9 @@ export default async function ApplicantSeminarPage({
               {seminarState.completedCount} of {seminarState.items.length} seminar items completed
             </p>
             {seminarState.allCompleted ? (
-              <p className="font-medium text-foreground/80">{completionCta.label} is ready.</p>
+              <p className="font-medium text-foreground/80">
+                {documentChoiceHrefs ? "Choose your document submission method." : `${completionCta.label} is ready.`}
+              </p>
             ) : (
               <p>Finish all items to unlock the information form.</p>
             )}
@@ -157,6 +177,7 @@ export default async function ApplicantSeminarPage({
         progress={seminarState.progress}
         applicantId={applicantId}
         completionCta={completionCta}
+        documentChoiceHrefs={documentChoiceHrefs}
       />
     </div>
   );

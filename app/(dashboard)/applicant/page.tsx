@@ -7,7 +7,7 @@ import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
 import { UserManualModal } from "@/components/applicant/user-manual-modal";
 import { ApplicantDocumentPanel } from "@/components/applicant/applicant-document-panel";
-import { QuickSubmitOfficeButton } from "@/components/applicant/quick-submit-office-button";
+import { DocumentSubmissionChoice } from "@/components/applicant/document-submission-choice";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Button } from "@/components/ui/button";
@@ -244,7 +244,7 @@ function getPrimaryAction({
     if (documentSubmissionMode === "office") {
       return {
         href: selectedApplicationId ? `/applicant?applicant=${selectedApplicantId}&application=${selectedApplicationId}#documents` : "/applicant#documents",
-        label: "Wait for office verification"
+        label: "Bring documents to the BWD office"
       };
     }
     return {
@@ -340,7 +340,11 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
 
   const isInhousePlumbingActive = selectedApplication && !inhouseCompleted && primaryAction?.label === "Complete inhouse plumbing";
   const isInspectionActive = selectedApplication && inhouseCompleted && !inspectionApproved;
-  const isUploadDocsActive = selectedApplication && inspectionApproved && !documentsReady && primaryAction?.label === "Upload documents";
+  const isDocumentSubmissionActive =
+    selectedApplication &&
+    inspectionApproved &&
+    !documentsReady &&
+    (primaryAction?.label === "Upload documents" || primaryAction?.label === "Bring documents to the BWD office");
   const isPaymentActive = selectedApplication && inspectionApproved && documentsReady && latestPayment?.status !== "paid";
   const isWaterMeterActive = selectedApplication && latestPayment?.status === "paid" && !selectedApplication.water_meter_installed_at;
 
@@ -478,6 +482,17 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               );
             }
             if (inspectionApproved) {
+              if (selectedApplication.document_submission_mode === "office") {
+                return (
+                  <div className="rounded-xl border border-[#FBBC03]/40 bg-[#FBBC03]/10 p-4">
+                    <p className="font-medium text-foreground">Action required: Bring documents to the BWD office</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Your inspection is approved. Bring the required physical documents to the BWD office for staff verification.
+                    </p>
+                  </div>
+                );
+              }
+
               return (
                 <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
                   <p className="font-medium text-primary">Action required: Upload documents</p>
@@ -608,11 +623,11 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             {/* 3. Payment Node */}
             <div className="flex-1 relative group">
               <div className="flex flex-row md:flex-col items-center md:items-start gap-4 md:gap-3 px-2">
-                <div className={`h-10 w-10 shrink-0 rounded-full border-2 flex items-center justify-center font-bold text-sm bg-card transition-all duration-300 ${latestPayment?.status === "paid" ? "border-primary text-primary ring-4 ring-primary/10" : (isPaymentActive || isUploadDocsActive ? "border-primary bg-primary text-primary-foreground shadow-[0_0_15px_rgba(2,132,199,0.3)] ring-4 ring-primary/20 scale-110" : "border-border text-muted-foreground")}`}>
+                <div className={`h-10 w-10 shrink-0 rounded-full border-2 flex items-center justify-center font-bold text-sm bg-card transition-all duration-300 ${latestPayment?.status === "paid" ? "border-primary text-primary ring-4 ring-primary/10" : (isPaymentActive || isDocumentSubmissionActive ? "border-primary bg-primary text-primary-foreground shadow-[0_0_15px_rgba(2,132,199,0.3)] ring-4 ring-primary/20 scale-110" : "border-border text-muted-foreground")}`}>
                   3
                 </div>
                 <div className="flex flex-col">
-                  <p className={`font-heading font-semibold text-sm transition-colors ${isPaymentActive || isUploadDocsActive || latestPayment?.status === "paid" ? "text-foreground" : "text-muted-foreground"}`}>Office Payment</p>
+                  <p className={`font-heading font-semibold text-sm transition-colors ${isPaymentActive || isDocumentSubmissionActive || latestPayment?.status === "paid" ? "text-foreground" : "text-muted-foreground"}`}>Office Payment</p>
                   <p className="text-xs text-muted-foreground mt-1 font-medium">
                     {latestPayment ? (
                       latestPayment.status === "paid"
@@ -646,24 +661,36 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             </div>
           </div>
 
+          {selectedApplication && !assignedAccount.isConverted ? (
+            <div id="document-submission" className="scroll-mt-24 rounded-2xl border border-border/70 bg-muted/10 p-4 sm:p-5">
+              <DocumentSubmissionChoice
+                variant="action"
+                applicationId={selectedApplication.id}
+                selectedMode={
+                  selectedApplication.document_submission_mode === "office" ? "office" : "online"
+                }
+                locked={documentsReady}
+                compact
+                title="Document submission method"
+                description={
+                  inspectionApproved
+                    ? selectedApplication.document_submission_mode === "office"
+                      ? "Bring the required physical documents to the BWD office. You may switch to online upload until verification is completed."
+                      : "Online upload is ready below. You may switch to office submission until verification is completed."
+                    : "Your choice is saved. You may change it now; actual document submission opens after inspection approval."
+                }
+              />
+            </div>
+          ) : null}
+
           {showPrimaryActionButton ? (
             <div className="flex flex-wrap items-center gap-3">
-              <Button asChild className={`h-10 w-full text-xs font-bold md:w-auto md:text-sm ${
-                primaryAction?.label === "Wait for office verification" 
-                  ? "bg-amber-100 text-amber-800 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-300 pointer-events-none"
-                  : ""
-              }`}>
+              <Button asChild className="h-10 w-full text-xs font-bold md:w-auto md:text-sm">
                 <Link href={primaryAction?.href ?? "/applicant"}>
                   {primaryAction?.label}
-                  {primaryAction?.label !== "Wait for office verification" && <ArrowRight className="ml-2 h-3.5 w-3.5 md:h-4 md:w-4" />}
+                  <ArrowRight className="ml-2 h-3.5 w-3.5 md:h-4 md:w-4" />
                 </Link>
               </Button>
-              {(primaryAction?.label === "Upload documents" || primaryAction?.label === "Wait for office verification") && selectedApplication ? (
-                <QuickSubmitOfficeButton
-                  applicationId={selectedApplication.id}
-                  submissionMode={selectedApplication.document_submission_mode ?? undefined}
-                />
-              ) : null}
             </div>
           ) : null}
         </CardContent>
@@ -784,7 +811,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
           application={selectedApplication as any}
           documents={documents ?? []}
           isUploadUnlocked={inspectionApproved}
-          isActive={isUploadDocsActive}
+          isActive={Boolean(isDocumentSubmissionActive)}
         />
       ) : null}
 
