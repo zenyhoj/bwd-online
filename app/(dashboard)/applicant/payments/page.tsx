@@ -102,7 +102,12 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
   const inspectionApproved =
     application?.inspections?.some((inspection) => inspection.status === "approved") ?? false;
   const documentRows = application
-    ? getDocumentRequirementRows(application.documents ?? [], application.optional_document_types ?? [])
+    ? getDocumentRequirementRows(
+        application.documents ?? [],
+        application.optional_document_types ?? [],
+        application.classified_document_types ?? [],
+        application.status
+      )
     : [];
   const documentsReady =
     application && inspectionApproved

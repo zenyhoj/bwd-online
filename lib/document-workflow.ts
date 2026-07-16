@@ -4,8 +4,19 @@ import type { ApplicationDocumentType } from "@/lib/constants";
 
 export const requiredDocumentTypes = applicationDocumentTypes;
 
+const documentSubmissionLockedStatuses = new Set([
+  "documents_verified",
+  "payment_scheduled",
+  "approved",
+  "converted"
+]);
+
+export function isDocumentSubmissionLocked(status: string) {
+  return documentSubmissionLockedStatuses.has(status);
+}
+
 type ApplicationDocumentWorkflowInput = Partial<
-  Pick<Application, "document_submission_mode" | "optional_document_types" | "document_review_note" | "status">
+  Pick<Application, "document_submission_mode" | "optional_document_types" | "classified_document_types" | "document_review_note" | "status">
 > | null | undefined;
 
 export type DocumentRequirementRow = {
@@ -13,6 +24,7 @@ export type DocumentRequirementRow = {
   label: string;
   document: Document | null;
   isRequired: boolean;
+  isClassified: boolean;
   status: DocumentStatus | "missing";
   reviewNote: string | null;
 };
@@ -29,11 +41,22 @@ export type WacoPrintEligibility = {
 
 export function getDocumentRequirementRows(
   documents: Document[],
-  optionalDocumentTypes: readonly string[] = []
+  optionalDocumentTypes: readonly string[] = [],
+  classifiedDocumentTypes: readonly string[] = [],
+  applicationStatus?: string
 ): DocumentRequirementRow[] {
   const optionalTypes = new Set(optionalDocumentTypes);
+  const classifiedTypes = new Set(classifiedDocumentTypes);
+  const legacyVerifiedTypes = isDocumentSubmissionLocked(applicationStatus ?? "")
+    ? new Set(
+        documents
+          .filter((document) => document.status === "verified")
+          .map((document) => document.document_type)
+      )
+    : new Set<string>();
 
   return requiredDocumentTypes.map((type) => {
+    const isClassified = classifiedTypes.has(type) || legacyVerifiedTypes.has(type);
     const latestDocument =
       [...documents]
         .filter((document) => document.document_type === type)
@@ -44,7 +67,8 @@ export function getDocumentRequirementRows(
       type,
       label: documentTypeLabels[type],
       document: latestDocument,
-      isRequired: !optionalTypes.has(type),
+      isRequired: isClassified && !optionalTypes.has(type),
+      isClassified,
       status: latestDocument?.status ?? "missing",
       reviewNote: latestDocument?.review_notes ?? null
     } satisfies DocumentRequirementRow;
@@ -87,14 +111,7 @@ export function getWacoPrintEligibility({
       : { allowed: false, reason: "office_documents_unverified" };
   }
 
-  const allRequiredDocumentsUploaded = getDocumentRequirementRows(
-    documents,
-    application?.optional_document_types ?? []
-  )
-    .filter((row) => row.isRequired)
-    .every((row) => Boolean(row.document));
-
-  return allRequiredDocumentsUploaded
+  return areDocumentsReadyForPayment(application)
     ? { allowed: true, reason: null }
     : { allowed: false, reason: "online_documents_incomplete" };
 }

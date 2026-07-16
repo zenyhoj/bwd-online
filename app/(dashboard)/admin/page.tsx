@@ -339,7 +339,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   const selectedDocuments = ((selectedApplication?.documents as Document[] | undefined) ?? []);
   const selectedDocumentRequirements = getDocumentRequirementRows(
     selectedDocuments,
-    ((selectedApplication?.optional_document_types as Document["document_type"][] | undefined) ?? [])
+    ((selectedApplication?.optional_document_types as Document["document_type"][] | undefined) ?? []),
+    ((selectedApplication?.classified_document_types as Document["document_type"][] | undefined) ?? []),
+    String(selectedApplication?.status ?? "")
   );
   const selectedPayments = ((selectedApplication?.payments as Payment[] | undefined) ?? []);
   const latestSelectedPayment = selectedPayments[0] ?? null;

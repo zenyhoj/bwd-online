@@ -16,7 +16,12 @@ type ApplicantDocumentPanelProps = {
 };
 
 export function ApplicantDocumentPanel({ application, documents, isUploadUnlocked, isActive }: ApplicantDocumentPanelProps) {
-  const requirementRows = getDocumentRequirementRows(documents, application.optional_document_types ?? []);
+  const requirementRows = getDocumentRequirementRows(
+    documents,
+    application.optional_document_types ?? [],
+    application.classified_document_types ?? [],
+    application.status
+  );
   const documentsReady = isUploadUnlocked ? areDocumentsReadyForPayment(application) : false;
   const isOfficeSubmission = application.document_submission_mode === "office";
   
@@ -85,8 +90,8 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
               {documentsReady
                 ? "Documents are complete for payment scheduling."
                 : isOfficeSubmission
-                  ? "Bring every item marked Required to the BWD office for verification."
-                  : "Upload every item marked Required. Optional documents do not block verification."}
+                  ? "Bring the documents that apply to your application. BWD staff will classify them during verification."
+                  : "Upload the documents that apply to your application. BWD staff will confirm which are required during verification."}
             </span>
           </div>
 
@@ -119,9 +124,11 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-2">
                         <span>{row.label}</span>
-                        <Badge variant={row.isRequired ? "default" : "outline"}>
-                          {row.isRequired ? "Required" : "Optional"}
-                        </Badge>
+                        {row.isClassified && row.document ? (
+                          <Badge variant={row.isRequired ? "default" : "outline"}>
+                            {row.isRequired ? "Required" : "Optional"}
+                          </Badge>
+                        ) : null}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -136,18 +143,22 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
                       )}
                     </TableCell>
                     <TableCell>
-                      {row.status === "missing" && !row.isRequired ? (
+                      {row.status === "missing" ? (
                         <span className="text-sm text-muted-foreground">Not submitted</span>
+                      ) : !row.isClassified ? (
+                        <span className="text-sm text-muted-foreground">Awaiting admin assessment</span>
+                      ) : !row.isRequired && row.status === "pending" ? (
+                        <span className="text-sm text-muted-foreground">Submitted</span>
                       ) : (
-                        <StatusBadge status={row.status === "missing" ? "pending" : row.status} />
+                        <StatusBadge status={row.status} />
                       )}
                     </TableCell>
                     <TableCell>
                       {row.reviewNote ?? (row.status === "missing"
                         ? row.isRequired
                           ? isOfficeSubmission ? "Bring to office" : "Awaiting upload"
-                          : "No upload required"
-                        : "-")}
+                          : row.isClassified ? "No upload required" : "Upload if applicable"
+                        : !row.isClassified ? "Requirement level pending" : "-")}
                     </TableCell>
                   </TableRow>
                 ))

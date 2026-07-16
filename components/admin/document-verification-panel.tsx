@@ -1,20 +1,23 @@
 "use client";
 
 import { useActionState, useId, useMemo, useState, type ReactNode } from "react";
-import { CheckCircle2, ChevronDown, Download, Files } from "lucide-react";
+import { CheckCheck, CheckCircle2, ChevronDown, Download, Files } from "lucide-react";
 
-import { completeDocumentVerificationAction, updateDocumentRequirementAction } from "@/actions/documents";
+import {
+  bulkVerifySubmittedDocumentsAction,
+  completeDocumentVerificationAction,
+  updateDocumentRequirementAction
+} from "@/actions/documents";
 import { initialActionState } from "@/actions/state";
 import { DocumentReviewForm } from "@/components/admin/document-review-form";
 import { DocumentPreview } from "@/components/shared/document-preview";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FormMessage } from "@/components/forms/form-message";
 import { getDocumentDownloadHref } from "@/lib/document-links";
-import type { DocumentRequirementRow } from "@/lib/document-workflow";
+import { isDocumentSubmissionLocked, type DocumentRequirementRow } from "@/lib/document-workflow";
 
 type DocumentVerificationPanelProps = {
   applicationId: string;
@@ -39,10 +42,11 @@ function VerificationDisclosure({
   const [isExpanded, setIsExpanded] = useState(false);
   const contentId = useId();
   const requiredRows = requirements.filter((row) => row.isRequired);
-  const optionalCount = requirements.length - requiredRows.length;
-  const uploadedCount = requiredRows.filter((row) => Boolean(row.document)).length;
-  const verifiedCount = requiredRows.filter((row) => row.status === "verified").length;
-  const rejectedCount = requiredRows.filter((row) => row.status === "rejected").length;
+  const optionalCount = requirements.filter((row) => row.isClassified && !row.isRequired).length;
+  const unclassifiedCount = requirements.filter((row) => !row.isClassified).length;
+  const uploadedCount = requirements.filter((row) => Boolean(row.document)).length;
+  const verifiedCount = requirements.filter((row) => row.status === "verified").length;
+  const rejectedCount = requirements.filter((row) => row.status === "rejected").length;
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border/80 bg-background shadow-sm">
@@ -64,7 +68,7 @@ function VerificationDisclosure({
                 ? "Document verification is complete."
                 : isOfficeSubmission
                   ? `${requiredRows.length} required physical documents to verify at the office.`
-                  : `${uploadedCount} of ${requiredRows.length} required files uploaded.`}
+                  : `${uploadedCount} files uploaded; ${unclassifiedCount} requirements still to assess.`}
             </span>
           </span>
         </span>
@@ -76,6 +80,11 @@ function VerificationDisclosure({
           {optionalCount > 0 ? (
             <span className="rounded-full border border-sky-300/70 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
               {optionalCount} optional
+            </span>
+          ) : null}
+          {unclassifiedCount > 0 ? (
+            <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+              {unclassifiedCount} to assess
             </span>
           ) : null}
           {isOfficeSubmission ? (
@@ -121,6 +130,10 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
     updateDocumentRequirementAction,
     initialActionState
   );
+  const [bulkReviewState, bulkReviewAction, bulkReviewPending] = useActionState(
+    bulkVerifySubmittedDocumentsAction,
+    initialActionState
+  );
 
   const previewDocument = useMemo(() => requirements.find(r => r.document?.id === previewDocumentId)?.document ?? null, [requirements, previewDocumentId]);
 
@@ -137,13 +150,19 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
   const hasRejected = requiredRows.some((row) => row.status === "rejected");
   const hasUnreviewed = requiredRows.some((row) => row.document && row.status === "pending");
   const hasMissingRequired = requiredRows.some((row) => !row.document);
+  const hasUnclassifiedUploads = requirements.some((row) => row.document && !row.isClassified);
+  const submittedRows = requirements.filter((row) => row.document);
+  const hasRejectedSubmitted = submittedRows.some((row) => row.status === "rejected");
+  const bulkVerifiableCount = submittedRows.filter(
+    (row) => row.isClassified && row.status === "pending"
+  ).length;
   const canComplete =
     isOfficeSubmission ||
-    requiredRows.every((row) => Boolean(row.document) && row.status === "verified");
+    (!hasUnclassifiedUploads && requiredRows.every((row) => Boolean(row.document) && row.status === "verified"));
   
   // If the application is already past the document verification stage, hide the complete button
   const showCompleteForm = applicationStatus === "inspection_completed" || applicationStatus === "under_review";
-  const isVerificationComplete = !showCompleteForm && canComplete;
+  const isVerificationComplete = isDocumentSubmissionLocked(applicationStatus);
 
   if (requirements.length === 0) {
     return (
@@ -176,15 +195,16 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                     <label className="sr-only" htmlFor={`office-requirement-${req.type}`}>Requirement level for {req.label}</label>
                     <select
                       id={`office-requirement-${req.type}`}
-                      name="isRequired"
-                      key={`${req.type}-${req.isRequired}`}
-                      defaultValue={String(req.isRequired)}
-                      disabled={!showCompleteForm || requirementPending}
+                      name="requirementLevel"
+                      key={`${req.type}-${req.isRequired}-${req.isClassified}`}
+                      defaultValue={req.isClassified ? (req.isRequired ? "required" : "optional") : "unset"}
+                      disabled={isVerificationComplete || requirementPending}
                       onChange={(event) => event.currentTarget.form?.requestSubmit()}
                       className="h-9 rounded-md border border-input bg-background px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                     >
-                      <option value="true">Required</option>
-                      <option value="false">Optional</option>
+                      <option value="unset">Set requirement</option>
+                      <option value="required">Required</option>
+                      <option value="optional">Optional</option>
                     </select>
                   </form>
                 </li>
@@ -253,8 +273,41 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
         </div>
       )}
       <div className="rounded-2xl border border-border bg-background overflow-hidden shadow-none">
-        <div className="border-b border-border/70 px-4 py-3">
-          <FormMessage state={requirementState} />
+        <div className="flex flex-col gap-3 border-b border-border/70 bg-muted/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-foreground">Bulk verification</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {hasUnclassifiedUploads
+                ? "Classify every uploaded file as Required or Optional to enable bulk verification."
+                : hasRejectedSubmitted
+                  ? "Resolve rejected files individually before verifying the remaining submissions."
+                  : bulkVerifiableCount > 0
+                    ? `Verify ${bulkVerifiableCount} pending submitted ${bulkVerifiableCount === 1 ? "file" : "files"} at once.`
+                    : "There are no pending submitted files to verify."}
+            </p>
+            <FormMessage state={requirementState} />
+            <FormMessage state={bulkReviewState} />
+          </div>
+          <form action={bulkReviewAction} className="shrink-0">
+            <input type="hidden" name="applicationId" value={applicationId} />
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              loading={bulkReviewPending}
+              disabled={
+                isVerificationComplete ||
+                requirementPending ||
+                hasUnclassifiedUploads ||
+                hasRejectedSubmitted ||
+                bulkVerifiableCount === 0
+              }
+              className="w-full sm:w-auto"
+            >
+              <CheckCheck className="mr-2 h-4 w-4" />
+              Verify all submitted
+            </Button>
+          </form>
         </div>
         <Table>
           <TableHeader className="bg-muted/50">
@@ -272,9 +325,17 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{row.label}</span>
-                      <Badge variant={row.isRequired ? "default" : "outline"}>
-                        {row.isRequired ? "Required" : "Optional"}
-                      </Badge>
+                      {row.document && row.isClassified ? (
+                        <span
+                          className={
+                            row.isRequired
+                              ? "rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300"
+                              : "rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+                          }
+                        >
+                          {row.isRequired ? "Required" : "Optional"}
+                        </span>
+                      ) : null}
                     </div>
                     <form action={requirementAction}>
                       <input type="hidden" name="applicationId" value={applicationId} />
@@ -282,15 +343,16 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                       <label className="sr-only" htmlFor={`requirement-${row.type}`}>Requirement level for {row.label}</label>
                       <select
                         id={`requirement-${row.type}`}
-                        name="isRequired"
-                        key={`${row.type}-${row.isRequired}`}
-                        defaultValue={String(row.isRequired)}
-                        disabled={!showCompleteForm || requirementPending}
+                        name="requirementLevel"
+                        key={`${row.type}-${row.isRequired}-${row.isClassified}`}
+                        defaultValue={row.isClassified ? (row.isRequired ? "required" : "optional") : "unset"}
+                        disabled={isVerificationComplete || requirementPending}
                         onChange={(event) => event.currentTarget.form?.requestSubmit()}
-                        className="h-8 rounded-md border border-input bg-background px-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
+                        className="h-8 rounded-md border border-border/70 bg-transparent px-2 text-xs font-medium text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
                       >
-                        <option value="true">Required</option>
-                        <option value="false">Optional</option>
+                        <option value="unset">Set requirement</option>
+                        <option value="required">Required</option>
+                        <option value="optional">Optional</option>
                       </select>
                     </form>
                   </div>
@@ -309,16 +371,32 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                   )}
                 </TableCell>
                 <TableCell>
-                  <StatusBadge status={row.status === "missing" ? "pending" : row.status} />
+                  {row.status === "missing" ? (
+                    <span className="text-xs text-muted-foreground">
+                      {row.isRequired ? "Awaiting upload" : "Not uploaded"}
+                    </span>
+                  ) : !row.isClassified ? (
+                    <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Awaiting classification</span>
+                  ) : !row.isRequired && row.status === "pending" ? (
+                    <span className="text-xs text-muted-foreground">No review needed</span>
+                  ) : (
+                    <StatusBadge status={row.status} />
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setSelectedType(row.type)}
-                  >
-                    {row.status === "pending" || row.status === "rejected" ? "Review" : "View"}
-                  </Button>
+                  {row.document && row.isClassified ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedType(row.type)}
+                    >
+                      {row.isRequired && (row.status === "pending" || row.status === "rejected") ? "Review" : "View"}
+                    </Button>
+                  ) : row.document ? (
+                    <span className="text-xs text-muted-foreground">Set requirement first</span>
+                  ) : (
+                    <span aria-hidden="true" className="text-muted-foreground/50">—</span>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -344,6 +422,11 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
             )}
             {hasMissingRequired && !hasRejected && !hasUnreviewed && (
               <p className="text-xs font-medium text-amber-600 dark:text-amber-500">Required documents are still missing.</p>
+            )}
+            {hasUnclassifiedUploads && !hasRejected && (
+              <p className="text-xs font-medium text-amber-600 dark:text-amber-500">
+                Set uploaded documents as Required or Optional before completing verification.
+              </p>
             )}
           </div>
           
@@ -376,26 +459,36 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                 <div>
                   <p className="text-sm text-muted-foreground">
                     {selectedRow.document
-                      ? "Review the uploaded file and tag it as valid or invalid."
+                      ? selectedRow.isRequired
+                        ? "Review this required file and mark it as valid or invalid."
+                        : "This file is optional, so no valid or invalid review is required."
                       : "No file uploaded for this requirement yet."}
                   </p>
                 </div>
-                <StatusBadge status={selectedRow.status === "missing" ? "pending" : selectedRow.status} />
+                {!selectedRow.isRequired && selectedRow.document ? (
+                  <span className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                    Optional
+                  </span>
+                ) : (
+                  <StatusBadge status={selectedRow.status === "missing" ? "pending" : selectedRow.status} />
+                )}
               </div>
 
               {selectedRow.document ? (
-                <div className="mt-4 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+                <div className={selectedRow.isRequired ? "mt-4 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start" : "mt-4"}>
                   <div className="min-w-0 rounded-xl border border-border/60 p-4">
                     <DocumentPreview key={selectedRow.document.id} document={selectedRow.document} compact />
                   </div>
-                  <div className="xl:sticky xl:top-6">
-                    <DocumentReviewForm
-                      key={selectedRow.document.id}
-                      document={selectedRow.document}
-                      showPreview={false}
-                      onReviewed={closeDialog}
-                    />
-                  </div>
+                  {selectedRow.isRequired ? (
+                    <div className="xl:sticky xl:top-6">
+                      <DocumentReviewForm
+                        key={selectedRow.document.id}
+                        document={selectedRow.document}
+                        showPreview={false}
+                        onReviewed={closeDialog}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <div className="mt-4 rounded-xl border border-dashed border-border/70 bg-muted/10 p-8 text-center">
