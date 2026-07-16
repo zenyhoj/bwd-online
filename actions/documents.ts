@@ -86,7 +86,7 @@ async function getManagedApplication({
 
   const { data: application } = await supabase
     .from("applications")
-    .select("id, applicant_id, status, optional_document_types, classified_document_types")
+    .select("id, applicant_id, status, seminar_completed, optional_document_types, classified_document_types")
     .eq("id", applicationId)
     .in("applicant_id", applicants.map((applicant) => applicant.id))
     .maybeSingle();
@@ -125,22 +125,10 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
       return { success: false, message: "Documents cannot be uploaded after verification is complete." };
     }
 
-    const { data: approvedInspection, error: inspectionError } = await supabase
-      .from("inspections")
-      .select("id")
-      .eq("application_id", parsed.data.applicationId)
-      .eq("status", "approved")
-      .limit(1)
-      .maybeSingle();
-
-    if (inspectionError) {
-      return { success: false, message: inspectionError.message };
-    }
-
-    if (!approvedInspection) {
+    if (!application.seminar_completed) {
       return {
         success: false,
-        message: "Documents can be uploaded after the in-house inspection is approved."
+        message: "Complete the seminar before uploading documents."
       };
     }
 

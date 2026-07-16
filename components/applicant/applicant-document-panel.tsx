@@ -11,18 +11,18 @@ import { cn } from "@/lib/utils";
 type ApplicantDocumentPanelProps = {
   application: Application;
   documents: Document[];
-  isUploadUnlocked: boolean;
+  isSubmissionUnlocked: boolean;
   isActive?: boolean;
 };
 
-export function ApplicantDocumentPanel({ application, documents, isUploadUnlocked, isActive }: ApplicantDocumentPanelProps) {
+export function ApplicantDocumentPanel({ application, documents, isSubmissionUnlocked, isActive }: ApplicantDocumentPanelProps) {
   const requirementRows = getDocumentRequirementRows(
     documents,
     application.optional_document_types ?? [],
     application.classified_document_types ?? [],
     application.status
   );
-  const documentsReady = isUploadUnlocked ? areDocumentsReadyForPayment(application) : false;
+  const documentsReady = isSubmissionUnlocked ? areDocumentsReadyForPayment(application) : false;
   const isOfficeSubmission = application.document_submission_mode === "office";
   
   const actionableTypes = documentsReady ? [] : requirementRows

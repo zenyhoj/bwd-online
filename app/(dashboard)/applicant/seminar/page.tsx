@@ -54,9 +54,7 @@ export default async function ApplicantSeminarPage({
       : null;
   const hasApplication = Boolean(selectedApplication);
   const inhouseCompleted = Boolean(selectedApplication?.inhouse_installation_completed);
-  const inspectionApproved =
-    selectedApplication?.inspections?.some((inspection) => inspection.status === "approved") ?? false;
-  const documentsReady = selectedApplication && inspectionApproved
+  const documentsReady = selectedApplication
     ? areDocumentsReadyForPayment(selectedApplication)
     : false;
 
@@ -66,23 +64,17 @@ export default async function ApplicantSeminarPage({
         label: "Proceed to application",
         description: "Your next step is to proceed with the application form."
       }
-    : !inhouseCompleted
+    : !latestPayment && !documentsReady
       ? {
-          href: `/applicant?applicant=${applicantId}&application=${selectedApplication?.id ?? ""}#inhouse-installation`,
-          label: "Complete inhouse plumbing",
-          description: "Your next step is to mark the inhouse plumbing as complete."
+          href: `/applicant?applicant=${applicantId}&application=${selectedApplication?.id ?? ""}#document-submission`,
+          label: "Open document submission",
+          description: "You can upload documents or choose office submission now, even if your inspection is not yet scheduled."
         }
-      : !latestPayment && !documentsReady
-        ? !inspectionApproved
-          ? {
-              href: `/applicant?applicant=${applicantId}&application=${selectedApplication?.id ?? ""}`,
-              label: "View inspection status",
-              description: "Your next step is to wait for the in-house inspection approval before document upload opens."
-            }
-          : {
-            href: `/applicant/documents?application=${selectedApplication?.id ?? ""}`,
-            label: "Upload documents",
-            description: "Your next step is to upload the required documents before payment can be scheduled."
+      : !inhouseCompleted
+        ? {
+            href: `/applicant?applicant=${applicantId}&application=${selectedApplication?.id ?? ""}#inhouse-installation`,
+            label: "Complete inhouse plumbing",
+            description: "Your next step is to mark the inhouse plumbing as complete."
           }
         : {
             href: `/applicant?applicant=${applicantId}&application=${selectedApplication?.id ?? ""}`,

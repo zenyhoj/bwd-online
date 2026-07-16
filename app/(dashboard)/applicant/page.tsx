@@ -310,10 +310,9 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
       )[0] ?? null
     : null;
   const inspectionApproved = selectedApplication ? hasApprovedInspection(selectedApplication) : false;
-  const documentsReady =
-    selectedApplication && inspectionApproved
-      ? areDocumentsReadyForPayment(selectedApplication)
-      : false;
+  const documentsReady = selectedApplication
+    ? areDocumentsReadyForPayment(selectedApplication)
+    : false;
   const inhouseCompleted = Boolean(selectedApplication?.inhouse_installation_completed);
   const onlineSeminarCompletedAt =
     seminarState.allCompleted
@@ -342,9 +341,9 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
   const isInspectionActive = selectedApplication && inhouseCompleted && !inspectionApproved;
   const isDocumentSubmissionActive =
     selectedApplication &&
-    inspectionApproved &&
+    seminarState.allCompleted &&
     !documentsReady &&
-    (primaryAction?.label === "Upload documents" || primaryAction?.label === "Bring documents to the BWD office");
+    !assignedAccount.isConverted;
   const isPaymentActive = selectedApplication && inspectionApproved && documentsReady && latestPayment?.status !== "paid";
   const isWaterMeterActive = selectedApplication && latestPayment?.status === "paid" && !selectedApplication.water_meter_installed_at;
 
@@ -518,7 +517,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                 <div className="rounded-xl border border-muted-foreground/20 bg-muted/10 p-4">
                   <p className="font-medium text-foreground">Waiting for BWD: Schedule inspection</p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Your in-house plumbing and documents are complete. BWD will now schedule an inspection.
+                    Your in-house plumbing is complete. You can submit your documents while BWD schedules the inspection.
                   </p>
                 </div>
               );
@@ -527,7 +526,7 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
                 <p className="font-medium text-primary">Action required: Complete in-house plumbing</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Mark the in-house plumbing as completed first, including the plumber and proof photo, before moving to document review and payment.
+                  You can submit your documents now. Complete the in-house plumbing details, including the plumber and proof photo, so BWD can schedule the inspection.
                 </p>
               </div>
             );
@@ -673,14 +672,21 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
                 compact
                 title="Document submission method"
                 description={
-                  inspectionApproved
-                    ? selectedApplication.document_submission_mode === "office"
-                      ? "Bring the required physical documents to the BWD office. You may switch to online upload until verification is completed."
-                      : "Online upload is ready below. You may switch to office submission until verification is completed."
-                    : "Your choice is saved. You may change it now; actual document submission opens after inspection approval."
+                  selectedApplication.document_submission_mode === "office"
+                    ? "Bring the required physical documents to the BWD office now, even if your inspection is not yet scheduled. You may switch to online upload until verification is completed."
+                    : "Online upload is ready below, even if your inspection is not yet scheduled. You may switch to office submission until verification is completed."
                 }
               />
             </div>
+          ) : null}
+
+          {selectedApplication && seminarState.allCompleted && !assignedAccount.isConverted ? (
+            <ApplicantDocumentPanel
+              application={selectedApplication as any}
+              documents={documents ?? []}
+              isSubmissionUnlocked
+              isActive={Boolean(isDocumentSubmissionActive)}
+            />
           ) : null}
 
           {showPrimaryActionButton ? (
@@ -804,15 +810,6 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
             )}
           </CardContent>
         </Card>
-      ) : null}
-
-      {selectedApplication && inspectionApproved ? (
-        <ApplicantDocumentPanel
-          application={selectedApplication as any}
-          documents={documents ?? []}
-          isUploadUnlocked={inspectionApproved}
-          isActive={Boolean(isDocumentSubmissionActive)}
-        />
       ) : null}
 
       {applications.length > 1 ? (

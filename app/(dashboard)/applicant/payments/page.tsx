@@ -176,9 +176,9 @@ export default async function ApplicantPaymentsPage({ searchParams }: ApplicantP
         <CardContent className="space-y-6">
           {application && (payments ?? []).length === 0 && !inspectionApproved ? (
             <div className="rounded-xl border border-primary/20 bg-primary/[0.05] p-4">
-              <p className="font-medium text-primary">Inspection approval required</p>
+              <p className="font-medium text-primary">Inspection approval is still required for payment</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Document upload and payment scheduling open after the in-house inspection is approved.
+                You can submit documents now. Payment scheduling opens after the in-house inspection is approved and the required documents are verified.
               </p>
             </div>
           ) : null}

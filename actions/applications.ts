@@ -154,7 +154,7 @@ export async function createApplicationAction(_prevState: ActionState, formData:
         `<h3>Application Submitted</h3>
          <p>Your water connection application for <b>${applicant.full_name}</b> has been successfully submitted.</p>
          <p><strong>Your document submission choice:</strong> ${documentSubmissionLabel}</p>
-         <p>Document submission opens after your inspection is approved. You can change this choice before document verification is completed.</p>
+         <p>You can submit your documents now, even if your inspection is not yet scheduled. You can change this choice before document verification is completed.</p>
          <p>Please check your dashboard for the next steps.</p>`
       );
     }

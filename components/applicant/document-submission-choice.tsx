@@ -36,14 +36,14 @@ const OPTIONS: Array<{
     mode: "online",
     eyebrow: "Online",
     title: "Upload online",
-    description: "Upload PDF, JPG, or PNG files after inspection approval and track their review online.",
+    description: "Upload PDF, JPG, or PNG files after completing the seminar and track their review online.",
     icon: CloudUpload
   },
   {
     mode: "office",
     eyebrow: "At the BWD office",
     title: "Submit physical documents",
-    description: "Bring the required physical documents after inspection approval for staff verification.",
+    description: "Bring the required physical documents to the BWD office for staff verification.",
     icon: Building2
   }
 ];
@@ -59,7 +59,7 @@ export function DocumentSubmissionChoice({
   error,
   compact = false,
   title = "Choose how you'll submit your documents",
-  description = "Choose now so BWD knows how to prepare for verification. Actual submission opens after your inspection is approved."
+  description = "Choose how you will submit your documents. You can submit them as soon as the seminar is complete, even while your inspection is not yet scheduled."
 }: DocumentSubmissionChoiceProps) {
   const [state, formAction, pending] = useActionState(setDocumentSubmissionModeAction, initialActionState);
   const [radioValue, setRadioValue] = useState<DocumentSubmissionMode | null>(selectedMode);
