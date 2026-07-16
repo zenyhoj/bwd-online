@@ -922,7 +922,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     ) : null}
                     {selectedDocuments.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
-                        No uploaded documents yet. Use document validation notes to list lacking documents for the applicant.
+                        {selectedApplication.document_submission_mode === "office"
+                          ? "Office submission selected. No file upload is required; confirm the physical documents in the checklist below."
+                          : "No uploaded documents yet. Use document validation notes to list lacking documents for the applicant."}
                       </p>
                     ) : null}
                     {canRequestAdditionalDocuments ? (
@@ -935,6 +937,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       applicationId={String(selectedApplication.id)}
                       applicationStatus={String(selectedApplication.status)}
                       documentSubmissionMode={String(selectedApplication.document_submission_mode)}
+                      documentsVerifiedAt={(selectedApplication.documents_verified_at as string | null | undefined) ?? null}
                       requirements={selectedDocumentRequirements} 
                     />
                     <div className="rounded-xl border border-border/70 bg-muted/10 p-4">

@@ -240,7 +240,7 @@ export async function getAdminApplications(pagination: PaginationParams): Promis
   const { data, count, error } = await supabase
     .from("applications")
     .select(
-      "id, applicant_id, full_name, address, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
+      "id, applicant_id, full_name, address, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, documents_verified_at, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
       { count: "exact" }
     )
     .eq("organization_id", profile.organization_id)
@@ -333,7 +333,7 @@ async function getAdminApplicationsQueueLegacy(
   let query = supabase
     .from("applications")
     .select(
-      "id, applicant_id, full_name, address, cellphone_number, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, water_meter_installed_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
+      "id, applicant_id, full_name, address, cellphone_number, service_type, status, submitted_at, created_at, document_submission_mode, document_review_note, documents_verified_at, inhouse_installation_completed, inhouse_installation_completed_at, water_meter_installation_scheduled_at, water_meter_installed_at, accredited_plumbers(full_name), inspections(id,status,plumbing_approved,scheduled_at), payments(id,status,paid_at,due_date), concessionaires(id)",
       { count: "exact" }
     )
     .eq("organization_id", profile.organization_id)
@@ -602,7 +602,7 @@ export async function getAdminDashboardStats() {
 
   const { data, error } = await supabase
     .from("applications")
-    .select("id, status, document_submission_mode, inhouse_installation_completed, water_meter_installation_scheduled_at, water_meter_installed_at, inspections(id, status), documents(id, status), payments(id, status, paid_at, due_date), concessionaires(id)")
+    .select("id, status, document_submission_mode, documents_verified_at, inhouse_installation_completed, water_meter_installation_scheduled_at, water_meter_installed_at, inspections(id, status), documents(id, status), payments(id, status, paid_at, due_date), concessionaires(id)")
     .eq("organization_id", profile.organization_id);
 
   if (error) throw error;

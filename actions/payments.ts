@@ -49,7 +49,7 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, organization_id, status, document_submission_mode, document_review_note")
+      .select("id, organization_id, status, document_submission_mode, document_review_note, documents_verified_at")
       .eq("id", parsed.data.applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();

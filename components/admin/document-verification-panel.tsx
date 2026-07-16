@@ -23,6 +23,7 @@ type DocumentVerificationPanelProps = {
   applicationId: string;
   applicationStatus: string;
   documentSubmissionMode?: string;
+  documentsVerifiedAt?: string | null;
   requirements: DocumentRequirementRow[];
 };
 
@@ -67,32 +68,37 @@ function VerificationDisclosure({
               {isVerificationComplete
                 ? "Document verification is complete."
                 : isOfficeSubmission
-                  ? `${requiredRows.length} required physical documents to verify at the office.`
+                  ? `${requirements.length} physical documents to confirm at the office.`
                   : `${uploadedCount} files uploaded; ${unclassifiedCount} requirements still to assess.`}
             </span>
           </span>
         </span>
 
         <span className="flex flex-wrap items-center gap-2 sm:justify-end">
-          <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-            {requiredRows.length} required
-          </span>
-          {optionalCount > 0 ? (
-            <span className="rounded-full border border-sky-300/70 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
-              {optionalCount} not required
-            </span>
-          ) : null}
-          {unclassifiedCount > 0 ? (
-            <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
-              {unclassifiedCount} to assess
-            </span>
-          ) : null}
           {isOfficeSubmission ? (
-            <span className="rounded-full border border-amber-300/70 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-              Office submission
-            </span>
+            <>
+              <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                {requirements.length} physical
+              </span>
+              <span className="rounded-full border border-amber-300/70 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                Office submission
+              </span>
+            </>
           ) : (
             <>
+              <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                {requiredRows.length} required
+              </span>
+              {optionalCount > 0 ? (
+                <span className="rounded-full border border-sky-300/70 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
+                  {optionalCount} not required
+                </span>
+              ) : null}
+              {unclassifiedCount > 0 ? (
+                <span className="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                  {unclassifiedCount} to assess
+                </span>
+              ) : null}
               <span className="rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
                 {uploadedCount} uploaded
               </span>
@@ -122,7 +128,7 @@ function VerificationDisclosure({
   );
 }
 
-export function DocumentVerificationPanel({ applicationId, applicationStatus, documentSubmissionMode, requirements }: DocumentVerificationPanelProps) {
+export function DocumentVerificationPanel({ applicationId, applicationStatus, documentSubmissionMode, documentsVerifiedAt, requirements }: DocumentVerificationPanelProps) {
   const [selectedType, setSelectedType] = useState<string>(NO_DOCUMENT_VALUE);
   const [previewDocumentId, setPreviewDocumentId] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState(completeDocumentVerificationAction, initialActionState);
@@ -160,9 +166,9 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
     isOfficeSubmission ||
     (!hasUnclassifiedUploads && requiredRows.every((row) => Boolean(row.document) && row.status === "verified"));
   
-  // If the application is already past the document verification stage, hide the complete button
-  const showCompleteForm = applicationStatus === "inspection_completed" || applicationStatus === "under_review";
-  const isVerificationComplete = isDocumentSubmissionLocked(applicationStatus);
+  // Online verification still follows the inspection review stage. Office submissions can be confirmed immediately.
+  const showCompleteForm = isOfficeSubmission || applicationStatus === "inspection_completed" || applicationStatus === "under_review";
+  const isVerificationComplete = isDocumentSubmissionLocked(applicationStatus, documentsVerifiedAt);
 
   if (requirements.length === 0) {
     return (
@@ -172,45 +178,50 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
     );
   }
 
-  if (isOfficeSubmission && !isVerificationComplete) {
+  if (isOfficeSubmission) {
     return (
       <VerificationDisclosure
         requirements={requirements}
         isOfficeSubmission={isOfficeSubmission}
         isVerificationComplete={isVerificationComplete}
       >
+        {isVerificationComplete ? (
+          <div className="space-y-5 rounded-xl border border-emerald-300/70 bg-emerald-50/70 p-6 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-300" />
+              <div>
+                <p className="font-semibold text-foreground">Office verification complete</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  All listed physical documents were received and verified at the BWD office. No file uploads are required.
+                </p>
+              </div>
+            </div>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {requirements.map((requirement) => (
+                <li key={requirement.type} className="flex items-center gap-2 rounded-lg border border-emerald-200/80 bg-background/80 p-3 text-sm">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                  <span className="font-medium text-foreground">{requirement.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
         <div className="space-y-8">
           <div className="rounded-xl border border-dashed border-border/70 bg-muted/10 p-6">
             <p className="text-sm font-semibold text-foreground mb-2">Office Document Verification</p>
             <p className="text-sm text-muted-foreground mb-4">
-              The applicant chose to submit and verify their physical documents at the office. Please verify the following requirements manually:
+              The applicant chose office submission. Confirm the physical documents below; no upload or per-item classification is required.
             </p>
             <ul className="space-y-2 mb-6">
               {requirements.map((req) => (
-                <li key={req.type} className="flex flex-col gap-2 rounded-lg border border-border/60 bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+                <li key={req.type} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background p-3">
                   <span className="font-medium text-foreground">{req.label}</span>
-                  <form action={requirementAction} className="shrink-0">
-                    <input type="hidden" name="applicationId" value={applicationId} />
-                    <input type="hidden" name="documentType" value={req.type} />
-                    <label className="sr-only" htmlFor={`office-requirement-${req.type}`}>Requirement level for {req.label}</label>
-                    <select
-                      id={`office-requirement-${req.type}`}
-                      name="requirementLevel"
-                      key={`${req.type}-${req.isRequired}-${req.isClassified}`}
-                      defaultValue={req.isClassified ? (req.isRequired ? "required" : "optional") : "unset"}
-                      disabled={isVerificationComplete || requirementPending}
-                      onChange={(event) => event.currentTarget.form?.requestSubmit()}
-                      className="h-9 rounded-md border border-input bg-background px-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
-                    >
-                      <option value="unset">Set requirement</option>
-                      <option value="required">Required</option>
-                      <option value="optional">Not Required</option>
-                    </select>
-                  </form>
+                  <span className="shrink-0 rounded-full border border-amber-300/70 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                    Physical document
+                  </span>
                 </li>
               ))}
             </ul>
-            <FormMessage state={requirementState} />
 
             {showCompleteForm && (
               <div className="flex flex-col gap-4 rounded-xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -220,7 +231,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                     Manual verification completion
                   </p>
                   <p className="text-sm text-muted-foreground max-w-2xl">
-                    By clicking this button, you certify that you have physically inspected and verified all the required documents at the office.
+                    This confirms that every listed physical document was received and verified at the office.
                   </p>
                 </div>
 
@@ -232,7 +243,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                     disabled={!canComplete}
                     className="w-full sm:w-auto"
                   >
-                    Verify Documents
+                    Confirm all physical documents received
                   </Button>
                   <div className="mt-2 text-right">
                     <FormMessage state={state} />
@@ -242,6 +253,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
             )}
           </div>
         </div>
+        )}
       </VerificationDisclosure>
     );
   }

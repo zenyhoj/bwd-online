@@ -163,6 +163,8 @@ create table public.applications (
   optional_document_types public.document_type[] not null default '{}'::public.document_type[],
   classified_document_types public.document_type[] not null default '{}'::public.document_type[],
   document_review_note text,
+  documents_verified_at timestamptz,
+  documents_verified_by uuid references public.profiles (id) on delete set null,
   inhouse_installation_scheduled_at timestamptz,
   inhouse_installation_scheduled_by uuid references public.profiles (id) on delete set null,
   inhouse_installation_completed boolean not null default false,

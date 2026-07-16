@@ -11,12 +11,12 @@ const documentSubmissionLockedStatuses = new Set([
   "converted"
 ]);
 
-export function isDocumentSubmissionLocked(status: string) {
-  return documentSubmissionLockedStatuses.has(status);
+export function isDocumentSubmissionLocked(status: string, documentsVerifiedAt?: string | null) {
+  return Boolean(documentsVerifiedAt) || documentSubmissionLockedStatuses.has(status);
 }
 
 type ApplicationDocumentWorkflowInput = Partial<
-  Pick<Application, "document_submission_mode" | "optional_document_types" | "classified_document_types" | "document_review_note" | "status">
+  Pick<Application, "document_submission_mode" | "optional_document_types" | "classified_document_types" | "document_review_note" | "documents_verified_at" | "status">
 > | null | undefined;
 
 export type DocumentRequirementRow = {
@@ -80,16 +80,14 @@ export function isOfficeDocumentSubmission(application: ApplicationDocumentWorkf
 }
 
 export function areDocumentsReadyForPayment(application: ApplicationDocumentWorkflowInput) {
-  // Office document submissions still need to be verified by the admin
-  // so we wait for the documents_verified status.
-
   const readyStatuses = [
     "documents_verified",
     "payment_scheduled",
-    "approved"
+    "approved",
+    "converted"
   ];
 
-  return application?.status ? readyStatuses.includes(application.status) : false;
+  return Boolean(application?.documents_verified_at) || Boolean(application?.status && readyStatuses.includes(application.status));
 }
 
 export function getWacoPrintEligibility({

@@ -294,6 +294,8 @@ export type Database = {
           optional_document_types: Database["public"]["Enums"]["document_type"][];
           classified_document_types: Database["public"]["Enums"]["document_type"][];
           document_review_note: string | null;
+          documents_verified_at: string | null;
+          documents_verified_by: string | null;
           inhouse_installation_proof_image_url: string | null;
           inhouse_installation_signed_at: string | null;
           inhouse_installation_updated_by: string | null;
@@ -327,6 +329,8 @@ export type Database = {
           optional_document_types?: Database["public"]["Enums"]["document_type"][];
           classified_document_types?: Database["public"]["Enums"]["document_type"][];
           document_review_note?: string | null;
+          documents_verified_at?: string | null;
+          documents_verified_by?: string | null;
           inhouse_installation_proof_image_url?: string | null;
           inhouse_installation_signed_at?: string | null;
           inhouse_installation_updated_by?: string | null;
@@ -360,6 +364,8 @@ export type Database = {
           optional_document_types?: Database["public"]["Enums"]["document_type"][];
           classified_document_types?: Database["public"]["Enums"]["document_type"][];
           document_review_note?: string | null;
+          documents_verified_at?: string | null;
+          documents_verified_by?: string | null;
           inhouse_installation_proof_image_url?: string | null;
           inhouse_installation_signed_at?: string | null;
           inhouse_installation_updated_by?: string | null;
@@ -383,6 +389,13 @@ export type Database = {
             columns: ["applicant_id"];
             isOneToOne: false;
             referencedRelation: "applicants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "applications_documents_verified_by_fkey";
+            columns: ["documents_verified_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
             referencedColumns: ["id"];
           },
           {

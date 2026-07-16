@@ -52,7 +52,7 @@ export default async function AdminPaymentsPage() {
   const profile = await getCurrentProfile();
   const { data: applications, error: applicationsError } = await supabase
     .from("applications")
-    .select("id, full_name, service_type, status, document_submission_mode, document_review_note, inspections(status, plumbing_approved, inspected_at), documents(*), payments(*), concessionaires(id)")
+    .select("id, full_name, service_type, status, document_submission_mode, document_review_note, documents_verified_at, inspections(status, plumbing_approved, inspected_at), documents(*), payments(*), concessionaires(id)")
     .eq("organization_id", profile.organization_id)
     .order("created_at", { ascending: false });
 

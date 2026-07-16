@@ -38,7 +38,7 @@ function buildVerifiedDocumentAuditList({
   const classifiedTypes = new Set(classifiedDocumentTypes);
 
   if (submissionMode === "office") {
-    return requiredDocumentTypes.filter((type) => classifiedTypes.has(type) && !optionalTypes.has(type)).map((type) => ({
+    return requiredDocumentTypes.map((type) => ({
       document_id: null,
       document_type: type,
       label: documentTypeLabels[type],
@@ -66,6 +66,22 @@ function buildVerifiedDocumentAuditList({
     }));
 }
 
+function getStatusAfterDocumentReopen(application: {
+  inspections?: { status?: string | null }[] | null;
+}) {
+  const inspections = application.inspections ?? [];
+
+  if (inspections.some((inspection) => inspection.status === "approved")) {
+    return "inspection_completed" as const;
+  }
+
+  if (inspections.length > 0) {
+    return "inspection_scheduled" as const;
+  }
+
+  return "submitted" as const;
+}
+
 async function getManagedApplication({
   supabase,
   applicationId,
@@ -86,7 +102,7 @@ async function getManagedApplication({
 
   const { data: application } = await supabase
     .from("applications")
-    .select("id, applicant_id, status, seminar_completed, optional_document_types, classified_document_types")
+    .select("id, applicant_id, status, seminar_completed, optional_document_types, classified_document_types, documents_verified_at")
     .eq("id", applicationId)
     .in("applicant_id", applicants.map((applicant) => applicant.id))
     .maybeSingle();
@@ -121,7 +137,7 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
       return { success: false, message: "You are not allowed to upload documents for this application." };
     }
 
-    if (isDocumentSubmissionLocked(application.status)) {
+    if (isDocumentSubmissionLocked(application.status, application.documents_verified_at)) {
       return { success: false, message: "Documents cannot be uploaded after verification is complete." };
     }
 
@@ -270,7 +286,7 @@ export async function setDocumentSubmissionModeAction(
       return { success: false, message: "You are not allowed to update this document preference." };
     }
 
-    if (isDocumentSubmissionLocked(application.status)) {
+    if (isDocumentSubmissionLocked(application.status, application.documents_verified_at)) {
       return {
         success: false,
         message: "The document submission method cannot be changed after verification is complete."
@@ -363,7 +379,7 @@ export async function reenableDocumentValidationAction(
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, status")
+      .select("id, status, inspections(status)")
       .eq("id", parsed.data.applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -379,8 +395,10 @@ export async function reenableDocumentValidationAction(
     const { error } = await supabase
       .from("applications")
       .update({
-        status: "inspection_completed",
-        document_review_note: parsed.data.reviewNote
+        status: getStatusAfterDocumentReopen(application),
+        document_review_note: parsed.data.reviewNote,
+        documents_verified_at: null,
+        documents_verified_by: null
       })
       .eq("id", parsed.data.applicationId)
       .eq("organization_id", profile.organization_id);
@@ -432,7 +450,7 @@ export async function updateDocumentRequirementAction(
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, status, optional_document_types, classified_document_types")
+      .select("id, status, optional_document_types, classified_document_types, documents_verified_at")
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -441,7 +459,7 @@ export async function updateDocumentRequirementAction(
       return { success: false, message: applicationError?.message ?? "Application not found." };
     }
 
-    if (isDocumentSubmissionLocked(application.status)) {
+    if (isDocumentSubmissionLocked(application.status, application.documents_verified_at)) {
       return { success: false, message: "Document requirements cannot be changed after verification is complete." };
     }
 
@@ -512,7 +530,7 @@ export async function bulkVerifySubmittedDocumentsAction(
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, status, optional_document_types, classified_document_types")
+      .select("id, status, optional_document_types, classified_document_types, documents_verified_at")
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -521,7 +539,7 @@ export async function bulkVerifySubmittedDocumentsAction(
       return { success: false, message: applicationError?.message ?? "Application not found." };
     }
 
-    if (isDocumentSubmissionLocked(application.status)) {
+    if (isDocumentSubmissionLocked(application.status, application.documents_verified_at)) {
       return { success: false, message: "Documents cannot be reviewed after verification is complete." };
     }
 
@@ -623,13 +641,17 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, status, optional_document_types, classified_document_types")
+      .select("id, status, optional_document_types, classified_document_types, documents_verified_at, inspections(status)")
       .eq("id", document.application_id)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
 
     if (applicationError || !application) {
       return { success: false, message: applicationError?.message ?? "Application not found." };
+    }
+
+    if (isDocumentSubmissionLocked(application.status, application.documents_verified_at)) {
+      return { success: false, message: "Documents cannot be reviewed after verification is complete." };
     }
 
     const typedDocumentType = document.document_type as ApplicationDocumentType;
@@ -648,13 +670,14 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
       return { success: false, message: "Documents marked Not Required do not need a valid or invalid review." };
     }
 
+    const reviewedAt = new Date().toISOString();
     const { error } = await supabase
       .from("documents")
       .update({
         status: parsed.data.status,
         review_notes: parsed.data.reviewNotes,
         reviewer_id: profile.id,
-        reviewed_at: new Date().toISOString()
+        reviewed_at: reviewedAt
       })
       .eq("id", parsed.data.documentId);
 
@@ -699,8 +722,10 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
 
     if (parsed.data.status === "rejected" && reviewedRequirement?.isRequired) {
       applicationUpdate = {
-        status: "inspection_completed",
-        document_review_note: `Please reupload ${documentTypeLabels[document.document_type as ApplicationDocumentType] ?? "the selected document"}: ${parsed.data.reviewNotes ?? ""}`
+        status: getStatusAfterDocumentReopen(application),
+        document_review_note: `Please reupload ${documentTypeLabels[document.document_type as ApplicationDocumentType] ?? "the selected document"}: ${parsed.data.reviewNotes ?? ""}`,
+        documents_verified_at: null,
+        documents_verified_by: null
       };
 
       // Send email to notify the user of the required action
@@ -731,8 +756,12 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
       }
     } else if (allDocumentsVerified && allUploadedDocumentsClassified) {
       applicationUpdate = {
-        status: "documents_verified",
-        document_review_note: null
+        ...(application.inspections?.some((inspection) => inspection.status === "approved")
+          ? { status: "documents_verified" }
+          : {}),
+        document_review_note: null,
+        documents_verified_at: reviewedAt,
+        documents_verified_by: profile.id
       };
 
       try {
@@ -801,13 +830,17 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
     // Verify application exists and belongs to the admin's organization
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, organization_id, applicant_id, status, full_name, document_submission_mode, optional_document_types, classified_document_types")
+      .select("id, organization_id, applicant_id, status, full_name, document_submission_mode, optional_document_types, classified_document_types, document_review_note, documents_verified_at, documents_verified_by, inspections(status)")
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
 
     if (applicationError || !application) {
       return { success: false, message: applicationError?.message ?? "Application not found." };
+    }
+
+    if (isDocumentSubmissionLocked(application.status, application.documents_verified_at)) {
+      return { success: false, message: "Document verification is already complete." };
     }
 
     const { data: documents, error: documentsError } = await supabase
@@ -837,13 +870,25 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
       }
     }
 
-    // Update application status
+    const isOfficeSubmission = application.document_submission_mode === "office";
+    const hasApprovedInspection = application.inspections?.some((inspection) => inspection.status === "approved") ?? false;
+    const verifiedAt = new Date().toISOString();
+    const verificationUpdate = {
+      ...(hasApprovedInspection ? { status: "documents_verified" as const } : {}),
+      document_review_note: null,
+      documents_verified_at: verifiedAt,
+      documents_verified_by: profile.id,
+      ...(isOfficeSubmission
+        ? {
+            optional_document_types: [] as ApplicationDocumentType[],
+            classified_document_types: [...applicationDocumentTypes]
+          }
+        : {})
+    };
+
     const { error: updateError } = await supabase
       .from("applications")
-      .update({
-        status: "documents_verified",
-        document_review_note: null
-      })
+      .update(verificationUpdate)
       .eq("id", applicationId)
       .eq("organization_id", profile.organization_id);
 
@@ -851,7 +896,6 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
       return { success: false, message: updateError.message };
     }
 
-    const verifiedAt = new Date().toISOString();
     const { error: auditError } = await supabase
       .from("document_verification_audit_logs")
       .insert({
@@ -871,11 +915,33 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
       });
 
     if (auditError) {
+      const { error: rollbackError } = await supabase
+        .from("applications")
+        .update({
+          status: application.status,
+          document_review_note: application.document_review_note,
+          documents_verified_at: application.documents_verified_at,
+          documents_verified_by: application.documents_verified_by,
+          optional_document_types: application.optional_document_types,
+          classified_document_types: application.classified_document_types
+        })
+        .eq("id", applicationId)
+        .eq("organization_id", profile.organization_id);
+
+      if (rollbackError) {
+        console.error("Failed to roll back document verification after audit error:", rollbackError);
+      }
+
       return { success: false, message: auditError.message };
     }
 
     revalidatePath("/admin");
     revalidatePath("/applicant");
-    return { success: true, message: "Document verification completed." };
+    return {
+      success: true,
+      message: isOfficeSubmission
+        ? "All physical documents were confirmed and verified."
+        : "Document verification completed."
+    };
   });
 }
