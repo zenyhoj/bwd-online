@@ -560,7 +560,7 @@ export async function bulkVerifySubmittedDocumentsAction(
     }
 
     if (submittedRows.some((row) => !row.isClassified)) {
-      return { success: false, message: "Set every submitted document as Required or Optional first." };
+      return { success: false, message: "Set every submitted document as Required or Not Required first." };
     }
 
     if (submittedRows.some((row) => row.status === "rejected")) {
@@ -653,11 +653,11 @@ export async function reviewDocumentAction(_prevState: ActionState, formData: Fo
     );
 
     if (!classifiedTypes.has(typedDocumentType)) {
-      return { success: false, message: "Set this document as Required or Optional before reviewing it." };
+      return { success: false, message: "Set this document as Required or Not Required before reviewing it." };
     }
 
     if (optionalTypes.has(typedDocumentType)) {
-      return { success: false, message: "Optional documents do not need a valid or invalid review." };
+      return { success: false, message: "Documents marked Not Required do not need a valid or invalid review." };
     }
 
     const { error } = await supabase
@@ -841,7 +841,7 @@ export async function completeDocumentVerificationAction(_prevState: ActionState
       );
 
       if (requiredRows.some((row) => row.document && !row.isClassified)) {
-        return { success: false, message: "Set every uploaded document as Required or Optional before completing verification." };
+        return { success: false, message: "Set every uploaded document as Required or Not Required before completing verification." };
       }
 
       if (requiredRows.some((row) => row.isRequired && (!row.document || row.status !== "verified"))) {

@@ -79,7 +79,7 @@ function VerificationDisclosure({
           </span>
           {optionalCount > 0 ? (
             <span className="rounded-full border border-sky-300/70 bg-sky-50 px-2.5 py-1 text-[11px] font-semibold text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300">
-              {optionalCount} optional
+              {optionalCount} not required
             </span>
           ) : null}
           {unclassifiedCount > 0 ? (
@@ -204,7 +204,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                     >
                       <option value="unset">Set requirement</option>
                       <option value="required">Required</option>
-                      <option value="optional">Optional</option>
+                      <option value="optional">Not Required</option>
                     </select>
                   </form>
                 </li>
@@ -278,7 +278,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
             <p className="text-sm font-semibold text-foreground">Bulk verification</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {hasUnclassifiedUploads
-                ? "Classify every uploaded file as Required or Optional to enable bulk verification."
+                ? "Classify every uploaded file as Required or Not Required to enable bulk verification."
                 : hasRejectedSubmitted
                   ? "Resolve rejected files individually before verifying the remaining submissions."
                   : bulkVerifiableCount > 0
@@ -333,7 +333,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                               : "rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
                           }
                         >
-                          {row.isRequired ? "Required" : "Optional"}
+                          {row.isRequired ? "Required" : "Not Required"}
                         </span>
                       ) : null}
                     </div>
@@ -352,7 +352,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                       >
                         <option value="unset">Set requirement</option>
                         <option value="required">Required</option>
-                        <option value="optional">Optional</option>
+                        <option value="optional">Not Required</option>
                       </select>
                     </form>
                   </div>
@@ -425,7 +425,7 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
             )}
             {hasUnclassifiedUploads && !hasRejected && (
               <p className="text-xs font-medium text-amber-600 dark:text-amber-500">
-                Set uploaded documents as Required or Optional before completing verification.
+                Set uploaded documents as Required or Not Required before completing verification.
               </p>
             )}
           </div>
@@ -461,13 +461,13 @@ export function DocumentVerificationPanel({ applicationId, applicationStatus, do
                     {selectedRow.document
                       ? selectedRow.isRequired
                         ? "Review this required file and mark it as valid or invalid."
-                        : "This file is optional, so no valid or invalid review is required."
+                        : "This file is not required, so no valid or invalid review is needed."
                       : "No file uploaded for this requirement yet."}
                   </p>
                 </div>
                 {!selectedRow.isRequired && selectedRow.document ? (
                   <span className="rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                    Optional
+                    Not Required
                   </span>
                 ) : (
                   <StatusBadge status={selectedRow.status === "missing" ? "pending" : selectedRow.status} />

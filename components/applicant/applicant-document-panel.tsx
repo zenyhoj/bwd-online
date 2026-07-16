@@ -46,7 +46,7 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <p>
-                Bring the required physical documents listed below for staff verification. Optional documents may be included when available.
+                Bring the required physical documents listed below for staff verification. Documents marked Not Required may be included when available.
               </p>
               <p className="font-medium text-foreground">
                 Keep this application available on your phone so staff can match the documents to your record.
@@ -126,7 +126,7 @@ export function ApplicantDocumentPanel({ application, documents, isUploadUnlocke
                         <span>{row.label}</span>
                         {row.isClassified && row.document ? (
                           <Badge variant={row.isRequired ? "default" : "outline"}>
-                            {row.isRequired ? "Required" : "Optional"}
+                            {row.isRequired ? "Required" : "Not Required"}
                           </Badge>
                         ) : null}
                       </div>
