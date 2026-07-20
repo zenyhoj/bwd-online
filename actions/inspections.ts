@@ -100,6 +100,7 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
       .single();
 
     const applicantProfileId = (applicationRecord?.applicants as any)?.profile_id;
+    const applicantName = (applicationRecord?.applicants as any)?.full_name ?? parsed.data.applicationId;
     if (applicantProfileId) {
       const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
       const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
@@ -108,7 +109,7 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
           userAuth.user.email,
           "Inspection Scheduled - BWD Online",
           `<h3>Inspection Scheduled</h3>
-           <p>An inspection for your application ID: <b>${parsed.data.applicationId}</b> has been scheduled.</p>
+           <p>An inspection for applicant: <b>${applicantName}</b> has been scheduled.</p>
            <p><strong>Scheduled Date:</strong> ${new Date(parsed.data.scheduledAt).toLocaleString()}</p>
            <p>Please ensure someone is available at the premises during the inspection.</p>`
         );
@@ -267,6 +268,7 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
 
     if (parsed.data.status === "approved") {
       const applicantProfileId = (application?.applicants as any)?.profile_id;
+      const applicantName = (application?.applicants as any)?.full_name ?? inspection.application_id;
       if (applicantProfileId) {
         const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
         const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
@@ -275,7 +277,7 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
             userAuth.user.email,
             "Inspection Approved - BWD Online",
             `<h3>Inspection Approved</h3>
-             <p>Your site inspection for application ID: <b>${inspection.application_id}</b> has been approved!</p>
+             <p>Your site inspection for applicant: <b>${applicantName}</b> has been approved!</p>
              <p>Please log in to your dashboard to proceed to the next steps.</p>`
           );
         }

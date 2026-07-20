@@ -244,12 +244,15 @@ export async function uploadDocumentAction(_prevState: ActionState, formData: Fo
       })
       .eq("id", parsed.data.applicationId);
 
+    const applicantRes = await supabase.from("applicants").select("full_name").eq("id", application.applicant_id).maybeSingle();
+    const applicantName = applicantRes.data?.full_name ?? parsed.data.applicationId;
+
     // Notify admin
     await sendWorkflowEmail(
       await getAdminEmails(),
       "New Document Uploaded",
       `<h3>New Document Uploaded</h3>
-       <p>A new document (<strong>${documentTypeLabels[parsed.data.documentType as ApplicationDocumentType] ?? parsed.data.documentType}</strong>) has been uploaded for application ID: <b>${parsed.data.applicationId}</b>.</p>
+       <p>A new document (<strong>${documentTypeLabels[parsed.data.documentType as ApplicationDocumentType] ?? parsed.data.documentType}</strong>) has been uploaded for applicant: <b>${applicantName}</b>.</p>
        <p>Please review it in the admin dashboard.</p>`
     );
 

@@ -49,7 +49,7 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
 
     const { data: application, error: applicationError } = await supabase
       .from("applications")
-      .select("id, organization_id, status, document_submission_mode, document_review_note, documents_verified_at")
+      .select("id, organization_id, status, document_submission_mode, document_review_note, documents_verified_at, applicants(full_name)")
       .eq("id", parsed.data.applicationId)
       .eq("organization_id", profile.organization_id)
       .maybeSingle();
@@ -142,12 +142,14 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
 
     const user = await getSessionUser();
     
+    const applicantName = (application.applicants as any)?.full_name ?? parsed.data.applicationId;
+    
     // Send email to Admin
     await sendWorkflowEmail(
       await getAdminEmails(),
       "New Payment Scheduled",
       `<h3>New Payment Scheduled</h3>
-       <p>A new payment has been scheduled for application ID: <b>${parsed.data.applicationId}</b>.</p>
+       <p>A new payment has been scheduled for applicant: <b>${applicantName}</b>.</p>
        <p>Please check the admin dashboard for details.</p>`
     );
 
@@ -157,7 +159,7 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
         user.email,
         "Payment Scheduled",
         `<h3>Payment Scheduled</h3>
-         <p>Your payment schedule has been saved for application ID: <b>${parsed.data.applicationId}</b>.</p>
+         <p>Your payment schedule has been saved for applicant: <b>${applicantName}</b>.</p>
          <p>Please pay at the office on the scheduled date.</p>`
       );
     }
@@ -281,12 +283,13 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
       if (applicantProfileId) {
         const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
         const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+        const applicantName = (applicationRecord.applicants as any)?.full_name ?? paymentRecord.application_id;
         if (userAuth?.user?.email) {
           await sendWorkflowEmail(
             userAuth.user.email,
             "Payment Approved - BWD Online",
             `<h3>Payment Approved</h3>
-             <p>Your payment for application ID: <b>${paymentRecord.application_id}</b> has been received and verified.</p>
+             <p>Your payment for applicant: <b>${applicantName}</b> has been received and verified.</p>
              <p>Thank you! You can view the receipt in your dashboard.</p>`
           );
         }
