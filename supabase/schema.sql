@@ -159,7 +159,7 @@ create table public.applications (
   address text not null,
   number_of_users integer not null check (number_of_users > 0),
   concessionaire_classification public.concessionaire_classification,
-  document_submission_mode text not null default 'online' check (document_submission_mode in ('online', 'office')),
+  document_submission_mode text not null default 'office' check (document_submission_mode in ('online', 'office')),
   optional_document_types public.document_type[] not null default '{}'::public.document_type[],
   classified_document_types public.document_type[] not null default '{}'::public.document_type[],
   document_review_note text,

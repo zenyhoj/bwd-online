@@ -73,20 +73,6 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: "Connection classification is required.", fieldErrors: { classification: ["Please select a classification."] } as Record<string, string[]> };
     }
 
-    const documentSubmissionMode = documentSubmissionModeValueSchema.safeParse(
-      formData.get("documentSubmissionMode")
-    );
-
-    if (!documentSubmissionMode.success) {
-      return {
-        success: false,
-        message: "Choose how you will submit the required documents.",
-        fieldErrors: {
-          documentSubmissionMode: ["Select online upload or submission at the BWD office."]
-        }
-      };
-    }
-
     const { data: existingApps, error: existingAppsError } = await supabase
       .from("applications")
       .select("id, status, payments(status)")
@@ -123,7 +109,7 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       number_of_users: numberOfUsers,
       service_type: "new_connection",
       seminar_completed: true,
-      document_submission_mode: documentSubmissionMode.data,
+      document_submission_mode: "office",
       status: "submitted",
       submitted_at: new Date().toISOString(),
       concessionaire_classification: classification as ConcessionaireClassification
@@ -133,8 +119,7 @@ export async function createApplicationAction(_prevState: ActionState, formData:
       return { success: false, message: error.message };
     }
 
-    const documentSubmissionLabel =
-      documentSubmissionMode.data === "office" ? "Physical documents at the BWD office" : "Online document upload";
+    const documentSubmissionLabel = "Physical documents at the BWD office";
 
     // Send email to Admin
     await sendWorkflowEmail(

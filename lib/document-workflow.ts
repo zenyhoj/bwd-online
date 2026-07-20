@@ -99,17 +99,21 @@ export function getWacoPrintEligibility({
   documents: Document[];
   payments?: Array<Pick<Payment, "status">>;
 }): WacoPrintEligibility {
+  const allowedStatuses = [
+    "inspection_completed",
+    "documents_verified",
+    "payment_scheduled",
+    "approved",
+    "converted"
+  ];
+
+  if (application?.status && allowedStatuses.includes(application.status)) {
+    return { allowed: true, reason: null };
+  }
+
   if (payments.some((payment) => payment.status === "paid")) {
     return { allowed: true, reason: null };
   }
 
-  if (isOfficeDocumentSubmission(application)) {
-    return areDocumentsReadyForPayment(application)
-      ? { allowed: true, reason: null }
-      : { allowed: false, reason: "office_documents_unverified" };
-  }
-
-  return areDocumentsReadyForPayment(application)
-    ? { allowed: true, reason: null }
-    : { allowed: false, reason: "online_documents_incomplete" };
+  return { allowed: false, reason: "office_documents_unverified" };
 }

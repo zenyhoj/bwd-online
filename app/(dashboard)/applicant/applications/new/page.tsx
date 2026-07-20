@@ -13,9 +13,6 @@ export default async function NewApplicationPage({
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const applicantId = typeof resolvedSearchParams?.["applicant"] === "string" ? resolvedSearchParams["applicant"] : null;
-  const requestedDocumentMode = resolvedSearchParams?.["documentMode"];
-  const initialDocumentMode =
-    requestedDocumentMode === "online" || requestedDocumentMode === "office" ? requestedDocumentMode : null;
 
   if (!applicantId) {
     redirect("/applicant");
@@ -78,7 +75,6 @@ export default async function NewApplicationPage({
       <ApplicationForm
         applicantId={applicantId}
         applicant={selectedApplicant ?? null}
-        initialDocumentMode={initialDocumentMode}
       />
 
     </div>

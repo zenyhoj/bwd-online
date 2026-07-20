@@ -47,10 +47,7 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
   });
 
   if (!wacoPrintEligibility.allowed) {
-    const message =
-      wacoPrintEligibility.reason === "office_documents_unverified"
-        ? "WACO printing becomes available after office document verification is completed."
-        : "WACO printing becomes available after all required documents have been uploaded.";
+    const message = "WACO printing becomes available after the inspection is approved.";
 
     return (
       <main className="flex min-h-[70vh] items-center justify-center p-4 sm:p-8">
