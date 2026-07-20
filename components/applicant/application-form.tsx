@@ -9,6 +9,10 @@ import { BARANGAYS } from "@/lib/constants";
 import { createApplicationAction } from "@/actions/applications";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
+import {
+  DocumentSubmissionChoice,
+  type DocumentSubmissionMode
+} from "@/components/applicant/document-submission-choice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +25,7 @@ type Applicant = Database["public"]["Tables"]["applicants"]["Row"];
 type ApplicationFormProps = {
   applicantId: string;
   applicant: Applicant | null;
+  initialDocumentMode?: DocumentSubmissionMode | null;
 };
 
 const PURPOSE_LABELS = {
@@ -211,7 +216,7 @@ function ApplicantEditForm({
   );
 }
 
-export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps) {
+export function ApplicationForm({ applicantId, applicant, initialDocumentMode = null }: ApplicationFormProps) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState(createApplicationAction, initialActionState);
   const [isEditingApplicant, setIsEditingApplicant] = useState(false);
@@ -344,6 +349,14 @@ export function ApplicationForm({ applicantId, applicant }: ApplicationFormProps
                 <p className="text-xs text-muted-foreground">Enter the total number of people who will use this water connection.</p>
               )}
             </div>
+          </div>
+
+          <div className="pt-2">
+            <DocumentSubmissionChoice
+              variant="radio"
+              selectedMode={initialDocumentMode}
+              error={errorText("documentSubmissionMode")}
+            />
           </div>
 
           <FormMessage state={state} />

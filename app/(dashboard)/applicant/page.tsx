@@ -7,6 +7,7 @@ import { ApplicantSwitcher } from "@/components/applicant/applicant-switcher";
 import { ApplicationSwitcher } from "@/components/applicant/application-switcher";
 import { UserManualModal } from "@/components/applicant/user-manual-modal";
 import { ApplicantDocumentPanel } from "@/components/applicant/applicant-document-panel";
+import { DocumentSubmissionChoice } from "@/components/applicant/document-submission-choice";
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Button } from "@/components/ui/button";
@@ -658,6 +659,26 @@ export default async function ApplicantDashboardPage({ searchParams }: Applicant
               </div>
             </div>
           </div>
+
+          {selectedApplication && !assignedAccount.isConverted ? (
+            <div id="document-submission" className="scroll-mt-24 rounded-2xl border border-border/70 bg-muted/10 p-4 sm:p-5">
+              <DocumentSubmissionChoice
+                variant="action"
+                applicationId={selectedApplication.id}
+                selectedMode={
+                  selectedApplication.document_submission_mode === "office" ? "office" : "online"
+                }
+                locked={documentsReady}
+                compact
+                title="Document submission method"
+                description={
+                  selectedApplication.document_submission_mode === "office"
+                    ? "Bring the required physical documents to the BWD office now, even if your inspection is not yet scheduled. You may switch to online upload until verification is completed."
+                    : "Online upload is ready below, even if your inspection is not yet scheduled. You may switch to office submission until verification is completed."
+                }
+              />
+            </div>
+          ) : null}
 
           {selectedApplication && seminarState.allCompleted && !assignedAccount.isConverted ? (
             <ApplicantDocumentPanel
