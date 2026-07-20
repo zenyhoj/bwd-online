@@ -13,9 +13,9 @@ function toProperCase(str: string): string {
 
 import { BARANGAYS } from "@/lib/constants";
 const applicantSchema = z.object({
-  lastName: z.string().min(2, "Last name must be at least 2 characters").transform(toProperCase),
-  firstName: z.string().min(2, "First name must be at least 2 characters").transform(toProperCase),
-  middleInitial: z.string().trim().max(3).optional().transform((val) => (val ? toProperCase(val) : val)),
+  lastName: z.string().trim().min(2, "Last name must be at least 2 characters").transform(toProperCase),
+  firstName: z.string().trim().min(2, "First name must be at least 2 characters").transform(toProperCase),
+  middleInitial: z.string().trim().max(3).optional().transform((val) => (val ? toProperCase(val.replace(/\./g, '')) : val)),
   sex: z.enum(["Male", "Female"]),
   age: z.coerce.number().int().min(1).max(120),
   specificAddress: z.string().min(2, "Specific address is required"),
