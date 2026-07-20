@@ -1,6 +1,6 @@
 import type { AppRole } from "@/types/domain";
 
-export const publicRoutes = ["/", "/login", "/register", "/privacy-notice", "/accept-invite", "/sw.js", "/manifest.json", "/manual", "/forgot-password", "/auth/callback"];
+export const publicRoutes = ["/", "/login", "/register", "/privacy-notice", "/accept-invite", "/sw.js", "/manifest.json", "/manual", "/forgot-password", "/auth/callback", "/auth/update-password-callback"];
 
 export const roleHome: Record<AppRole, string> = {
   applicant: "/applicant",
