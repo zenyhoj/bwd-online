@@ -352,8 +352,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
   });
   const wacoPrintHint =
     wacoPrintEligibility.reason === "office_documents_unverified"
-      ? "WACO printing becomes available after office document verification is completed."
-      : "WACO printing becomes available after all required documents have been uploaded.";
+      ? "SACO printing becomes available after office document verification is completed."
+      : "SACO printing becomes available after all required documents have been uploaded.";
   const canScheduleInstallation = latestSelectedPayment?.status === "paid";
   const selectedApplicationStatus = String(selectedApplication?.status ?? "");
   const selectedInspections =
@@ -687,12 +687,12 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       {wacoPrintEligibility.allowed ? (
                         <Button variant="default" asChild className="font-medium shadow-sm transition-transform hover:scale-105 active:scale-95">
                           <Link href={`/admin/reports/waco/${selectedApplication.id}`} target="_blank">
-                            Print WACO
+                            Print SACO
                           </Link>
                         </Button>
                       ) : (
                         <Button variant="default" disabled title={wacoPrintHint} className="font-medium shadow-sm">
-                          Print WACO
+                          Print SACO
                         </Button>
                       )}
 

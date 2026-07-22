@@ -46,7 +46,7 @@ export function WacoReport({ application, inspection, payment, plumberName, semi
         <p>Telefax: (085-343-4037) Email: bwd_adn@yahoo.com</p>
       </header>
 
-      <h1 className="mb-2 text-center text-[11pt] font-bold tracking-wide">WATER APPLICATION AND CONSTRUCTION ORDER</h1>
+      <h1 className="mb-2 text-center text-[11pt] font-bold tracking-wide">SERVICE APPLICATION AND CONTRACT FOR WATER SERVICES (SACO)</h1>
 
       <div className="mb-2 border-b-[1px] border-dashed border-black"></div>
 

@@ -47,7 +47,7 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
   });
 
   if (!wacoPrintEligibility.allowed) {
-    const message = "WACO printing becomes available after the inspection is approved.";
+    const message = "SACO printing becomes available after the inspection is approved.";
 
     return (
       <main className="flex min-h-[70vh] items-center justify-center p-4 sm:p-8">
@@ -56,7 +56,7 @@ export default async function WacoReportPage({ params }: WacoReportPageProps) {
             <span className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
               <FileClock className="h-6 w-6" aria-hidden="true" />
             </span>
-            <CardTitle>WACO is not available yet</CardTitle>
+            <CardTitle>SACO is not available yet</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 text-center">
             <p className="text-sm leading-6 text-muted-foreground">{message}</p>
