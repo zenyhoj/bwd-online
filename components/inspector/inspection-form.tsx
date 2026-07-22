@@ -250,11 +250,23 @@ export function InspectionForm({ inspection, pulledPlumberName }: InspectionForm
               disabled={isReadOnly}
               required
               ref={refAccNumRef}
+              placeholder="0441-12-031"
+              pattern="\d{4}-\d{2}-\d{3}"
+              title="Account number must be in XXXX-XX-XXX format (e.g. 0441-12-031)"
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="accountNumber">Account number</Label>
-            <Input id="accountNumber" name="accountNumber" defaultValue={inspection.account_number ?? ""} disabled={isReadOnly} required />
+            <Input
+              id="accountNumber"
+              name="accountNumber"
+              defaultValue={inspection.account_number ?? ""}
+              disabled={isReadOnly}
+              required
+              placeholder="0441-12-031"
+              pattern="\d{4}-\d{2}-\d{3}"
+              title="Account number must be in XXXX-XX-XXX format (e.g. 0441-12-031)"
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="latitude">Latitude</Label>

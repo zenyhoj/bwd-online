@@ -326,3 +326,41 @@ export async function searchReferenceAccountsAction(query: string) {
 
   return { success: true, data: formattedData };
 }
+
+export async function updateAccountNumberByAdminAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase } = await getActionContext();
+    const applicationId = String(formData.get("applicationId") ?? "").trim();
+    const inspectionId = String(formData.get("inspectionId") ?? "").trim();
+    const accountNumber = String(formData.get("accountNumber") ?? "").trim();
+
+    if (!/^\d{4}-\d{2}-\d{3}$/.test(accountNumber)) {
+      return { success: false, message: "Account number must be in XXXX-XX-XXX format (e.g. 0441-12-031)." };
+    }
+
+    if (inspectionId) {
+      const { error } = await supabase
+        .from("inspections")
+        .update({ account_number: accountNumber })
+        .eq("id", inspectionId);
+
+      if (error) {
+        return { success: false, message: error.message };
+      }
+    }
+
+    if (applicationId) {
+      await supabase
+        .from("concessionaires")
+        .update({ concessionaire_number: accountNumber })
+        .eq("application_id", applicationId);
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/inspections");
+    revalidatePath("/inspector");
+    revalidatePath("/applicant");
+
+    return { success: true, message: "Account number updated successfully." };
+  });
+}

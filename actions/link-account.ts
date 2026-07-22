@@ -33,6 +33,10 @@ export async function linkLegacyAccountAction(
     const cleanAccountNumber = accountNumber.trim();
     const cleanAccountName = accountName.trim();
 
+    if (!/^\d{4}-\d{2}-\d{3}$/.test(cleanAccountNumber)) {
+      return { success: false, message: "Account number must be in XXXX-XX-XXX format (e.g. 0441-12-031)." };
+    }
+
     // Verify against the latest uploaded bill first. This avoids picking an older
     // duplicate concessionaire row that has the same account number but no bills.
     const { data: latestBill, error: billLookupError } = await adminClient

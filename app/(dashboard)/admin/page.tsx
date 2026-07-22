@@ -15,6 +15,7 @@ import { InhouseInstallationForm } from "@/components/shared/inhouse-installatio
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ApplicantAddressInlineEditor } from "@/components/admin/applicant-address-inline-editor";
+import { AccountNumberInlineEditor } from "@/components/admin/account-number-inline-editor";
 import { ApplicantSelectionButton } from "@/components/admin/applicant-selection-button";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Badge } from "@/components/ui/badge";
@@ -662,11 +663,19 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       {String(selectedApplication.service_type).replaceAll("_", " ")} • Submitted{" "}
                       {formatDateTime((selectedApplication.submitted_at as string | null | undefined) ?? null)}
                     </p>
-                    <div className="mt-1">
+                    <div className="mt-1 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4">
                       <ApplicantAddressInlineEditor
                         applicantId={String(selectedApplication.applicant_id)}
                         address={String(selectedApplication.address ?? "")}
                       />
+                      <div className="flex items-center gap-1.5 text-sm">
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account #:</span>
+                        <AccountNumberInlineEditor
+                          applicationId={String(selectedApplication.id)}
+                          inspectionId={latestSelectedInspection?.id ? String(latestSelectedInspection.id) : null}
+                          accountNumber={(latestSelectedInspection as Record<string, unknown> | null)?.account_number as string | null ?? null}
+                        />
+                      </div>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">

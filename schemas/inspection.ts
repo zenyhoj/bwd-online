@@ -20,7 +20,13 @@ export const inspectionUpdateSchema = z.object({
   materialList: z.string().trim().min(3),
   latitude: z.coerce.number().min(-90).max(90),
   longitude: z.coerce.number().min(-180).max(180),
-  referenceAccountNumber: z.string().trim().min(3),
+  referenceAccountNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{3}$/, "Reference account number must be in XXXX-XX-XXX format (e.g. 0441-12-031)."),
   referenceAccountName: z.string().trim().min(3),
-  accountNumber: z.string().trim().min(3)
+  accountNumber: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{3}$/, "Account number must be in XXXX-XX-XXX format (e.g. 0441-12-031).")
 });

@@ -26,7 +26,14 @@ export function ConcessionaireForm({ applicationId, profileId }: ConcessionaireF
           <input type="hidden" name="profileId" value={profileId} />
           <div className="space-y-2">
             <Label htmlFor={`concessionaireNumber-${applicationId}`}>Concessionaire no.</Label>
-            <Input id={`concessionaireNumber-${applicationId}`} name="concessionaireNumber" required />
+            <Input
+              id={`concessionaireNumber-${applicationId}`}
+              name="concessionaireNumber"
+              required
+              placeholder="0441-12-031"
+              pattern="\d{4}-\d{2}-\d{3}"
+              title="Account number must be in XXXX-XX-XXX format (e.g. 0441-12-031)"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor={`connectionDate-${applicationId}`}>Connection date</Label>
