@@ -15,7 +15,6 @@ import { InhouseInstallationForm } from "@/components/shared/inhouse-installatio
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { ApplicantAddressInlineEditor } from "@/components/admin/applicant-address-inline-editor";
-import { AccountNumberInlineEditor } from "@/components/admin/account-number-inline-editor";
 import { ApplicantSelectionButton } from "@/components/admin/applicant-selection-button";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Badge } from "@/components/ui/badge";
@@ -670,11 +669,9 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       />
                       <div className="flex items-center gap-1.5 text-sm">
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account #:</span>
-                        <AccountNumberInlineEditor
-                          applicationId={String(selectedApplication.id)}
-                          inspectionId={latestSelectedInspection?.id ? String(latestSelectedInspection.id) : null}
-                          accountNumber={(latestSelectedInspection as Record<string, unknown> | null)?.account_number as string | null ?? null}
-                        />
+                        <span className="font-mono text-sm font-semibold">
+                          {((latestSelectedInspection as Record<string, unknown> | null)?.account_number as string | null)?.trim() || "Not assigned yet"}
+                        </span>
                       </div>
                     </div>
                   </div>
