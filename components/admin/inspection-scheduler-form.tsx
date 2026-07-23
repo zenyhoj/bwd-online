@@ -26,6 +26,7 @@ type InspectionSchedulerFormProps = {
   applicationId: string;
   inspectors: InspectorRecord[];
   existingInspection?: ExistingInspection | null;
+  hideTitle?: boolean;
 };
 
 function toDateTimeLocalValue(value?: string | null) {
@@ -46,7 +47,8 @@ function toDateTimeLocalValue(value?: string | null) {
 export function InspectionSchedulerForm({
   applicationId,
   inspectors,
-  existingInspection
+  existingInspection,
+  hideTitle = false
 }: InspectionSchedulerFormProps) {
   const [scheduleState, scheduleAction, schedulePending] = useActionState(scheduleInspectionAction, initialActionState);
   const [rescheduleState, rescheduleAction, reschedulePending] = useActionState(rescheduleInspectionAction, initialActionState);
@@ -172,49 +174,52 @@ export function InspectionSchedulerForm({
     );
   }
 
+  const formElement = (
+    <form action={scheduleAction} className="flex flex-col gap-4">
+      <input type="hidden" name="applicationId" value={applicationId} />
+      <div className="space-y-2">
+        <Label htmlFor={`inspector-${applicationId}`}>Assigned inspector</Label>
+        <select
+          id={`inspector-${applicationId}`}
+          name="inspectorId"
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          required
+        >
+          <option value="">Select inspector</option>
+          {inspectors.map((inspector) => (
+            <option key={inspector.id} value={inspector.id}>
+              {inspector.full_name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`scheduled-${applicationId}`}>Inspection appointment</Label>
+        <BusinessDateTimeInput
+          id={`scheduled-${applicationId}`}
+          name="scheduledAt"
+          allowDateJump
+          required
+        />
+      </div>
+      <Button type="submit" disabled={schedulePending} className="mt-2 w-full sm:w-auto">
+        <CalendarClock className="h-4 w-4" />
+        {schedulePending ? "Scheduling..." : "Schedule inspection"}
+      </Button>
+      <FormMessage state={scheduleState} />
+    </form>
+  );
+
+  if (hideTitle) {
+    return formElement;
+  }
+
   return (
     <Card className="border-border/70 shadow-sm">
       <CardHeader>
         <CardTitle>Schedule inspection</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Inspection scheduling follows a first finished, first served basis based on the earliest completed in-house plumbing record.
-        </p>
       </CardHeader>
-      <CardContent>
-        <form action={scheduleAction} className="flex flex-col gap-4">
-          <input type="hidden" name="applicationId" value={applicationId} />
-          <div className="space-y-2">
-            <Label htmlFor={`inspector-${applicationId}`}>Assigned inspector</Label>
-            <select
-              id={`inspector-${applicationId}`}
-              name="inspectorId"
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              required
-            >
-              <option value="">Select inspector</option>
-              {inspectors.map((inspector) => (
-                <option key={inspector.id} value={inspector.id}>
-                  {inspector.full_name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`scheduled-${applicationId}`}>Inspection appointment</Label>
-            <BusinessDateTimeInput
-              id={`scheduled-${applicationId}`}
-              name="scheduledAt"
-              allowDateJump
-              required
-            />
-          </div>
-          <Button type="submit" disabled={schedulePending} className="mt-2 w-full sm:w-auto">
-            <CalendarClock className="h-4 w-4" />
-            {schedulePending ? "Scheduling..." : "Schedule inspection"}
-          </Button>
-          <FormMessage state={scheduleState} />
-        </form>
-      </CardContent>
+      <CardContent>{formElement}</CardContent>
     </Card>
   );
 }
