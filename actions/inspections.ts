@@ -55,9 +55,6 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
       };
     }
 
-    // The strict first-finished-first-served scheduling queue validation check has been removed 
-    // to prevent deadlocks when older applications are abandoned or delayed.
-
     const { data: inspector, error: inspectorError } = await supabase
       .from("inspectors")
       .select("id, full_name")
@@ -92,29 +89,35 @@ export async function scheduleInspectionAction(_prevState: ActionState, formData
       .update({ status: "inspection_scheduled" })
       .eq("id", parsed.data.applicationId);
 
-    // Send email to User
-    const { data: applicationRecord } = await supabase
-      .from("applications")
-      .select("applicants(profile_id)")
-      .eq("id", parsed.data.applicationId)
-      .single();
+    // Send email asynchronously in the background
+    (async () => {
+      try {
+        const { data: applicationRecord } = await supabase
+          .from("applications")
+          .select("applicants(profile_id, full_name)")
+          .eq("id", parsed.data.applicationId)
+          .single();
 
-    const applicantProfileId = (applicationRecord?.applicants as any)?.profile_id;
-    const applicantName = (applicationRecord?.applicants as any)?.full_name ?? parsed.data.applicationId;
-    if (applicantProfileId) {
-      const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
-      const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
-      if (userAuth?.user?.email) {
-        await sendWorkflowEmail(
-          userAuth.user.email,
-          "Inspection Scheduled - BWD Online",
-          `<h3>Inspection Scheduled</h3>
-           <p>An inspection for applicant: <b>${applicantName}</b> has been scheduled.</p>
-           <p><strong>Scheduled Date:</strong> ${new Date(parsed.data.scheduledAt).toLocaleString()}</p>
-           <p>Please ensure someone is available at the premises during the inspection.</p>`
-        );
+        const applicantProfileId = (applicationRecord?.applicants as any)?.profile_id;
+        const applicantName = (applicationRecord?.applicants as any)?.full_name ?? parsed.data.applicationId;
+        if (applicantProfileId) {
+          const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+          const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+          if (userAuth?.user?.email) {
+            await sendWorkflowEmail(
+              userAuth.user.email,
+              "Inspection Scheduled - BWD Online",
+              `<h3>Inspection Scheduled</h3>
+               <p>An inspection for applicant: <b>${applicantName}</b> has been scheduled.</p>
+               <p><strong>Scheduled Date:</strong> ${new Date(parsed.data.scheduledAt).toLocaleString()}</p>
+               <p>Please ensure someone is available at the premises during the inspection.</p>`
+            );
+          }
+        }
+      } catch (emailErr) {
+        console.error("Failed to send workflow email in background:", emailErr);
       }
-    }
+    })();
 
     revalidatePath("/admin/inspections");
     return { success: true, message: "Inspection scheduled." };
@@ -148,22 +151,26 @@ export async function rescheduleInspectionAction(_prevState: ActionState, formDa
       return { success: false, message: fetchError?.message ?? "Inspection not found." };
     }
 
-    const { error } = await supabase
-      .from("inspections")
-      .update({
-        scheduled_at: toManilaISOString(parsed.data.scheduledAt),
-        status: "rescheduled"
-      })
-      .eq("id", parsed.data.inspectionId);
+    const [updateInspectionRes, updateAppRes] = await Promise.all([
+      supabase
+        .from("inspections")
+        .update({
+          scheduled_at: toManilaISOString(parsed.data.scheduledAt),
+          status: "rescheduled"
+        })
+        .eq("id", parsed.data.inspectionId),
+      supabase
+        .from("applications")
+        .update({ status: "inspection_scheduled" })
+        .eq("id", inspection.application_id)
+    ]);
 
-    if (error) {
-      return { success: false, message: error.message };
+    if (updateInspectionRes.error) {
+      return { success: false, message: updateInspectionRes.error.message };
     }
-
-    await supabase
-      .from("applications")
-      .update({ status: "inspection_scheduled" })
-      .eq("id", inspection.application_id);
+    if (updateAppRes.error) {
+      return { success: false, message: updateAppRes.error.message };
+    }
 
     revalidatePath("/admin/inspections");
     revalidatePath("/admin");
@@ -195,9 +202,18 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
 
     const plumbingApproved = parsed.data.status === "approved" ? parsed.data.plumbingApproved : false;
 
+    // Combined query: Fetch inspection and application details (plumber & applicant) in a single database call
     const { data: inspection, error: fetchError } = await supabase
       .from("inspections")
-      .select("application_id")
+      .select(`
+        scheduled_at,
+        application_id,
+        applications!inner (
+          accredited_plumber_id,
+          accredited_plumbers (full_name),
+          applicants (profile_id, full_name)
+        )
+      `)
       .eq("id", parsed.data.inspectionId)
       .single();
 
@@ -205,8 +221,7 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
       return { success: false, message: fetchError?.message ?? "Inspection not found." };
     }
 
-    const scheduledAt = (inspection as { scheduled_at?: string | null }).scheduled_at;
-
+    const scheduledAt = inspection.scheduled_at;
     if (scheduledAt) {
       const inspectedAtTime = toManilaDate(parsed.data.inspectedAt).getTime();
       const scheduledAtTime = new Date(scheduledAt).getTime();
@@ -219,17 +234,8 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
       }
     }
 
-    const { data: application, error: applicationError } = await supabase
-      .from("applications")
-      .select("accredited_plumber_id, accredited_plumbers(full_name), applicants(profile_id)")
-      .eq("id", inspection.application_id)
-      .single();
-
-    if (applicationError || !application) {
-      return { success: false, message: applicationError?.message ?? "Application not found." };
-    }
-
-    const plumberName = (application.accredited_plumbers as { full_name?: string } | null)?.full_name?.trim() ?? "";
+    const application = (inspection as any).applications;
+    const plumberName = (application?.accredited_plumbers as { full_name?: string } | null)?.full_name?.trim() ?? "";
 
     if (!plumberName) {
       return {
@@ -238,49 +244,62 @@ export async function updateInspectionAction(_prevState: ActionState, formData: 
       };
     }
 
-    const { error } = await supabase
-      .from("inspections")
-      .update({
-        status: parsed.data.status,
-        plumbing_approved: plumbingApproved,
-        remarks: parsed.data.remarks,
-        material_list: parsed.data.materialList,
-        latitude: parsed.data.latitude,
-        longitude: parsed.data.longitude,
-        plumber_name: plumberName,
-        reference_account_number: parsed.data.referenceAccountNumber,
-        reference_account_name: parsed.data.referenceAccountName,
-        account_number: parsed.data.accountNumber,
-        inspected_at: toManilaISOString(parsed.data.inspectedAt)
-      })
-      .eq("id", parsed.data.inspectionId);
+    // Parallelize updates to inspections and applications
+    const [updateInspectionRes, updateAppRes] = await Promise.all([
+      supabase
+        .from("inspections")
+        .update({
+          status: parsed.data.status,
+          plumbing_approved: plumbingApproved,
+          remarks: parsed.data.remarks,
+          material_list: parsed.data.materialList,
+          latitude: parsed.data.latitude,
+          longitude: parsed.data.longitude,
+          plumber_name: plumberName,
+          reference_account_number: parsed.data.referenceAccountNumber,
+          reference_account_name: parsed.data.referenceAccountName,
+          account_number: parsed.data.accountNumber,
+          inspected_at: toManilaISOString(parsed.data.inspectedAt)
+        })
+        .eq("id", parsed.data.inspectionId),
+      supabase
+        .from("applications")
+        .update({
+          status: parsed.data.status === "approved" ? "inspection_completed" : "under_review"
+        })
+        .eq("id", inspection.application_id)
+    ]);
 
-    if (error) {
-      return { success: false, message: error.message };
+    if (updateInspectionRes.error) {
+      return { success: false, message: updateInspectionRes.error.message };
+    }
+    if (updateAppRes.error) {
+      return { success: false, message: updateAppRes.error.message };
     }
 
-    await supabase
-      .from("applications")
-      .update({
-        status: parsed.data.status === "approved" ? "inspection_completed" : "under_review"
-      })
-      .eq("id", inspection.application_id);
-
+    // Non-blocking background email sending for approved inspections
     if (parsed.data.status === "approved") {
-      const applicantProfileId = (application?.applicants as any)?.profile_id;
-      const applicantName = (application?.applicants as any)?.full_name ?? inspection.application_id;
+      const applicantProfileId = application?.applicants?.profile_id;
+      const applicantName = application?.applicants?.full_name ?? inspection.application_id;
+
       if (applicantProfileId) {
-        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
-        const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
-        if (userAuth?.user?.email) {
-          await sendWorkflowEmail(
-            userAuth.user.email,
-            "Inspection Approved - BWD Online",
-            `<h3>Inspection Approved</h3>
-             <p>Your site inspection for applicant: <b>${applicantName}</b> has been approved!</p>
-             <p>Please log in to your dashboard to proceed to the next steps.</p>`
-          );
-        }
+        (async () => {
+          try {
+            const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+            const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+            if (userAuth?.user?.email) {
+              await sendWorkflowEmail(
+                userAuth.user.email,
+                "Inspection Approved - BWD Online",
+                `<h3>Inspection Approved</h3>
+                 <p>Your site inspection for applicant: <b>${applicantName}</b> has been approved!</p>
+                 <p>Please log in to your dashboard to proceed to the next steps.</p>`
+              );
+            }
+          } catch (emailErr) {
+            console.error("Failed to send workflow email in background:", emailErr);
+          }
+        })();
       }
     }
 

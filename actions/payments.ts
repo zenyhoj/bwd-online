@@ -140,29 +140,34 @@ export async function schedulePaymentAction(_prevState: ActionState, formData: F
       .update({ status: "payment_scheduled" })
       .eq("id", parsed.data.applicationId);
 
-    const user = await getSessionUser();
-    
-    const applicantName = (application.applicants as any)?.full_name ?? parsed.data.applicationId;
-    
-    // Send email to Admin
-    await sendWorkflowEmail(
-      await getAdminEmails(),
-      "New Payment Scheduled",
-      `<h3>New Payment Scheduled</h3>
-       <p>A new payment has been scheduled for applicant: <b>${applicantName}</b>.</p>
-       <p>Please check the admin dashboard for details.</p>`
-    );
+    // Send email notifications asynchronously in the background
+    (async () => {
+      try {
+        const user = await getSessionUser();
+        const applicantName = (application.applicants as any)?.full_name ?? parsed.data.applicationId;
+        const adminEmails = await getAdminEmails();
 
-    // Send email to User
-    if (user?.email) {
-      await sendWorkflowEmail(
-        user.email,
-        "Payment Scheduled",
-        `<h3>Payment Scheduled</h3>
-         <p>Your payment schedule has been saved for applicant: <b>${applicantName}</b>.</p>
-         <p>Please pay at the office on the scheduled date.</p>`
-      );
-    }
+        await sendWorkflowEmail(
+          adminEmails,
+          "New Payment Scheduled",
+          `<h3>New Payment Scheduled</h3>
+           <p>A new payment has been scheduled for applicant: <b>${applicantName}</b>.</p>
+           <p>Please check the admin dashboard for details.</p>`
+        );
+
+        if (user?.email) {
+          await sendWorkflowEmail(
+            user.email,
+            "Payment Scheduled",
+            `<h3>Payment Scheduled</h3>
+             <p>Your payment schedule has been saved for applicant: <b>${applicantName}</b>.</p>
+             <p>Please pay at the office on the scheduled date.</p>`
+          );
+        }
+      } catch (emailErr) {
+        console.error("Failed to send payment scheduled email in background:", emailErr);
+      }
+    })();
 
     revalidatePath("/admin");
     revalidatePath("/admin/payments");
@@ -277,22 +282,28 @@ export async function updatePaymentStatusAction(_prevState: ActionState, formDat
       }
     }
 
-    // Send email to User if payment was marked as paid
+    // Send email asynchronously in the background if payment was marked as paid
     if (parsed.data.status === "paid") {
       const applicantProfileId = (applicationRecord.applicants as any)?.profile_id;
       if (applicantProfileId) {
-        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
-        const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
-        const applicantName = (applicationRecord.applicants as any)?.full_name ?? paymentRecord.application_id;
-        if (userAuth?.user?.email) {
-          await sendWorkflowEmail(
-            userAuth.user.email,
-            "Payment Approved - BWD Online",
-            `<h3>Payment Approved</h3>
-             <p>Your payment for applicant: <b>${applicantName}</b> has been received and verified.</p>
-             <p>Thank you! You can view the receipt in your dashboard.</p>`
-          );
-        }
+        (async () => {
+          try {
+            const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+            const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+            const applicantName = (applicationRecord.applicants as any)?.full_name ?? paymentRecord.application_id;
+            if (userAuth?.user?.email) {
+              await sendWorkflowEmail(
+                userAuth.user.email,
+                "Payment Approved - BWD Online",
+                `<h3>Payment Approved</h3>
+                 <p>Your payment for applicant: <b>${applicantName}</b> has been received and verified.</p>
+                 <p>Thank you! You can view the receipt in your dashboard.</p>`
+              );
+            }
+          } catch (emailErr) {
+            console.error("Failed to send payment approval email in background:", emailErr);
+          }
+        })();
       }
     }
 

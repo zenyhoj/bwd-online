@@ -122,20 +122,27 @@ export async function markWaterMeterInstalledAction(_prevState: ActionState, for
       throw error;
     }
 
+    // Send workflow email asynchronously in the background
     const applicantProfileId = (application?.applicants as any)?.profile_id;
     const applicantName = (application?.applicants as any)?.full_name ?? applicationId;
     if (applicantProfileId) {
-      const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
-      const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
-      if (userAuth?.user?.email) {
-        await sendWorkflowEmail(
-          userAuth.user.email,
-          "Water Connection Active - Welcome to BWD!",
-          `<h3>Water Connection Active</h3>
-           <p>Congratulations! Your water meter for applicant: <b>${applicantName}</b> has been successfully installed and activated.</p>
-           <p>You can now view your concessionaire details and water bills in your dashboard.</p>`
-        );
-      }
+      (async () => {
+        try {
+          const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+          const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+          if (userAuth?.user?.email) {
+            await sendWorkflowEmail(
+              userAuth.user.email,
+              "Water Connection Active - Welcome to BWD!",
+              `<h3>Water Connection Active</h3>
+               <p>Congratulations! Your water meter for applicant: <b>${applicantName}</b> has been successfully installed and activated.</p>
+               <p>You can now view your concessionaire details and water bills in your dashboard.</p>`
+            );
+          }
+        } catch (emailErr) {
+          console.error("Failed to send water connection email in background:", emailErr);
+        }
+      })();
     }
 
     revalidatePath("/admin");

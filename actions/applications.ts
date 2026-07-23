@@ -121,28 +121,34 @@ export async function createApplicationAction(_prevState: ActionState, formData:
 
     const documentSubmissionLabel = "Physical documents at the BWD office";
 
-    // Send email to Admin
-    await sendWorkflowEmail(
-      await getAdminEmails(),
-      "New Application Submitted",
-      `<h3>New Application Submitted</h3>
-       <p>A new application for <b>${applicant.full_name}</b> has been submitted.</p>
-       <p><strong>Document submission:</strong> ${documentSubmissionLabel}</p>
-       <p>Please check the admin dashboard for details.</p>`
-    );
+    // Send emails asynchronously in the background
+    (async () => {
+      try {
+        const adminEmails = await getAdminEmails();
+        await sendWorkflowEmail(
+          adminEmails,
+          "New Application Submitted",
+          `<h3>New Application Submitted</h3>
+           <p>A new application for <b>${applicant.full_name}</b> has been submitted.</p>
+           <p><strong>Document submission:</strong> ${documentSubmissionLabel}</p>
+           <p>Please check the admin dashboard for details.</p>`
+        );
 
-    // Send email to User
-    if (user?.email) {
-      await sendWorkflowEmail(
-        user.email,
-        "Application Submitted Successfully",
-        `<h3>Application Submitted</h3>
-         <p>Your water connection application for <b>${applicant.full_name}</b> has been successfully submitted.</p>
-         <p><strong>Your document submission choice:</strong> ${documentSubmissionLabel}</p>
-         <p>You can submit your documents now, even if your inspection is not yet scheduled. You can change this choice before document verification is completed.</p>
-         <p>Please check your dashboard for the next steps.</p>`
-      );
-    }
+        if (user?.email) {
+          await sendWorkflowEmail(
+            user.email,
+            "Application Submitted Successfully",
+            `<h3>Application Submitted</h3>
+             <p>Your water connection application for <b>${applicant.full_name}</b> has been successfully submitted.</p>
+             <p><strong>Your document submission choice:</strong> ${documentSubmissionLabel}</p>
+             <p>You can submit your documents now, even if your inspection is not yet scheduled. You can change this choice before document verification is completed.</p>
+             <p>Please check your dashboard for the next steps.</p>`
+          );
+        }
+      } catch (emailErr) {
+        console.error("Failed to send application submission email in background:", emailErr);
+      }
+    })();
 
     revalidatePath("/applicant");
     revalidatePath("/applicant/applications/new");
@@ -182,39 +188,40 @@ export async function updateApplicationStatusAction(_prevState: ActionState, for
       return { success: false, message: error.message };
     }
 
-    // Send push notification & email to applicant
-    try {
-      const { data: appData } = await supabase
-        .from("applications")
-        .select("status, applicants(profile_id)")
-        .eq("id", parsed.data.applicationId)
-        .single();
-      
-      const applicantProfileId = (appData?.applicants as any)?.profile_id;
-      if (applicantProfileId) {
-        await sendPushNotificationAction(
-          applicantProfileId,
-          "Application Update",
-          `Your application status has been updated to: ${parsed.data.status.replace("_", " ")}`,
-          "/applicant"
-        );
-
-        const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
-        const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
-        if (userAuth?.user?.email) {
-          await sendWorkflowEmail(
-            userAuth.user.email,
-            "Application Update - BWD Online",
-            `<h3>Application Update</h3>
-             <p>Your application status has been updated to: <strong>${parsed.data.status.replace("_", " ")}</strong></p>
-             <p>Please log in to BWD Online to check for any pending tasks or requirements.</p>`
+    // Send push notification & email asynchronously in the background
+    (async () => {
+      try {
+        const { data: appData } = await supabase
+          .from("applications")
+          .select("status, applicants(profile_id)")
+          .eq("id", parsed.data.applicationId)
+          .single();
+        
+        const applicantProfileId = (appData?.applicants as any)?.profile_id;
+        if (applicantProfileId) {
+          await sendPushNotificationAction(
+            applicantProfileId,
+            "Application Update",
+            `Your application status has been updated to: ${parsed.data.status.replace("_", " ")}`,
+            "/applicant"
           );
+
+          const adminClient = (await import("@/lib/supabase/server")).createSupabaseAdminClient();
+          const { data: userAuth } = await adminClient.auth.admin.getUserById(applicantProfileId);
+          if (userAuth?.user?.email) {
+            await sendWorkflowEmail(
+              userAuth.user.email,
+              "Application Update - BWD Online",
+              `<h3>Application Update</h3>
+               <p>Your application status has been updated to: <strong>${parsed.data.status.replace("_", " ")}</strong></p>
+               <p>Please log in to BWD Online to check for any pending tasks or requirements.</p>`
+            );
+          }
         }
+      } catch (pushError) {
+        console.error("Failed to send push/email notification in background:", pushError);
       }
-    } catch (pushError) {
-      console.error("Failed to send push/email notification:", pushError);
-      // Don't fail the whole action if push/email fails
-    }
+    })();
 
     revalidatePath("/admin");
     return { success: true, message: "Application status updated." };
