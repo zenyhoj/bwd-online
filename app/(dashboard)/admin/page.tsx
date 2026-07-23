@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, CheckCircle2, ClipboardList, CreditCard, FileCheck2, Wrench, Download } from "lucide-react";
+import { CalendarClock, CheckCircle2, ChevronDown, ClipboardList, CreditCard, FileCheck2, Wrench, Download } from "lucide-react";
 
 import { WaterMeterSchedulerForm } from "@/components/admin/water-meter-scheduler-form";
 import { WaterMeterCompletionForm } from "@/components/admin/water-meter-completion-form";
@@ -824,25 +824,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                   </div>
                 </div>
 
-                {inhousePlumbingCompleted && (
-                  <div className="border-t border-border/50 p-6 bg-muted/5">
-                    <div className="mb-4">
-                      <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">Inhouse Plumbing Record</p>
-                    </div>
-                    <InhouseInstallationForm
-                      applicationId={String(selectedApplication.id)}
-                      plumbers={plumbers}
-                      currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
-                      currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
-                      currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
-                      currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
-                      isCompleted={true}
-                      isLocked={true}
-                      variant="admin"
-                    />
-                  </div>
-                )}
-
                 {activeAction ? (
                   <div className="border-t border-border/50 p-6 bg-primary/[0.02]">
                     <div className="rounded-xl border-2 border-primary/20 bg-background p-6 shadow-sm">
@@ -913,6 +894,42 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                     </div>
                   </div>
                 ) : null}
+
+                {inhousePlumbingCompleted && (
+                  <details className="group border-t border-border/50 bg-muted/5 transition-all" open={activeAction === "inhouse-plumbing" ? true : undefined}>
+                    <summary className="flex cursor-pointer items-center justify-between p-6 select-none hover:bg-muted/10 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180 text-muted-foreground" />
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground font-semibold">
+                            Inhouse Plumbing Record
+                          </p>
+                          <p className="text-xs text-muted-foreground font-normal mt-0.5">
+                            {(selectedApplication.accredited_plumbers as { full_name?: string } | null | undefined)?.full_name
+                              ? `Completed by ${(selectedApplication.accredited_plumbers as { full_name?: string }).full_name}`
+                              : "Installation completed"}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-700 text-[10px] font-medium px-2.5 py-0.5">
+                        Fully Verified
+                      </Badge>
+                    </summary>
+                    <div className="px-6 pb-6 pt-2 border-t border-border/40">
+                      <InhouseInstallationForm
+                        applicationId={String(selectedApplication.id)}
+                        plumbers={plumbers}
+                        currentPlumberId={(selectedApplication.accredited_plumber_id as string | null | undefined) ?? null}
+                        currentCompletedAt={(selectedApplication.inhouse_installation_completed_at as string | null | undefined) ?? null}
+                        currentProofImageUrl={(selectedApplication.inhouse_installation_proof_image_url as string | null | undefined) ?? null}
+                        currentSignedAt={(selectedApplication.inhouse_installation_signed_at as string | null | undefined) ?? null}
+                        isCompleted={true}
+                        isLocked={true}
+                        variant="admin"
+                      />
+                    </div>
+                  </details>
+                )}
 
                 <div className="border-t border-border/50 p-6">
                   <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-4">Document verification</p>
