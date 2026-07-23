@@ -75,7 +75,7 @@ function EditInspectorRow({ inspector, onCancel }: { inspector: InspectorRecord;
             <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
               Cancel
             </Button>
-            <FormMessage state={state} />
+            <FormMessage state={state} autoHideSuccessMs={3000} />
           </div>
         </form>
       </TableCell>
@@ -128,7 +128,7 @@ export function InspectorRegistryForm({ inspectors }: InspectorRegistryFormProps
               <Input id="phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" className="h-11" required />
             </div>
             <div className="sm:col-span-2 lg:col-span-3">
-              <FormMessage state={state} />
+              <FormMessage state={state} autoHideSuccessMs={3000} />
             </div>
             <div className="sm:col-span-2 lg:col-span-3">
               <Button type="submit" loading={pending}>
