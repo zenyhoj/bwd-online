@@ -4,6 +4,7 @@ export * from "@/schemas/auth";
 export * from "@/schemas/concessionaire";
 export * from "@/schemas/document";
 export * from "@/schemas/inspection";
+export * from "@/schemas/inspector";
 export * from "@/schemas/payment";
 export * from "@/schemas/seminar";
 export * from "@/schemas/staff";

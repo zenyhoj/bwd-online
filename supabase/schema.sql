@@ -137,6 +137,7 @@ create table public.inspectors (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
   full_name text not null,
+  position text,
   phone text,
   notes text,
   is_active boolean not null default true,

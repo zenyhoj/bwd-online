@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getActionContext, parseFormData, withErrorHandling } from "@/actions/_helpers";
-import { accreditedPlumberSchema, deleteAccreditedPlumberSchema } from "@/schemas";
+import { deleteAccreditedPlumberSchema, inspectorSchema, updateInspectorSchema } from "@/schemas";
 import type { ActionState } from "@/types";
 
 export async function createInspectorAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
@@ -14,11 +14,10 @@ export async function createInspectorAction(_prevState: ActionState, formData: F
       return { success: false, message: "Only administrators can manage inspectors." };
     }
 
-    const parsed = await parseFormData(accreditedPlumberSchema, {
+    const parsed = await parseFormData(inspectorSchema, {
       fullName: formData.get("fullName"),
-      licenseNumber: "",
-      phone: formData.get("phone"),
-      notes: formData.get("notes")
+      position: formData.get("position"),
+      phone: formData.get("phone")
     });
 
     if (parsed.error) {
@@ -28,8 +27,8 @@ export async function createInspectorAction(_prevState: ActionState, formData: F
     const { error } = await supabase.from("inspectors").insert({
       organization_id: profile.organization_id,
       full_name: parsed.data.fullName,
-      phone: parsed.data.phone || null,
-      notes: parsed.data.notes || null,
+      position: parsed.data.position,
+      phone: parsed.data.phone,
       created_by: profile.id
     });
 
@@ -41,6 +40,46 @@ export async function createInspectorAction(_prevState: ActionState, formData: F
     revalidatePath("/admin");
     revalidatePath("/admin/inspections");
     return { success: true, message: "Inspector added." };
+  });
+}
+
+export async function updateInspectorAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  return withErrorHandling(async () => {
+    const { supabase, profile } = await getActionContext();
+
+    if (profile.role !== "admin") {
+      return { success: false, message: "Only administrators can manage inspectors." };
+    }
+
+    const parsed = await parseFormData(updateInspectorSchema, {
+      inspectorId: formData.get("inspectorId"),
+      fullName: formData.get("fullName"),
+      position: formData.get("position"),
+      phone: formData.get("phone")
+    });
+
+    if (parsed.error) {
+      return parsed.error;
+    }
+
+    const { error } = await supabase
+      .from("inspectors")
+      .update({
+        full_name: parsed.data.fullName,
+        position: parsed.data.position,
+        phone: parsed.data.phone
+      })
+      .eq("id", parsed.data.inspectorId)
+      .eq("organization_id", profile.organization_id);
+
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    revalidatePath("/admin/inspectors");
+    revalidatePath("/admin");
+    revalidatePath("/admin/inspections");
+    return { success: true, message: "Inspector updated." };
   });
 }
 

@@ -480,6 +480,7 @@ export type Database = {
           id: string;
           organization_id: string;
           full_name: string;
+          position: string | null;
           phone: string | null;
           notes: string | null;
           is_active: boolean;
@@ -491,6 +492,7 @@ export type Database = {
           id?: string;
           organization_id: string;
           full_name: string;
+          position?: string | null;
           phone?: string | null;
           notes?: string | null;
           is_active?: boolean;
@@ -502,6 +504,7 @@ export type Database = {
           id?: string;
           organization_id?: string;
           full_name?: string;
+          position?: string | null;
           phone?: string | null;
           notes?: string | null;
           is_active?: boolean;

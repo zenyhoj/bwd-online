@@ -2,6 +2,7 @@ create table if not exists public.inspectors (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations (id) on delete cascade,
   full_name text not null,
+  position text,
   phone text,
   notes text,
   is_active boolean not null default true,
@@ -9,6 +10,9 @@ create table if not exists public.inspectors (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.inspectors
+add column if not exists position text;
 
 alter table public.inspections
 add column if not exists registry_inspector_id uuid references public.inspectors (id) on delete set null;

@@ -1,36 +1,111 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
-import { createInspectorAction, deleteInspectorAction } from "@/actions/inspectors";
+import { createInspectorAction, deleteInspectorAction, updateInspectorAction } from "@/actions/inspectors";
 import { initialActionState } from "@/actions/state";
 import { FormMessage } from "@/components/forms/form-message";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { InspectorRecord } from "@/types";
 
 type InspectorRegistryFormProps = {
   inspectors: InspectorRecord[];
 };
 
+function EditInspectorRow({ inspector, onCancel }: { inspector: InspectorRecord; onCancel: () => void }) {
+  const [state, formAction, pending] = useActionState(updateInspectorAction, initialActionState);
+
+  useEffect(() => {
+    if (state.success) {
+      onCancel();
+    }
+  }, [onCancel, state.success]);
+
+  return (
+    <TableRow className="bg-muted/20 hover:bg-muted/20">
+      <TableCell colSpan={5} className="p-4">
+        <form action={formAction} className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <input type="hidden" name="inspectorId" value={inspector.id} />
+          <div className="space-y-1.5 sm:col-span-2 lg:col-span-1">
+            <Label htmlFor={`edit-name-${inspector.id}`} className="text-xs">
+              Full name
+            </Label>
+            <Input
+              id={`edit-name-${inspector.id}`}
+              name="fullName"
+              defaultValue={inspector.full_name}
+              className="h-10"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`edit-position-${inspector.id}`} className="text-xs">
+              Position
+            </Label>
+            <Input
+              id={`edit-position-${inspector.id}`}
+              name="position"
+              defaultValue={inspector.position ?? ""}
+              className="h-10"
+              required
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor={`edit-phone-${inspector.id}`} className="text-xs">
+              Contact number
+            </Label>
+            <Input
+              id={`edit-phone-${inspector.id}`}
+              name="phone"
+              type="tel"
+              inputMode="tel"
+              defaultValue={inspector.phone ?? ""}
+              className="h-10"
+              required
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2 sm:col-span-2 lg:col-span-3">
+            <Button type="submit" size="sm" loading={pending}>
+              Save changes
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+              Cancel
+            </Button>
+            <FormMessage state={state} />
+          </div>
+        </form>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 function DeleteInspectorButton({ inspectorId }: { inspectorId: string }) {
   const [state, formAction, pending] = useActionState(deleteInspectorAction, initialActionState);
 
   return (
-    <form action={formAction} className="space-y-2">
+    <form action={formAction}>
       <input type="hidden" name="inspectorId" value={inspectorId} />
-      <Button type="submit" variant="outline" loading={pending}>
+      <Button
+        type="submit"
+        variant="ghost"
+        size="sm"
+        loading={pending}
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+      >
         Remove
       </Button>
-      <FormMessage state={state} />
+      {!state.success && state.message ? <p className="mt-1 text-xs text-destructive">{state.message}</p> : null}
     </form>
   );
 }
 
 export function InspectorRegistryForm({ inspectors }: InspectorRegistryFormProps) {
   const [state, formAction, pending] = useActionState(createInspectorAction, initialActionState);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   return (
     <div className="space-y-6">
@@ -39,27 +114,23 @@ export function InspectorRegistryForm({ inspectors }: InspectorRegistryFormProps
           <CardTitle>Add inspector</CardTitle>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
+          <form action={formAction} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-2 sm:col-span-2 lg:col-span-1">
               <Label htmlFor="fullName">Full name</Label>
-              <Input id="fullName" name="fullName" required />
+              <Input id="fullName" name="fullName" autoComplete="name" className="h-11" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" name="phone" />
+              <Label htmlFor="position">Position</Label>
+              <Input id="position" name="position" className="h-11" required />
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="notes">Notes</Label>
-              <textarea
-                id="notes"
-                name="notes"
-                className="min-h-28 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              />
+            <div className="space-y-2">
+              <Label htmlFor="phone">Contact number</Label>
+              <Input id="phone" name="phone" type="tel" autoComplete="tel" inputMode="tel" className="h-11" required />
             </div>
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2 lg:col-span-3">
               <FormMessage state={state} />
             </div>
-            <div className="md:col-span-2">
+            <div className="sm:col-span-2 lg:col-span-3">
               <Button type="submit" loading={pending}>
                 Add inspector
               </Button>
@@ -72,28 +143,53 @@ export function InspectorRegistryForm({ inspectors }: InspectorRegistryFormProps
         <CardHeader>
           <CardTitle>Inspector registry</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-0">
           {inspectors.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No inspectors registered yet.</p>
+            <p className="p-6 text-sm text-muted-foreground">No inspectors registered yet.</p>
           ) : (
-            inspectors.map((inspector) => (
-              <div
-                key={inspector.id}
-                className="flex flex-col gap-4 rounded-xl border border-border/80 p-4 lg:flex-row lg:items-start lg:justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    <span>{inspector.is_active ? "Active" : "Archived"}</span>
-                  </div>
-                  <h3 className="text-lg font-semibold">{inspector.full_name}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {inspector.phone ? `Phone: ${inspector.phone}` : "No phone recorded"}
-                  </p>
-                  {inspector.notes ? <p className="text-sm text-muted-foreground">{inspector.notes}</p> : null}
-                </div>
-                <DeleteInspectorButton inspectorId={inspector.id} />
-              </div>
-            ))
+            <Table className="min-w-[42rem]">
+              <TableHeader>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead>Name</TableHead>
+                  <TableHead>Position</TableHead>
+                  <TableHead>Contact number</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inspectors.map((inspector) =>
+                  editingId === inspector.id ? (
+                    <EditInspectorRow key={inspector.id} inspector={inspector} onCancel={() => setEditingId(null)} />
+                  ) : (
+                    <TableRow key={inspector.id}>
+                      <TableCell className="font-semibold text-foreground">{inspector.full_name}</TableCell>
+                      <TableCell className="text-muted-foreground">{inspector.position ?? "—"}</TableCell>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">{inspector.phone ?? "—"}</TableCell>
+                      <TableCell>
+                        <span
+                          className={
+                            inspector.is_active
+                              ? "inline-flex rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-400"
+                              : "inline-flex rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                          }
+                        >
+                          {inspector.is_active ? "Active" : "Archived"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(inspector.id)}>
+                            Edit
+                          </Button>
+                          <DeleteInspectorButton inspectorId={inspector.id} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
