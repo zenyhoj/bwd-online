@@ -219,7 +219,7 @@ export function BusinessDateTimeInput({
   }
 
   return (
-    <div className={cn("w-full min-w-0 max-w-full", compact ? "sm:max-w-[24rem]" : "sm:max-w-[33rem]", disabled && "opacity-60")}>
+    <div className={cn("w-full min-w-0 max-w-full", compact && "sm:max-w-[24rem]", disabled && "opacity-60")}>
       <input
         id={id}
         name={name}
@@ -233,7 +233,9 @@ export function BusinessDateTimeInput({
       <div
         className={cn(
           "grid min-w-0 overflow-hidden rounded-xl border border-border/80 bg-background shadow-sm",
-          compact ? "sm:grid-cols-[15rem_9rem]" : "sm:grid-cols-[18rem_15rem]"
+          compact
+            ? "sm:grid-cols-[minmax(0,15rem)_minmax(0,9rem)]"
+            : "sm:grid-cols-[minmax(17rem,1.2fr)_minmax(13rem,0.8fr)]"
         )}
       >
         <div className="min-w-0 border-b border-border/70 bg-muted/20 p-2 min-[360px]:p-3 sm:border-b-0 sm:border-r">

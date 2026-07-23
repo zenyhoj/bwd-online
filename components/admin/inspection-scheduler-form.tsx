@@ -182,7 +182,7 @@ export function InspectionSchedulerForm({
         <select
           id={`inspector-${applicationId}`}
           name="inspectorId"
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          className="flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           required
         >
           <option value="">Select inspector</option>
@@ -202,7 +202,7 @@ export function InspectionSchedulerForm({
           required
         />
       </div>
-      <Button type="submit" disabled={schedulePending} className="mt-2 w-full sm:w-auto">
+      <Button type="submit" disabled={schedulePending} className="mt-2 h-11 w-full">
         <CalendarClock className="h-4 w-4" />
         {schedulePending ? "Scheduling..." : "Schedule inspection"}
       </Button>
