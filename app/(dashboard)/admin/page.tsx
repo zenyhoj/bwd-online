@@ -14,7 +14,6 @@ import { DeleteApplicantButton } from "@/components/admin/delete-applicant-butto
 import { InhouseInstallationForm } from "@/components/shared/inhouse-installation-form";
 import { PaginationControls } from "@/components/shared/pagination-controls";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { ApplicantAddressInlineEditor } from "@/components/admin/applicant-address-inline-editor";
 import { ApplicantSelectionButton } from "@/components/admin/applicant-selection-button";
 import { PushPromptCard } from "@/components/pwa/push-prompt-card";
 import { Badge } from "@/components/ui/badge";
@@ -663,10 +662,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
                       {formatDateTime((selectedApplication.submitted_at as string | null | undefined) ?? null)}
                     </p>
                     <div className="mt-1 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4">
-                      <ApplicantAddressInlineEditor
-                        applicantId={String(selectedApplication.applicant_id)}
-                        address={String(selectedApplication.address ?? "")}
-                      />
+                      <p className="text-sm text-muted-foreground">{String(selectedApplication.address ?? "No address provided")}</p>
                       <div className="flex items-center gap-1.5 text-sm">
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Account #:</span>
                         <span className="font-mono text-sm font-semibold">
